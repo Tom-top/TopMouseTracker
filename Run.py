@@ -12,13 +12,13 @@ import cv2;
 import matplotlib.pyplot as plt;
 
 import TopMouseTracker.Settings as settings;
-import TopMouseTracker.Params as params;
+import TopMouseTracker.Parameters as params;
 import TopMouseTracker.IO as IO;
 import TopMouseTracker.Tracker as tracker;
 import TopMouseTracker.Analysis as analysis;
 
-baseDir = "Enter the path to your Directory here";     
-workDir = os.path.join(baseDir,"Name of the experiment");                   
+baseDir = "/Users/tomtop/Desktop/Data/Experiments/Inhibitory_DREADDS/Behavior_Data/";     
+workDir = os.path.join(baseDir,"181129-193");                   
 videoDir = os.path.join(workDir, "Raw_Data/");
 resultDir = os.path.join(videoDir,"Results/");
 
@@ -102,7 +102,7 @@ tracker.SaveTracking(data,videoDir);
 LinePlotParameters = {
                 "baseDir" : segmentationParameters["baseDir"],
                 "directory" : videoDir+'Results',
-                "mouse" : "195bis",
+                "mouse" : "193",
                 "cageLength" : 36.4,
                 "cageWidth" : 21.8,
                 "minDist" : 0.2,
@@ -112,6 +112,9 @@ LinePlotParameters = {
         
 Plot = analysis.Plot(**LinePlotParameters);
 
-#analysis.CheckTracking();
-analysis.TrackingPlot(100);
+minutes = 10;
+resolution = minutes*60*LinePlotParameters["framerate"];
+
+#Plot.CheckTracking();
+Plot.TrackingPlot(resolution);
         

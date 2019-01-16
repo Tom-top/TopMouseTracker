@@ -12,8 +12,8 @@ import numpy as np;
 import pandas as pd;
 from math import sqrt;
 
-import TopMouseTracker.Parameterss as params;
-import TopMouseTracker.Utils as utils;
+import TopMouseTracker.Parameters as params;
+import TopMouseTracker.Utilities as utils;
 import TopMouseTracker.IO as IO;
 
 

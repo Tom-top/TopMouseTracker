@@ -13,8 +13,8 @@ import numpy as np;
 import cv2;
 from natsort import natsorted;
 
-import TopKinectMouseTracker.Parameters as params;
-import TopKinectMouseTracker.Settings as settings;
+import TopMouseTracker.Parameters as params;
+import TopMouseTracker.Settings as settings;
 import TopMouseTracker.Utilities as utils;
 
 def VideoConverter(directory,**kwargs) :

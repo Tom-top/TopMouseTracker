@@ -8,8 +8,8 @@ Created on Mon Jan  7 17:56:59 2019
 
 import os;
 
-import TopKinectMouseTracker.Settings as settings;
-import TopKinectMouseTracker.Params as params;
+import TopMouseTracker.Settings as settings;
+import TopMouseTracker.Parameters as params;
 
 
 def PrintColoredMessage(msg,color) :
