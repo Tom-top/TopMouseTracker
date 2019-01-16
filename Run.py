@@ -99,7 +99,7 @@ tracker.SaveTracking(data,videoDir);
 #Plotting and Analysis
 ###############################################################################  
 
-LinePlotParameters = {
+PlotParameters = {
                 "baseDir" : segmentationParameters["baseDir"],
                 "directory" : videoDir+'Results',
                 "mouse" : "193",
@@ -108,13 +108,14 @@ LinePlotParameters = {
                 "minDist" : 0.2,
                 "maxDist" : 1000,
                 "framerate" : segmentationParameters["framerate"],
+                "gridsize" : 100,
                 };
         
-Plot = analysis.Plot(**LinePlotParameters);
+Plot = analysis.Plot(**PlotParameters);
 
-minutes = 10;
-resolution = minutes*60*LinePlotParameters["framerate"];
+res = 1;
 
 #Plot.CheckTracking();
-Plot.TrackingPlot(resolution);
+Plot.TrackingPlot(res);
+Plot.HeatMapPlot(PlotParameters["gridsize"]);
         

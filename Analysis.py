@@ -11,6 +11,7 @@ import pandas as pd;
 import numpy as np;
 from math import sqrt;
 import matplotlib.pyplot as plt;
+import matplotlib.colors as mcolors;
 
 import TopMouseTracker.Utilities as utils;
 
@@ -81,12 +82,21 @@ class Plot() :
         self.distTraveledBeforeInitiation = 0;
         self.distTraveledAfterInitiation = 0;
         
+        self.posBefore = self._positions[self._tStart*self._args["framerate"]:self._tStartBehav*self._args["framerate"]];
+        self.posAfter = self._positions[self._tStartBehav*self._args["framerate"]:self._Length*self._args["framerate"]];
+        
+        self.filteredPosBefore = self.posBefore[0::res];
+        self.filteredPosAfter = self.posAfter[0::res];
+        
+        ax0.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=0.1,color='blue');
+        ax0.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=0.1,color='red');
+        
         for i in range(len(self._positions)-1) :
             
-            if i%res == 0 :
+            #if i%res == 0 :
                 
-                self.percentage = (float(i)/float(len(self._positions)-1))*100;
-                utils.PrintColoredMessage("{0} percent of points ploted...".format(self.percentage),"darkgreen");
+                #self.percentage = (float(i)/float(len(self._positions)-1))*100;
+                #utils.PrintColoredMessage("{0} percent of points ploted...".format(self.percentage),"darkgreen");
                 
             dist = self.distanceNormalized[i];
             
@@ -94,20 +104,12 @@ class Plot() :
             #Creates line plot from mouse position over time and computes distance traveled
             
             if i > self._tStart*self._args["framerate"] and i <= self._tStartBehav*self._args["framerate"] :
-                
-                bluePlot = ax0.plot((self._positions[i][0],self._positions[i+1][0]),\
-                         (int(self._positions[i][1]),int(self._positions[i+1][1])),\
-                         alpha=0.1, color = 'blue',label='Before initiation of nest-building');
                                      
                 if int(dist) > self._args["minDist"] and int(dist) < self._args["maxDist"] :
                     
                     self.distTraveledBeforeInitiation += dist;
             
             elif i > self._tStartBehav*self._args["framerate"] and i <= self._Length*self._args["framerate"] :
-                
-                redPlot = ax0.plot((self._positions[i][0],self._positions[i+1][0]),\
-                         (int(self._positions[i][1]),int(self._positions[i+1][1])),\
-                         alpha=0.1, color = 'red',label='After initiation of nest-building');
                                     
                 if int(dist) > self._args["minDist"] and int(dist) < self._args["maxDist"] :
                     
@@ -119,8 +121,8 @@ class Plot() :
         self.timeBeforeInitiation = self._tStartBehav - self._tStart;
         self.timeAfterInitiation = self._Length - self._tStartBehav;
         
-        hB,mB,sB = utils.hoursMinutesSeconds(self.timeBeforeInitiation);
-        hA,mA,sA = utils.hoursMinutesSeconds(self.timeAfterInitiation);
+        #hB,mB,sB = utils.hoursMinutesSeconds(self.timeBeforeInitiation);
+        #hA,mA,sA = utils.hoursMinutesSeconds(self.timeAfterInitiation);
         
         fontBefore = { "size" : 10,
                       "color" : cBefore,
@@ -132,10 +134,29 @@ class Plot() :
                       "alpha" : 0.5,
         };
         
-        ax0.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off');
+        ax0.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False);
         ax0.set_title("Tracking Mouse "+self._mouse,position=(0.87, 1.025));
-        ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.07), 'Time before : {0}h {1}m {2}s'.format(str(hB),str(mB),str(sB)),fontdict=fontBefore);
-        ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.01), 'Dist before : {0}'.format(self.distTraveledBeforeInitiation)+'m',fontdict=fontBefore);
-        ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.10), 'Time after : {0}h {1}m {2}s'.format(str(hA),str(mA),str(sA)),fontdict=fontAfter);
-        ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.04), 'Dist after : {0}'.format(self.distTraveledAfterInitiation)+'m',fontdict=fontAfter)
-        ax0.legend(handles = [redPlot[0],bluePlot[0]],loc=2,bbox_to_anchor=(-0.01,1.13),shadow=True);
+        #ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.07), 'Time before : {0}h {1}m {2}s'.format(str(hB),str(mB),str(sB)),fontdict=fontBefore);
+        #ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.01), 'Dist before : {0}'.format(self.distTraveledBeforeInitiation)+'m',fontdict=fontBefore);
+        #ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.10), 'Time after : {0}h {1}m {2}s'.format(str(hA),str(mA),str(sA)),fontdict=fontAfter);
+        #ax0.text(int(self._ROIWidth)/2-8, int(self._ROILength)+(int(self._ROILength)*0.04), 'Dist after : {0}'.format(self.distTraveledAfterInitiation)+'m',fontdict=fontAfter)
+        #ax0.legend(handles = [redPlot[0],bluePlot[0]],loc=2,bbox_to_anchor=(-0.01,1.13),shadow=True);
+        
+    def HeatMapPlot(self,gridsize) :
+        
+        fig = plt.figure();
+        ax0 = plt.subplot();
+
+        ax0.set_xlim([0, int(self._ROIWidth)]);
+        ax0.set_ylim([0, int(self._ROILength)]);
+        
+        self._x = [x[0] for x in self._positions];
+        self._y = [x[1] for x in self._positions];
+        
+        cmap = plt.get_cmap('jet');
+        norm = mcolors.LogNorm();
+        
+        ax0.hexbin(self._x, self._y, gridsize=gridsize, cmap=cmap, norm=norm);
+        ax0.set_title('Heatmap Mouse {0}'.format(self._mouse));
+        
+        
