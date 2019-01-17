@@ -75,7 +75,7 @@ class TopMouseTracker():
         
         #Get frame from capture
         #----------------------------------------------------------------------
-        self.ret, self.RGBFrame = self._args["captures"][0].read(); #Reads the following frame from the video capture
+        self.ret, self.RGBFrame = self._args["captures"][self.videoNumber].read(); #Reads the following frame from the video capture
         self.frameNumber += 1; #Increments the frame number variable
         self.time = self.frameNumber/self._args["framerate"]; #Sets the time
            
@@ -314,7 +314,8 @@ def TopTracker(data,**kwargs) :
                 #----------------------------------------------------------------------------------------------------------------------------------
                 #Runs only every 10 minutes of the video being analyzed
                 if Tracker.frameNumber%(600*kwargs["framerate"]) == 0 :
-                        
+                    
+                    print(len(Tracker._positions))
                     utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.frameNumber)+'/'+str(int(Tracker._tEnd[Tracker.videoNumber]*kwargs["framerate"]))+\
                         ' = '+(str(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*kwargs["framerate"])*100)))\
                         +'% frames from video n°'+str(Tracker.videoNumber)+'/'+str(Tracker._nVideos), "darkgreen");

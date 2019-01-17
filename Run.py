@@ -18,7 +18,7 @@ import TopMouseTracker.Tracker as tracker;
 import TopMouseTracker.Analysis as analysis;
 
 baseDir = "/Users/tomtop/Desktop/Data/Experiments/Inhibitory_DREADDS/Behavior_Data/";     
-workDir = os.path.join(baseDir,"181129-193");                   
+workDir = os.path.join(baseDir,"181209-196");                   
 videoDir = os.path.join(workDir, "Raw_Data/");
 resultDir = os.path.join(videoDir,"Results/");
 
@@ -50,8 +50,8 @@ segmentationParameters = {
                 "minDist" : 3.0,
                 "showStream" : False,
                 "saveStream" : False,
-                "cageLength" : 36.4,
-                "cageWidth" : 21.8,
+                "cageLength" : 21.8,
+                "cageWidth" : 36.4,
                 };
         
 #%%############################################################################
@@ -76,7 +76,7 @@ segmentationParameters["captures"], segmentationParameters["testFrame"] = IO.Vid
 #Creating ROI for analysis#
 ###############################################################################
 
-segmentationParameters["mouse"] = "204";
+segmentationParameters["mouse"] = "196bis";
 
 data = tracker.TopMouseTracker(**segmentationParameters);
 
@@ -99,14 +99,18 @@ tracker.SaveTracking(data,videoDir);
 #Plotting and Analysis
 ###############################################################################  
 
+workDir = os.path.join(baseDir,"181208-196");                   
+videoDir = os.path.join(workDir, "Raw_Data/");
+resultDir = os.path.join(videoDir,"Results/");
+
 PlotParameters = {
                 "baseDir" : segmentationParameters["baseDir"],
                 "directory" : videoDir+'Results',
-                "mouse" : "193",
-                "cageLength" : 36.4,
-                "cageWidth" : 21.8,
-                "minDist" : 0.2,
-                "maxDist" : 1000,
+                "mouse" : "196",
+                "cageLength" : 21.8,
+                "cageWidth" : 36.4,
+                "minDist" : 0.5,
+                "maxDist" : 10,
                 "framerate" : segmentationParameters["framerate"],
                 "gridsize" : 100,
                 };
@@ -116,6 +120,7 @@ Plot = analysis.Plot(**PlotParameters);
 res = 1;
 
 #Plot.CheckTracking();
-Plot.TrackingPlot(res);
-Plot.HeatMapPlot(PlotParameters["gridsize"]);
+Plot.CompleteTrackingPlot(res,limit=6,save=True);
+#Plot.TrackingPlot(res,limit=6);
+#Plot.HeatMapPlot(PlotParameters["gridsize"]);
         
