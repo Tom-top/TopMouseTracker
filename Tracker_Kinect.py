@@ -45,10 +45,11 @@ class Tracker():
         the excel spreadsheet
     '''
     
-    def __init__(self,**kwargs) :
+    def __init__(self,mode="light",**kwargs) :
         
         #General variables
         #----------------------------------------------------------------------
+        self.mode = mode; #Mode argument to launch the regular/night mode tracker
         self._args = kwargs; #Arguments
         self._mouse = self._args["segmentation"]["mouse"]; #Name of the mouse
         self._H, self._W = self._args["main"]["rawFrameRGB"].shape
@@ -74,49 +75,77 @@ class Tracker():
         
     def SetROI(self) :
         
-        self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"][0].copy()).roi(); #Defining the ROI for segmentation
+        if self.mode == "light" :
+        
+            self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"][0].copy()).roi(); #Defining the ROI for segmentation
+            
+        if self.mode == "dark" :
+            
+            self._refPt = IO.CroppingROI(self._args["main"]["testFrameDEPTH"][0].copy()).roi(); #Defining the ROI for segmentation
         
     def Main(self):
         
-        #Get frame from stream
-        #----------------------------------------------------------------------
-        self.RGBFrame = getColorFrame(self._args["main"]["kinectRGB"],1);
-           
-        #If capture still has frames, and the following frame was successfully retrieved
-        #----------------------------------------------------------------------
+        if self.mode == "light" : #If the regular mode was choosen
         
-        self.RunSegmentation(); #Runs the segmentation on the ROI
-        
-        #Displaying the tracking
-        #----------------------------------------------------------------------
-        
-        if self._args["display"]["showStream"] or self._args["saving"]["saveVideo"] : #If the user specified to show the stream
+            #Get frame from stream
+            #----------------------------------------------------------------------
+            self.RGBFrame = getColorFrame(self._args["main"]["kinectRGB"],1);
+               
+            #If the RGB kinect is working
+            #----------------------------------------------------------------------
             
-            self.CreateDisplay(); #Creates the montage to be displayed
+            self.RunSegmentationMouse(self.RGBFrame,self._args["segmentation"]["threshMinRGB"],self._args["segmentation"]["threshMaxRGB"]); #Runs the segmentation on the ROI
+            
+            #Displaying the tracking
+            #----------------------------------------------------------------------
+            
+            if self._args["display"]["showStream"] or self._args["saving"]["saveVideo"] : #If the user specified to show the stream
+                
+                self.CreateDisplay(); #Creates the montage to be displayed
+                
+        if self.mode == "dark" : #If the regular mode was choosen
+            
+            #Get frame from stream
+            #----------------------------------------------------------------------
+            self.DEPTHFrame = getDepthFrame(self._args["main"]["kinectDEPTH"],1);
+            
+            #If the DEPTH kinect is working
+            #----------------------------------------------------------------------
+            
+            self.RunSegmentationMouse(self.DEPTHFrame,self._args["segmentation"]["threshMinDEPTH"],self._args["segmentation"]["threshMaxDEPTH"]); #Runs the segmentation on the ROI
                     
-    def RunSegmentation(self) :
+    def RunSegmentationMouse(self,frame,threshMin,threshMax) :
         
         #Getting basic image informations
         #----------------------------------------------------------------------------------------------------------------------------------
         
-        self.GetFrameInfo();
+        self.GetFrameInfo(frame);
         
         #Selects only the ROI part of the image for future analysis
         #----------------------------------------------------------------------------------------------------------------------------------
         
         self.distanceRatio = abs(self.upLeftX-self.lowRightX)/self._args["segmentation"]["cageLength"]; #Defines the resizing factor for the cage
         
-        self.croppedFrame = self.RGBFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
+        self.croppedFrame = frame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
         
-        self.maskDisplay = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2RGB); #[DISPLAY ONLY] Changes the croppedFrame to RGB for display purposes
-        self.colorFrame = cv2.cvtColor(self.cloneFrame, cv2.COLOR_BGR2RGB); #[DISPLAY ONLY] Changes the Frame to RGB for display purposes
+        if self.mode == "light" :
+        
+            self.maskDisplay = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2RGB); 
+            self.maskDisplay = cv2.cvtColor(self.maskDisplay, cv2.COLOR_RGB2BGR); #[DISPLAY ONLY] Changes the croppedFrame to RGB for display purposes
+            
+            self.colorFrame = cv2.cvtColor(self.cloneFrame, cv2.COLOR_BGR2RGB); 
+            self.colorFrame = cv2.cvtColor(self.colorFrame, cv2.COLOR_RGB2BGR); #[DISPLAY ONLY] Changes the Frame to RGB for display purposes
+            
+        elif self.mode == "dark" :
+            
+            self.maskDisplay = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2RGB);       
+            self.colorFrame = cv2.cvtColor(self.cloneFrame, cv2.COLOR_BGR2RGB); 
         
         #Filtering the ROI from noise
         #----------------------------------------------------------------------------------------------------------------------------------
         
-        self.hsvFrame = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2HSV); #Changes the croppedFrame LUT to HSV for segmentation
         self.blur = cv2.blur(self.hsvFrame,(5,5)); #Applies a Gaussian Blur to smoothen the image
-        self.mask = cv2.inRange(self.blur, self._args["segmentation"]["TRESH_MIN"], self._args["segmentation"]["TRESH_MAX"]); #Thresholds the image to binary
+        self.mask = cv2.inRange(self.blur, threshMin, threshMax); #Thresholds the image to binary
         self.opening = cv2.morphologyEx(self.mask,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 1); #Applies opening operation to the mask for dot removal
         self.closing = cv2.morphologyEx(self.opening,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
         self.cnts = cv2.findContours(self.closing.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
@@ -148,10 +177,10 @@ class Tracker():
             self.area = 0; #Resets the area size to 0
             self.StorePosition(); #Stores old position and area
             
-    def GetFrameInfo(self) :
+    def GetFrameInfo(self,frame) :
         
-        self._H,self._W,self._C = self.RGBFrame.shape; #Gets the Height, Width and Color of each frame
-        self.cloneFrame = self.RGBFrame.copy(); #[DISPLAY ONLY] Creates a clone frame for display purposes
+        self._H,self._W,self._C = frame.shape; #Gets the Height, Width and Color of each frame
+        self.cloneFrame = frame.copy(); #[DISPLAY ONLY] Creates a clone frame for display purposes
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates

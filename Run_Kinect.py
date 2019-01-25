@@ -29,6 +29,7 @@ utils.CheckDirectoryExists(_resultDir);
                  
 mainParameters = {"resultDir" : _resultDir,
                   "mice" : ["1","2"], #Name of the mice that are tracked
+                  "mode" : "light",
                   "resizeROI": 2., #Resizing factor for screen display
                   "resizeDisplay" : 2.,
                   "kinectRGB" : None,
@@ -41,8 +42,8 @@ mainParameters = {"resultDir" : _resultDir,
         
 segmentationParameters = {
                 "mouse" : None,
-                "TRESH_MIN" : np.array([0, 0, 0],np.uint8),
-                "TRESH_MAX" : np.array([179, 255, 93],np.uint8),
+                "threshMinRGB" : np.array([0, 0, 0],np.uint8),
+                "threshMaxRGB" : np.array([179, 255, 93],np.uint8),
                 "kernel" : np.ones((5,5),np.uint8),
                 "minAreaMask" : 800.0/mainParameters["resize_ROI"],
                 "maxAreaMask" : 8000.0/mainParameters["resize_ROI"],
@@ -97,7 +98,7 @@ for mouse in mainParameters["mice"] :
     
     segmentationParameters["mouse"] = mouse;
     
-    data["{0}".format(mouse)] = tracker.Tracker(**trackerParameters);
+    data["{0}".format(mouse)] = tracker.Tracker(mode=mainParameters["light"],**trackerParameters);
     data["{0}".format(mouse)].SetROI();
     
     cv2.destroyAllWindows();
@@ -114,17 +115,17 @@ tracker.KinectTopMouseTracker(data,**segmentationParameters);
 
 plotParameters = {
                 "baseDir" : segmentationParameters["baseDir"],
-                "directory" : videoDir+'Results',
+                "resultDir" : mainParameters["resultDir"],
                 "mouse" : "201",
-                "cageLength" : 21.8,
-                "cageWidth" : 36.4,
+                "cageLength" : segmentationParameters["cageLength"],
+                "cageWidth" : segmentationParameters["cageWidth"],
                 "minDist" : 0.5,
                 "maxDist" : 10,
-                "framerate" : segmentationParameters["framerate"],
+                "framerate" : savingParameters["framerate"],
                 "gridsize" : 100,
                 };
         
-Plot = analysis.Plot(**PlotParameters);
+Plot = analysis.Plot(**plotParameters);
 
 res = 1;
 
