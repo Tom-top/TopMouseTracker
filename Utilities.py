@@ -135,13 +135,34 @@ def PlaySound(n,sound) :
         
 def CheckDirectoryExists(directory) :
     
-    if not os.path.exists(directory) :
+    ''' Function that checks is a certain directory exists. If not : creates it
+    
+    Params :
+        directory (str) : path to the directory to be created
         
-        os.mkdir(directory);
-        PrintColoredMessage("[INFO] {0} has been created".format(directory),"darkgreen");
+    Output : 
+        Creates the designed directory 
+    '''
+    
+    if isinstance(directory,str) :
         
+        if os.path.dirname(directory) != "" :
+    
+            if not os.path.exists(directory) :
+                
+                os.mkdir(directory);
+                PrintColoredMessage("[INFO] {0} has been created".format(directory),"darkgreen");
+                
+            else :
+                
+                pass;
+                
+        else :
+            
+            raise RuntimeError("{0} is not a valid directory!".format(directory));
+            
     else :
         
-        pass;
+        raise RuntimeError("{0} is not a valid directory!".format(directory));
         
         

@@ -67,8 +67,8 @@ class Plot() :
         self.areasAfter = self._areas[self._tStartBehav*self._args["framerate"]:self._Length*self._args["framerate"]];
         
         if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= limit*3600*self._args["framerate"] :
-            self.distanceNormalizedAfter = self.distanceNormalized[self._tStartBehav*self._args["framerate"]:(limit*3600*self._args["framerate"])-len(self.distanceNormalizedBefore)];
-            self.areasAfter = self._areas[self._tStartBehav*self._args["framerate"]:(limit*3600*self._args["framerate"])-len(self.areasBefore)];
+            self.distanceNormalizedAfter = self.distanceNormalized[self._tStartBehav*self._args["framerate"]:limit*3600*self._args["framerate"]];
+            self.areasAfter = self._areas[self._tStartBehav*self._args["framerate"]:limit*3600*self._args["framerate"]];
         
         self.distanceCorrectedAfter = [dist if dist > self._args["minDist"] and dist < self._args["maxDist"]else 0 for dist in self.distanceNormalizedAfter];
         self.distanceCumulativeAfter = list(np.cumsum(self.distanceCorrectedAfter));
@@ -210,7 +210,7 @@ class Plot() :
         self.posAfter = self._positions[self._tStartBehav*self._args["framerate"]:self._Length*self._args["framerate"]];
         
         if len(self.posBefore)+len(self.posAfter) >= limit*3600*self._args["framerate"] :
-            self.posAfter = self._positions[self._tStartBehav*self._args["framerate"]:(limit*3600*self._args["framerate"])-len(self.posBefore)];
+            self.posAfter = self._positions[self._tStartBehav*self._args["framerate"]:limit*3600*self._args["framerate"]];
         
         self.filteredPosBefore = self.posBefore[0::res];
         self.filteredPosAfter = self.posAfter[0::res];
@@ -226,7 +226,7 @@ class Plot() :
         self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._args["framerate"]:self._Length*self._args["framerate"]]);
             
         if len(self.posBefore)+len(self.posAfter) >= limit*3600*self._args["framerate"] :
-            self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._args["framerate"]:(limit*3600*self._args["framerate"])-len(self.posBefore)]);
+            self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._args["framerate"]:limit*3600*self._args["framerate"]]);
                     
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100);
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100);

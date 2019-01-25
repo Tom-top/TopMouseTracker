@@ -16,17 +16,15 @@ import TopMouseTracker.Parameters as params;
 import TopMouseTracker.IO as IO;
 import TopMouseTracker.Tracker as tracker;
 import TopMouseTracker.Analysis as analysis;
+import TopMouseTracker.Utilities as utils;
 
 baseDir = "/Users/tomtop/Desktop/Data/Experiments/Inhibitory_DREADDS/Behavior_Data/";     
-workDir = os.path.join(baseDir,"181209-196");                   
+workDir = os.path.join(baseDir,"181217-201");                   
 videoDir = os.path.join(workDir, "Raw_Data/");
 resultDir = os.path.join(videoDir,"Results/");
 
-if not os.path.exists(videoDir) :
-    os.mkdir(videoDir);
-
-if not os.path.exists(resultDir) :
-    os.mkdir(resultDir);
+utils.CheckDirectoryExists(videoDir);
+utils.CheckDirectoryExists(resultDir);
         
 videoParameters = {
                 "encoder" : params.encoders["mpeg4"],
@@ -76,7 +74,7 @@ segmentationParameters["captures"], segmentationParameters["testFrame"] = IO.Vid
 #Creating ROI for analysis#
 ###############################################################################
 
-segmentationParameters["mouse"] = "196bis";
+segmentationParameters["mouse"] = "201";
 
 data = tracker.TopMouseTracker(**segmentationParameters);
 
@@ -99,14 +97,14 @@ tracker.SaveTracking(data,videoDir);
 #Plotting and Analysis
 ###############################################################################  
 
-workDir = os.path.join(baseDir,"181208-196");                   
+workDir = os.path.join(baseDir,"181217-201");                   
 videoDir = os.path.join(workDir, "Raw_Data/");
 resultDir = os.path.join(videoDir,"Results/");
 
 PlotParameters = {
                 "baseDir" : segmentationParameters["baseDir"],
                 "directory" : videoDir+'Results',
-                "mouse" : "196",
+                "mouse" : "201",
                 "cageLength" : 21.8,
                 "cageWidth" : 36.4,
                 "minDist" : 0.5,
