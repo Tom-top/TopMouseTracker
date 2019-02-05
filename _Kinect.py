@@ -36,12 +36,12 @@ class Kinect() :
     
     def LoadRGBDEPTH(self,resizeRGB,resizeDEPTH) :
         
-        RGBFrame = self.GetFrame(self._args["main"]["kinectRGB"],"rgb",resizeRGB);
+        RGBFrame = self.GetFrame(self._args["kinectRGB"],"rgb",resizeRGB);
         RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_BGR2RGB); 
         RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_RGB2BGR);
         RGBFrame = cv2.flip(RGBFrame,0);
         
-        DEPTHFrame = self.GetFrame(self._args["main"]["kinectDEPTH"],"depth",resizeDEPTH);
+        DEPTHFrame = self.GetFrame(self._args["kinectDEPTH"],"depth",resizeDEPTH);
         DEPTHFrame = cv2.cvtColor(DEPTHFrame, cv2.COLOR_GRAY2BGR); 
         DEPTHFrame = cv2.flip(DEPTHFrame,0);
         
@@ -49,7 +49,7 @@ class Kinect() :
     
     def CreateDisplay(self) :
         
-        RGBFrame,DEPTHFrame = self.LoadRGBDEPTH(self._args["main"]["resizeDisplay"],1/2);
+        RGBFrame,DEPTHFrame = self.LoadRGBDEPTH(2,1/2);
         
         H,W = RGBFrame.shape;
         DEPTHFrame = cv2.resize(DEPTHFrame, (W,H));
@@ -74,33 +74,33 @@ class Kinect() :
         
         self.time = time.localtime(time.time());
         
-        testFrameRGB = self.GetFrame(self._args["main"]["kinectRGB"],"rgb",1);
+        testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
         try :
             hRGB,wRGB,_ = testFrameRGB.shape
         except : 
             hRGB,wRGB = testFrameRGB.shape
         
-        testFrameDEPTH = self.GetFrame(self._args["main"]["kinectRGB"],"depth",1);
+        testFrameDEPTH = self.GetFrame(self._args["kinectRGB"],"depth",1);
         try :
             hDEPTH,wDEPTH,_ = testFrameDEPTH.shape
         except :
             hDEPTH,wDEPTH = testFrameDEPTH.shape
         
-        self.RGBString = self._args["saving"]["rawVideoFileName"],self.time.tm_mday,\
+        self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
             
-        self.RGBWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
+        self.RGBWriter = cv2.VideoWriter(os.path.join(self._args["resultDir"],\
                                             '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                            self._args["saving"]["fourcc"],self._args["saving"]["framerate"],(wRGB,hRGB));
+                                            self._args["fourcc"],self._args["framerate"],(wRGB,hRGB));
     
-        self.DEPTHString = self._args["saving"]["depthVideoFileName"],self.time.tm_mday,\
+        self.DEPTHString = self._args["depthVideoFileName"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
             
-        self.DEPTHWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.depthString)),\
-                                            self._args["saving"]["fourcc"],self._args["saving"]["framerate"],(wDEPTH,hDEPTH));
+        self.DEPTHWriter = cv2.VideoWriter(os.path.join(self._args["resultDir"],\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTHString)),\
+                                            self._args["fourcc"],self._args["framerate"],(wDEPTH,hDEPTH));
     
         while True :
             
