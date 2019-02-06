@@ -128,9 +128,10 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
-    def PlayAndSave(self,display=True) :
+    def PlayAndSave(self,display=True,wait=True) :
         
         self.time = time.localtime(time.time());
+        self.tStart = time.time();
         
         testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
         try :
@@ -162,6 +163,7 @@ class Kinect() :
     
         while True :
             
+            self.tCurrent = time.time();
             self.FrameRGB,self.FrameDEPTH = self.LoadRGBDEPTH(1,1);
             
             if display :
@@ -169,10 +171,13 @@ class Kinect() :
                 hStack = self.CreateDisplay();
                 cv2.imshow('RGB&DEPTH',hStack);
             
-            self.RGBWriter.write(self.FrameRGB);
-            self.DEPTHWriter.write(self.FrameDEPTH);
+            if self.tCurrent-self.tStart >= 15*60 :
+                
+                self.RGBWriter.write(self.FrameRGB);
+                self.DEPTHWriter.write(self.FrameDEPTH);
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                
                 break;
                 
         self.RGBWriter.release();

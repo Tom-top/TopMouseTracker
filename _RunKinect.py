@@ -58,4 +58,7 @@ Kinect.TestKinect();
 #Launch saving#
 ##############################################################################
 
-Kinect.PlayAndSave(display=True);
+#display : displays the stream on the screen
+#wait : waits 15 mins before saving the images (warming up the kinect)
+
+Kinect.PlayAndSave(display=True,wait=True); 
