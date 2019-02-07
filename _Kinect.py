@@ -10,7 +10,7 @@ import numpy as np;
 import cv2;
 import time;
 import os;
-import psutil;
+import xlwt;
 from math import pi,tan;
 
 import TopMouseTracker.Utilities as utils;
@@ -26,7 +26,6 @@ class Kinect() :
         self.kinectHorizontalAngle = 70.6; #degree
         self.kinectVerticalAngle = 60; #degree
         self.topBoxSize = 50; #cm
-        self.fps = [];
         
     def GetFrame(self,camera,which,resize) :
         
@@ -220,10 +219,37 @@ class Kinect() :
         self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
                                             '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
                                             self._args["fourcc"],self.videoFrameRate,(wDEPTH,hDEPTH));
-        
             
-        #Writes videos to disk
+        #Writes videos to disk and metadata
         #----------------------------------------------------------------------
+        
+        self.metaDataString = "MetaData",self.time.tm_mday,\
+                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
+                        self.time.tm_min,self.time.tm_sec;
+                        
+        self.metaDataFile = os.path.join(self.dataDir,'{0}_{1}-{2}-{3}_{4}-{5}-{6}.xlsx'.format(*self.metaDataString));
+        self.metaData = xlwt.Workbook(encoding = "ascii");
+        sheet = self.metaData.add_sheet("MetaData");
+        
+        sheet.write(0, 0, "Mice");
+        sheet.write(0, 1, self._args["mice"]);
+        
+        sheet.write(1, 0, "Time_Stamp");
+        sheet.write(1, 1, self.time);
+        
+        sheet.write(2, 0, "Elapsed_Time");
+        sheet.write(2, 1, self.tEnd-self.tStart);
+        
+        sheet.write(3, 0, "Framerate");
+        sheet.write(3, 1, self.videoFrameRate);
+        
+        sheet.write(4, 0, "nFrames");
+        sheet.write(4, 1, self.frameCnt);
+        
+        sheet.write(5, 0, "Fourcc");
+        sheet.write(5, 1, self._args["fourcc"]);
+        
+        self.metaData.save(self.metaDataFile);
         
         for RGBimg,DEPTHimg in zip(os.listdir(self.tempSinkRGB),os.listdir(self.tempSinkDEPTH)) :
             self.RGBWriter.write(RGBimg);
