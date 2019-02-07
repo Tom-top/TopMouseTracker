@@ -79,9 +79,7 @@ class Kinect() :
         
         while True :
             
-            #hStack = self.CreateDisplay()
             RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(2,1);
-            #cv2.imshow('RGB&DEPTH',hStack);
             
             clone = DEPTHFrame8bit.copy()
             
@@ -141,21 +139,6 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
-#    def TestKinect(self) :
-#        
-#        while True :
-#            RGBFrame,DEPTHFrame = self.LoadRGBDEPTH(3,1);
-#            
-#            #hStack = self.CreateDisplay()
-#            #cv2.imshow('RGB&DEPTH',hStack);
-#            cv2.imshow('RGB',RGBFrame);
-#            cv2.imshow('DEPTH',DEPTHFrame);
-#                
-#            
-#            if cv2.waitKey(1) & 0xFF == ord('q'):
-#                break;
-#                
-#        cv2.destroyAllWindows();
         
     def PlayAndSave(self,display=True) :
         
@@ -198,7 +181,7 @@ class Kinect() :
 
                 RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(3,1);
                 cv2.imshow('RGB',RGBFrame);
-                cv2.imshow('DEPTH',DEPTHFrame8bit);
+                #cv2.imshow('DEPTH',DEPTHFrame8bit);
             
             cv2.imwrite(os.path.join(self.tempSinkRGB,"RGB_{0}".format(self.frameCnt)),self.FrameRGB);
             cv2.imwrite(os.path.join(self.tempSinkDEPTH,"DEPTH_{0}".format(self.frameCnt)),self.FrameDEPTH);
