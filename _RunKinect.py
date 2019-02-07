@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
+
 """
 Created on Tue Feb  5 13:29:39 2019
 
 @author: tomtop
+
 """
 
 import os;
 import cv2;
+import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 import TopMouseTracker.Utilities as utils;
@@ -20,45 +24,45 @@ _savingDir = os.path.join(_mainDir,"TopMouseTracker");
 utils.CheckDirectoryExists(_savingDir);
 
 kinectParameters = {"savingDir" : _savingDir,
-                    "mice" : "193_195",
+                    "mice" : "226_217",
                     "kinectRGB" : None,
                     "kinectDEPTH" : None,
                     "depthMinThresh" : 130,
                     "depthMaxThresh" : 140,
                     "gridRes" : 20,
                     "rawVideoFileName" : None,
-                    "depthVideoFileName" : None,
-                    "framerate" : 15,
+                    "depthVideoFileName8Bit" : None,
+                    "depthVideoFileName16Bit" : None,
+                    "framerate" : 17,
                     "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
-                    };
-                    
+                    };              
+
 kinectParameters["rawVideoFileName"] = "Raw_Video_Mice_{0}".format(kinectParameters["mice"]);
-kinectParameters["depthVideoFileName"] = "Depth_Video_Mice_{0}".format(kinectParameters["mice"]);
-        
+kinectParameters["depthVideoFileName8Bit"] = "Depth_Video_Mice_8b_{0}".format(kinectParameters["mice"]);
+kinectParameters["depthVideoFileName16Bit"] = "Depth_Video_Mice_16b_{0}".format(kinectParameters["mice"]);
+
 #%%###########################################################################
 #Setting up cameras#
 ##############################################################################
-        
+
 kinectParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body); #Initializes the RGB camera
+
 kinectParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth); #Initializes the DEPTH camera
 
 #%%###########################################################################
 #Initializes the kinect object#
 ##############################################################################
 
-Kinect = kinect.Kinect();
+Kinect = kinect.Kinect(**kinectParameters);
 
 #%%###########################################################################
 #[OPTIONAL] Test the kinect for positioning#
 ##############################################################################
 
-Kinect.TestKinect();
+Kinect.TestKinect(grid=False);
 
 #%%###########################################################################
 #Launch saving#
 ##############################################################################
 
-#display : displays the stream on the screen
-#wait : waits 15 mins before saving the images (warming up the kinect)
-
-Kinect.PlayAndSave(display=True,wait=True); 
+Kinect.PlayAndSave(display=True,cmap=False);
