@@ -13,6 +13,8 @@ import os;
 import psutil;
 from math import pi,tan;
 
+import TopMouseTracker.Utilities as utils;
+
 
 class Kinect() :
     
@@ -155,86 +157,96 @@ class Kinect() :
 #                
 #        cv2.destroyAllWindows();
         
-    def PlayAndSave(self,display=True,cmap=False) :
+    def PlayAndSave(self,display=True) :
+        
+        
+        #Initializes time variables
+        #----------------------------------------------------------------------
         
         self.time = time.localtime(time.time());
-        tStart = time.time();
+        self.tStart = time.time();
         
-        testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
-        try :
-            hRGB,wRGB,_ = testFrameRGB.shape
-        except : 
-            hRGB,wRGB = testFrameRGB.shape
-        
-        testFrameDEPTH,_ = self.GetFrame(self._args["kinectDEPTH"],"depth",1);
-        try :
-            hDEPTH,wDEPTH,_ = testFrameDEPTH.shape
-        except :
-            hDEPTH,wDEPTH = testFrameDEPTH.shape
-        
-        self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
+        self.dataDirName = '{0}-{1}-{2}_{3}-{4}-{5}'.format(self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        self.time.tm_min,self.time.tm_sec;
-            
-        self.RGBWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                            self._args["fourcc"],self._args["framerate"],(wRGB,hRGB));
-    
-        self.DEPTH8BitString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
-                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        self.time.tm_min,self.time.tm_sec;
-            
-        self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
-                                            self._args["fourcc"],self._args["framerate"],(wDEPTH,hDEPTH));
-                    
-        #self.DEPTH16BitString = self._args["depthVideoFileName16Bit"],self.time.tm_mday,\
-                        #self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        #self.time.tm_min,self.time.tm_sec;
-            
-        #self.DEPTH16BitWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            #'{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH16BitString)),\
-                                            #self._args["fourcc"],self._args["framerate"],(wDEPTH,hDEPTH));
+                        self.time.tm_min,self.time.tm_sec);
+        self.dataDir = os.path.join(self._args["savingDir"],self.dataDirName);
+        utils.CheckDirectoryExists(self.dataDir);
+        
+        
+        #Creates temporary folders that will hold of the stream images
+        #----------------------------------------------------------------------
+        
+        self.tempSinkRGB = os.path.join(self.dataDir,"tempSinkRGB");
+        utils.CheckDirectoryExists(self.tempSinkRGB);
+        
+        self.tempSinkDEPTH = os.path.join(self.dataDir,"tempSinkDEPTH");
+        utils.CheckDirectoryExists(self.tempSinkDEPTH);
+        
+        
+        #Creates temporary folders that will hold of the stream images
+        #----------------------------------------------------------------------
         
         self.frameCnt = 0;
     
         while True :
             
-            self.FrameRGB,self.FrameDEPTH8Bit,self.FrameDEPTH16Bit = self.LoadRGBDEPTH(1,1);
+            self.FrameRGB,self.FrameDEPTH8Bit,_ = self.LoadRGBDEPTH(1,1);
+            
             self.frameCnt += 1;
-            
-            curTime = time.time();
-            
-            if curTime-tStart > 1 :
-                self.fps.append(self.frameCnt/(curTime-tStart))
-                tStart = curTime;
-                self.frameCnt = 0;
             
             if display :
 
                 RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(3,1);
                 cv2.imshow('RGB',RGBFrame);
-                if cmap : 
-                    DEPTHFrame8bit = cv2.cvtColor(DEPTHFrame8bit, cv2.COLOR_RGB2GRAY);
-                    DEPTHFrame8bit = cv2.applyColorMap(DEPTHFrame8bit, cv2.COLORMAP_JET);
                 cv2.imshow('DEPTH',DEPTHFrame8bit);
             
-            self.RGBWriter.write(self.FrameRGB);
-            self.DEPTH8BitWriter.write(self.FrameDEPTH8Bit);
-            #self.DEPTH16BitWriter.write(self.FrameDEPTH16Bit);
-            #print('memory % used:', psutil.virtual_memory()[2]);
+            cv2.imwrite(os.path.join(self.tempSinkRGB,"RGB_{0}".format(self.frameCnt)),self.FrameRGB);
+            cv2.imwrite(os.path.join(self.tempSinkDEPTH,"DEPTH_{0}".format(self.frameCnt)),self.FrameDEPTH);
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break;
-        
-        #tEnd = time.time();
-        #Time = tEnd-tStart
-        #print("FPS : {0}".format(self.frameCnt/Time))
-        self.RGBWriter.release();
-        self.DEPTH8BitWriter.release();
-        #self.DEPTH16BitWriter.release();
                 
         cv2.destroyAllWindows();
+        
+        
+        #Set VideoWriters
+        #----------------------------------------------------------------------
+        
+        self.tEnd = time.time();
+        self.videoFrameRate = self.frameCnt/(self.tEnd-self.tStart);
+        
+        hRGB,wRGB,_ = self.FrameRGB.shape;
+        hDEPTH,wDEPTH = self.FrameDEPTH8Bit.shape;
+        
+        self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
+                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
+                        self.time.tm_min,self.time.tm_sec;
+            
+        self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
+                                            self._args["fourcc"],self.videoFrameRate,(wRGB,hRGB));
+    
+        self.DEPTH8BitString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
+                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
+                        self.time.tm_min,self.time.tm_sec;
+            
+        self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
+                                            self._args["fourcc"],self.videoFrameRate,(wDEPTH,hDEPTH));
+        
+            
+        #Writes videos to disk
+        #----------------------------------------------------------------------
+        
+        for RGBimg,DEPTHimg in zip(os.listdir(self.tempSinkRGB),os.listdir(self.tempSinkDEPTH)) :
+            self.RGBWriter.write(RGBimg);
+            self.DEPTH8BitWriter.write(DEPTHimg);
+
+        #Releases VideoWriters
+        #----------------------------------------------------------------------
+
+        self.RGBWriter.release();
+        self.DEPTH8BitWriter.release();
     
         
         
