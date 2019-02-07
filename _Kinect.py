@@ -110,23 +110,27 @@ class Kinect() :
                     
                     for y in np.arange(int(vertical_position)+gridres,int(vertical_position)+(box_size*average_ratio),gridres) : 
                         
-                        #cv2.circle(frame,(x,y), 1, (0,255,0), 1);
-                        
                         local_pixel_values = [];
                         
                         for x_pixel in np.arange(-gridres/2,gridres/2) :
+                            
                             for y_pixel in np.arange(-gridres/2,gridres/2) :
-                                #cv2.circle(frame,(int(x+x_pixel),int(y+y_pixel)), 1, (0,255,0), 1);
+                                
                                 pixel_value = clone[int(y+y_pixel)][int(x+x_pixel)][0];
                                 local_pixel_values.append(pixel_value);
                                 
                         avg_local_value = sum(local_pixel_values)/len(local_pixel_values);
                         
                         if avg_local_value > self._args["depthMaxThresh"] : 
+                            
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (255,0,0), 1);
+                            
                         elif avg_local_value < self._args["depthMinThresh"] : 
+                            
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,0,255), 1);
+                            
                         else : 
+                            
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,255,0), 1);
                         
                         cv2.putText(DEPTHFrame8bit, str(int(avg_local_value)), (x-10,y+2),cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255));

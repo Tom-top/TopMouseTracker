@@ -33,7 +33,6 @@ kinectParameters = {"savingDir" : _savingDir,
                     "rawVideoFileName" : None,
                     "depthVideoFileName8Bit" : None,
                     "depthVideoFileName16Bit" : None,
-                    "framerate" : 17,
                     "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
                     };              
 
@@ -46,7 +45,6 @@ kinectParameters["depthVideoFileName16Bit"] = "Depth_Video_Mice_16b_{0}".format(
 ##############################################################################
 
 kinectParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body); #Initializes the RGB camera
-
 kinectParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth); #Initializes the DEPTH camera
 
 #%%###########################################################################
@@ -59,10 +57,10 @@ Kinect = kinect.Kinect(**kinectParameters);
 #[OPTIONAL] Test the kinect for positioning#
 ##############################################################################
 
-Kinect.TestKinect(grid=False);
+Kinect.TestKinect(grid=False); #If grid == True : Displays the calibration grid on depth image
 
 #%%###########################################################################
 #Launch saving#
 ##############################################################################
 
-Kinect.PlayAndSave(display=True,cmap=False);
+Kinect.PlayAndSave(display=True); #If display == True : Displays the RGB feed from the camera
