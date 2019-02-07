@@ -28,7 +28,7 @@ def PrintColoredMessage(msg,color) :
     
         if color in params.colors :
             
-            return print(params.colors[color]+msg+params.colors["off"]);
+            print(params.colors[color]+msg+params.colors["off"]);
         
         else :
             

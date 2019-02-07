@@ -11,72 +11,55 @@ import numpy as np;
 import cv2;
 import matplotlib.pyplot as plt;
 
-import TopMouseTracker.Settings as settings;
-import TopMouseTracker.Parameters as params;
+import TopMouseTracker.Utilities as utils;
 import TopMouseTracker.IO as IO;
 import TopMouseTracker.Tracker as tracker;
-import TopMouseTracker.Analysis as analysis;
-import TopMouseTracker.Utilities as utils;
 
-baseDir = "/Users/tomtop/Desktop/Data/Experiments/Inhibitory_DREADDS/Behavior_Data/";     
-workDir = os.path.join(baseDir,"181217-201");                   
-videoDir = os.path.join(workDir, "Raw_Data/");
-resultDir = os.path.join(videoDir,"Results/");
+_mainDir = os.path.expanduser("~");
+_desktopDir = os.path.join(_mainDir,"Desktop");
+_resultDir = os.path.join(_mainDir,"TopMouseTracker");
+_workingDir = os.path.join(_resultDir,"190207-01");
 
-utils.CheckDirectoryExists(videoDir);
-utils.CheckDirectoryExists(resultDir);
-        
-videoParameters = {
-                "encoder" : params.encoders["mpeg4"],
-                "framerate" : 30,
-                "quality" : 22,
-                "runstr" : '{0} -i {1} -o {2} -e {3} -q {4} -r {5} --vfr',
-                "handBrakeCLI" : "/Applications/HandBrakeCLI",
-                "playSound" : True,
-                };
+utils.CheckDirectoryExists(_resultDir);
         
 segmentationParameters = {
-                "baseDir" : baseDir,
+                "resultDir" : _resultDir,
+                "workingDir" : _workingDir,
                 "mouse" : None,
-                "captures" : None,
+                "capturesRGB" : None,
+                "capturesDEPTH" : None,
                 "testFrame" : None,
-                "framerate" : 30,
-                "TRESH_MIN" : np.array([0, 0, 0],np.uint8),
-                "TRESH_MAX" : np.array([179, 255, 93],np.uint8),
+                "framerate" : None,
+                "threshMinMouse" : np.array([0, 0, 0],np.uint8),
+                "threshMaxMouse" : np.array([179, 255, 93],np.uint8),
                 "kernel" : np.ones((5,5),np.uint8),
-                "minAreaMask" : 200.0,
+                "minAreaMask" : 800.0,
+                "maxAreaMask" : 8000.0,
                 "minDist" : 3.0,
                 "showStream" : False,
                 "saveStream" : False,
-                "cageLength" : 21.8,
-                "cageWidth" : 36.4,
+                "cageLength" : 25.,
+                "cageWidth" : 50.,
+                "playSound" : True,
                 };
-        
-#%%############################################################################
-###############################################################################
-                        #OFFLINE Modules#
-###############################################################################
-###############################################################################
-
-##############################################################################
-#Convert videos to the right format#
-##############################################################################
-        
-IO.VideoConverter(videoDir,**videoParameters);
 
 #%%###########################################################################
 # Loading images to memory#
 ##############################################################################
 
-segmentationParameters["captures"], segmentationParameters["testFrame"] = IO.VideoLoader(videoDir,**videoParameters);
+segmentationParameters["capturesRGB"], segmentationParameters["capturesDEPTH"], segmentationParameters["testFrame"] = IO.VideoLoader(_workingDir,**segmentationParameters);
+
+#%%###########################################################################
+#Initializes the tracker object#
+##############################################################################
+
+segmentationParameters["mouse"] = "217";
+
+data = tracker.TopMouseTracker(**segmentationParameters);
 
 #%%############################################################################
 #Creating ROI for analysis#
 ###############################################################################
-
-segmentationParameters["mouse"] = "201";
-
-data = tracker.TopMouseTracker(**segmentationParameters);
 
 data.SetROI();    
    

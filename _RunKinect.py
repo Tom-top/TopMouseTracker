@@ -11,7 +11,7 @@ Created on Tue Feb  5 13:29:39 2019
 
 import os;
 import cv2;
-import matplotlib.pyplot as plt;
+#import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 import TopMouseTracker.Utilities as utils;

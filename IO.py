@@ -121,47 +121,64 @@ def VideoLoader(directory,**kwargs) :
     '''
     
     counter = 0;
-    Captures = [];
+    RGBCaptures = [];
+    DEPTHCaptures = [];
     testFrame = [];
     
-    for files in natsorted(os.listdir(directory)) :
+    for file in natsorted(os.listdir(directory)) :
         
-        if files.split('.')[-1] == 'mp4' :
+        if file.split('.')[-1] == 'avi' :
             
-            cap = cv2.VideoCapture(os.path.join(directory,files));
-            Captures.append(cap);
-            
-            if not cap.isOpened() :
+            if file.split('_')[0] == "Raw" :
                 
-                utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
+                cap = cv2.VideoCapture(os.path.join(directory,file));
+                RGBCaptures.append(cap);
                 
-            else :
-    
-                ret, frame = cap.read();
-                ret, frame = cap.read();
-        
-                if counter == 0 :
-                    testFrame.append(frame);
-        
-                if ret == False :
+                if cap.isOpened() :
+                
+                    ret, frame = cap.read();
+                    ret, frame = cap.read();
                     
-                    utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
+                    if counter == 0 :
+                        testFrame.append(frame);
+                        counter+=1;
+                        
+                else :
+                    
+                    utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
+                
+            elif file.split('_')[0] == "Depth" :
+                
+                cap = cv2.VideoCapture(os.path.join(directory,file));
+                DEPTHCaptures.append(cap);
+                
+                if cap.isOpened() :
+                
+                    ret, frame = cap.read();
+                    ret, frame = cap.read();
                     
                 else :
                     
-                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(files),"darkgreen");
+                    utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
+            
+            if ret == False :
                     
-                    if kwargs["playSound"] :
-                        
-                        utils.PlaySound(1,params.sounds['Purr']);
-    
-            counter+=1;
+                utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
+                    
+            else :
+                
+                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                
+                if kwargs["playSound"] :
+                    
+                    utils.PlaySound(1,params.sounds['Purr']);
+            
     
     if counter == 0 :
         
         utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found","darkred");
             
-    return Captures,testFrame;
+    return RGBCaptures,DEPTHCaptures,testFrame;
 
 
 class CroppingROI():
@@ -187,7 +204,7 @@ class CroppingROI():
         # keep looping until the 'q' key is pressed
         while True:
             # display the image and wait for a keypress
-            cv2.moveWindow("image", int((settings._width)/4), int((settings._height)/4));
+            cv2.moveWindow("image", 0, 0);
             cv2.imshow("image", self.frame);
             key = cv2.waitKey(10) & 0xFF;
             # if the 'r' key is pressed, reset the cropping region

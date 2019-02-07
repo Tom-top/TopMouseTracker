@@ -8,6 +8,7 @@ Created on Fri Dec  7 14:03:44 2018
 
 import os;
 import cv2;
+import time;
 import numpy as np;
 import pandas as pd;
 from math import sqrt;
@@ -34,7 +35,7 @@ class TopMouseTracker():
         self._args = kwargs; #Arguments
         self._mouse = self._args["mouse"]; #Name of the mouse
         
-        videoInfoWorkbook = pd.read_excel(self._args["baseDir"]+'/Mice_Video_Info.xlsx'); #Load video info excel sheet
+        videoInfoWorkbook = pd.read_excel(self._args["resultDir"]+'/Mice_Video_Info.xlsx'); #Load video info excel sheet
         videoInfo = videoInfoWorkbook.as_matrix(); #Transforms it into a matrix
         
         for metaData in videoInfo :
@@ -59,49 +60,49 @@ class TopMouseTracker():
         
         #Real-Time tracking variables
         #----------------------------------------------------------------------
-        self.frameNumber = 0;
-        self.videoNumber = 0;
         self.realTimePosition = []; #Position of the mouse in real time
         self.realTimeSpeed = 0.; #Speed of the mouse in real time
         self.center = None; #Centroid (x,y) of the mouse binary mask in real time
         self.correctedCenter = None; #Corrected centroid (x,y) of the mouse binary mask in real time
         self.trackingStream = [];
         
+        #Saving variables
+        #----------------------------------------------------------------------
+        self.time = time.localtime(time.time());
+        
     def SetROI(self) :
         
-        self._refPt = IO.CroppingROI(self._args["testFrame"][0]).roi(); #Defining the ROI for segmentation
+        self._refPt = IO.CroppingROI(self._args["testFrame"][0].copy()).roi(); #Defining the ROI for segmentation
         
-    def OffLineTracker(self):
+    def Main(self):
         
         #Get frame from capture
         #----------------------------------------------------------------------
-        self.ret, self.RGBFrame = self._args["captures"][self.videoNumber].read(); #Reads the following frame from the video capture
+        self.RGBret, self.RGBFrame = self._args["capturesRGB"][self.videoNumber].read(); #Reads the following frame from the video capture
+        self.DEPTHret, self.DEPTHFrame = self._args["capturesDEPTH"][self.videoNumber].read(); #Reads the following frame from the video capture
+        
         self.frameNumber += 1; #Increments the frame number variable
-        self.time = self.frameNumber/self._args["framerate"]; #Sets the time
+        self.curTime = self.frameNumber/self._args["framerate"]; #Sets the time
            
         #If capture still has frames, and the following frame was successfully retrieved
         #----------------------------------------------------------------------
-        if self.ret : #If the next frame was well retrieved
+        if self.RGBret and self.DEPTHret : #If the next frame was well retrieved
             
             if self.videoNumber == 0 : #If the first video is being processed
                 
-                if self.time >= self._tStart and self.time <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
+                if self.curTime >= self._tStart and self.curTime <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
                     
                     self.RunSegmentation(); #Runs the segmentation on the ROI
                 
-                elif self.time < self._tStart : #If the cotton was not added yet
+                elif self.curTime < self._tStart : #If the cotton was not added yet
                     
                     self.RunSegmentationBackground(); #Waits... Or displays camera feed if precised
                     
             elif self.videoNumber != 0 : #If the one of the next videos is being processed
                 
-                if self.time <= self._tEnd[self.videoNumber] : #If the video is not finished
+                if self.curTime <= self._tEnd[self.videoNumber] : #If the video is not finished
                     
                     self.RunSegmentation(); #Runs the segmentation on the ROI
-                    
-            if self._args["saveStream"] and self.frameNumber % 30 == 0 :
-            
-                self.trackingStream.append(self.hStack);
                     
     def RunSegmentation(self) :
         
