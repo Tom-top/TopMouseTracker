@@ -119,14 +119,17 @@ class TopMouseTracker():
         self.croppedFrame = self.RGBFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
         
         self.maskDisplay = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2RGB); #[DISPLAY ONLY] Changes the croppedFrame to RGB for display purposes
+        self.maskDisplay = cv2.cvtColor(self.maskDisplay, cv2.COLOR_RGB2BGR);
+        
         self.colorFrame = cv2.cvtColor(self.cloneFrame, cv2.COLOR_BGR2RGB); #[DISPLAY ONLY] Changes the Frame to RGB for display purposes
+        self.colorFrame = cv2.cvtColor(self.colorFrame, cv2.COLOR_RGB2BGR);
         
         #Filtering the ROI from noise
         #----------------------------------------------------------------------------------------------------------------------------------
         
         self.hsvFrame = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2HSV); #Changes the croppedFrame LUT to HSV for segmentation
         self.blur = cv2.blur(self.hsvFrame,(5,5)); #Applies a Gaussian Blur to smoothen the image
-        self.mask = cv2.inRange(self.blur, self._args["TRESH_MIN"], self._args["TRESH_MAX"]); #Thresholds the image to binary
+        self.mask = cv2.inRange(self.blur, self._args["threshMinMouse"], self._args["threshMaxMouse"]); #Thresholds the image to binary
         self.opening = cv2.morphologyEx(self.mask,cv2.MORPH_OPEN,self._args["kernel"], iterations = 1); #Applies opening operation to the mask for dot removal
         self.closing = cv2.morphologyEx(self.opening,cv2.MORPH_CLOSE,self._args["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
         self.cnts = cv2.findContours(self.closing.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
