@@ -117,13 +117,10 @@ class Kinect() :
                     
                     for y in np.arange(int(vertical_position)+gridres,int(vertical_position)+(box_size*average_ratio),gridres) : 
                         
-                        #cv2.circle(frame,(x,y), 1, (0,255,0), 1);
-                        
                         local_pixel_values = [];
                         
                         for x_pixel in np.arange(-gridres/2,gridres/2) :
                             for y_pixel in np.arange(-gridres/2,gridres/2) :
-                                #cv2.circle(frame,(int(x+x_pixel),int(y+y_pixel)), 1, (0,255,0), 1);
                                 pixel_value = clone[int(y+y_pixel)][int(x+x_pixel)][0];
                                 local_pixel_values.append(pixel_value);
                                 
@@ -146,34 +143,23 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
-#    def TestKinect(self) :
-#        
-#        while True :
-#            RGBFrame,DEPTHFrame = self.LoadRGBDEPTH(3,1);
-#            
-#            #hStack = self.CreateDisplay()
-#            #cv2.imshow('RGB&DEPTH',hStack);
-#            cv2.imshow('RGB',RGBFrame);
-#            cv2.imshow('DEPTH',DEPTHFrame);
-#                
-#            
-#            if cv2.waitKey(1) & 0xFF == ord('q'):
-#                break;
-#                
-#        cv2.destroyAllWindows();
+    def PlayAndSave(self,display=True) :
         
-    def PlayAndSave(self,display=True,cmap=False) :
+        self.trigger = True;
         
         self.time = time.localtime(time.time());
-        tStart = time.time();
+        self.tStart = time.time();
+        self.frameCnt = 0;
         
         testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
+        
         try :
             hRGB,wRGB,_ = testFrameRGB.shape
         except : 
             hRGB,wRGB = testFrameRGB.shape
         
         testFrameDEPTH,_ = self.GetFrame(self._args["kinectDEPTH"],"depth",1);
+        
         try :
             hDEPTH,wDEPTH,_ = testFrameDEPTH.shape
         except :
@@ -182,63 +168,47 @@ class Kinect() :
         self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
-            
-        self.RGBWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                            self._args["fourcc"],self._args["framerate"],(wRGB,hRGB));
     
         self.DEPTH8BitString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
-            
-        self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
-                                            self._args["fourcc"],self._args["framerate"],(wDEPTH,hDEPTH));
-                    
-        #self.DEPTH16BitString = self._args["depthVideoFileName16Bit"],self.time.tm_mday,\
-                        #self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        #self.time.tm_min,self.time.tm_sec;
-            
-        #self.DEPTH16BitWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
-                                            #'{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH16BitString)),\
-                                            #self._args["fourcc"],self._args["framerate"],(wDEPTH,hDEPTH));
-        
-        self.frameCnt = 0;
     
         while True :
             
-            self.FrameRGB,self.FrameDEPTH8Bit,self.FrameDEPTH16Bit = self.LoadRGBDEPTH(1,1);
+            self.FrameRGB,self.FrameDEPTH8Bit,_ = self.LoadRGBDEPTH(1,1);
             self.frameCnt += 1;
             
-            curTime = time.time();
-            
-            if curTime-tStart > 1 :
-                self.fps.append(self.frameCnt/(curTime-tStart))
-                tStart = curTime;
-                self.frameCnt = 0;
+            self.tNow = time.time();
             
             if display :
 
-                RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(3,1);
-                cv2.imshow('RGB',RGBFrame);
-                if cmap : 
-                    DEPTHFrame8bit = cv2.cvtColor(DEPTHFrame8bit, cv2.COLOR_RGB2GRAY);
-                    DEPTHFrame8bit = cv2.applyColorMap(DEPTHFrame8bit, cv2.COLORMAP_JET);
-                cv2.imshow('DEPTH',DEPTHFrame8bit);
+                self.testRGBFrame,_,_ = self.LoadRGBDEPTH(3,1);
+                cv2.imshow('RGB',self.testRGBFrame);
+                cv2.imshow('DEPTH',self.FrameDEPTH8Bit);
             
-            self.RGBWriter.write(self.FrameRGB);
-            self.DEPTH8BitWriter.write(self.FrameDEPTH8Bit);
-            #self.DEPTH16BitWriter.write(self.FrameDEPTH16Bit);
-            #print('memory % used:', psutil.virtual_memory()[2]);
+            if self.tStart-self.tNow > 1*60 : #Starts saving the frames after 1 minute of sampling
+        
+                if self.trigger :
+                    
+                    self.frameRate = self.frameCnt/(self.tStart-self.tNow);
+                    
+                    self.RGBWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
+                                            self._args["fourcc"],self.frameRate,(wRGB,hRGB));
+                                                
+                    self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self._args["savingDir"],\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
+                                            self._args["fourcc"],self.frameRate,(wDEPTH,hDEPTH));
+                                                      
+                    self.trigger = False;
+            
+                self.RGBWriter.write(self.FrameRGB);
+                self.DEPTHWriter.write(self.FrameDEPTH8Bit);
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break;
         
-        #tEnd = time.time();
-        #Time = tEnd-tStart
-        #print("FPS : {0}".format(self.frameCnt/Time))
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
-        #self.DEPTH16BitWriter.release();
                 
         cv2.destroyAllWindows();
