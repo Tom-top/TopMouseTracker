@@ -169,7 +169,7 @@ class Kinect() :
         Writer1.write(self.FrameRGB);
         Writer2.write(self.FrameDEPTH8Bit);
         
-    def PlayAndSave(self,threading=True,samplingTime=60) :
+    def PlayAndSave(self,Thread=True,SamplingTime=60) :
         
         #self.display = display;
         self.lock = threading.Lock();
@@ -235,11 +235,11 @@ class Kinect() :
         #----------------------------------------------------------------------
         
         print("\n");
-        print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime));
+        print("[INFO] Starting framerate sampling for {0}s...".format(SamplingTime));
         
-        while self.tNow-self.tStart < samplingTime : 
+        while self.tNow-self.tStart < SamplingTime : 
             
-            if threading : 
+            if Thread : 
                 
                 thread = threading.Thread(target = self.threadedSaveFrames, args = (self.TestRGBWriter,self.TestDEPTHWriter));
                 self.threads.append(thread);
@@ -258,7 +258,7 @@ class Kinect() :
         #Resets timers and counters
         #----------------------------------------------------------------------
         
-        if threading :
+        if Thread :
             
             [t.join() for t in self.threads];
 
@@ -291,7 +291,7 @@ class Kinect() :
         
         while True :
             
-            if threading : 
+            if Thread : 
                 
                 thread = threading.Thread(target = self.threadedSaveFrames, args = (self.RGBWriter,self.DEPTH8BitWriter));
                 self.threads.append(thread);
@@ -310,7 +310,7 @@ class Kinect() :
         #Stops stream saving and saves metadata
         #----------------------------------------------------------------------
         
-        if threading :
+        if Thread :
             
             [t.join() for t in self.threads];
         
