@@ -260,7 +260,7 @@ class Kinect() :
         
         if threading :
             
-            [thread.join() for thread in self.threads];
+            [t.join() for t in self.threads];
 
         self.threads = [];
         self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
@@ -312,7 +312,7 @@ class Kinect() :
         
         if threading :
             
-            [thread.join() for thread in self.threads];
+            [t.join() for t in self.threads];
         
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
