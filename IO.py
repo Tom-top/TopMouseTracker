@@ -143,6 +143,21 @@ def VideoLoader(directory,**kwargs) :
                         testFrame.append(frame);
                         counter+=1;
                         
+                    if ret == False :
+                    
+                      utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
+                      
+                    else :
+                
+                      utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                      
+                      if kwargs["playSound"] :
+                          
+                          try :  
+                            utils.PlaySound(1,params.sounds['Purr']);
+                          except :
+                            pass;
+                        
                 else :
                     
                     utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
@@ -157,21 +172,24 @@ def VideoLoader(directory,**kwargs) :
                     ret, frame = cap.read();
                     ret, frame = cap.read();
                     
+                    if ret == False :
+                    
+                      utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
+                    
+                    else :
+                
+                      utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                      
+                      if kwargs["playSound"] :
+                        
+                          try :  
+                            utils.PlaySound(1,params.sounds['Purr']);
+                          except :
+                            pass;
+                    
                 else :
                     
                     utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
-            
-            if ret == False :
-                    
-                utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
-                    
-            else :
-                
-                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
-                
-                if kwargs["playSound"] :
-                    
-                    utils.PlaySound(1,params.sounds['Purr']);
             
     
     if counter == 0 :

@@ -35,15 +35,16 @@ class TopMouseTracker():
         self._args = kwargs; #Arguments
         self._mouse = self._args["mouse"]; #Name of the mouse
         
-        videoInfoWorkbook = pd.read_excel(self._args["resultDir"]+'/Mice_Video_Info.xlsx'); #Load video info excel sheet
+        videoInfoWorkbook = pd.read_excel(self._args["resultDir"]+'/Mice_Video_Info.xlsx',header=None); #Load video info excel sheet
         videoInfo = videoInfoWorkbook.as_matrix(); #Transforms it into a matrix
         
         for metaData in videoInfo :
-            if str(metaData[0]) == self._args["mouse"] :
-                self._tStart = int(metaData[1]); #Moment at which the cotton is added (s)
-                self._tStartBehav = int(metaData[2]); #Moment at which the mouse start nest-building (s)
-                self._tEnd = [int(metaData[3]),int(metaData[4]),\
-                             int(metaData[5]),int(metaData[6])]; #Length of each video of the experiment (max 4 videos)
+            if not np.isnan(metaData[0]) : 
+              if str(int(metaData[0])) == self._args["mouse"] :
+                  self._tStart = int(metaData[1]); #Moment at which the cotton is added (s)
+                  self._tStartBehav = int(metaData[2]); #Moment at which the mouse start nest-building (s)
+                  self._tEnd = [int(metaData[3]),int(metaData[4]),\
+                               int(metaData[5]),int(metaData[6])]; #Length of each video of the experiment (max 4 videos)
         
         self._nVideos = 0; #Variable holding the number of videos to be analyzed
         
