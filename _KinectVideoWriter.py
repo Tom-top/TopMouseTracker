@@ -258,6 +258,11 @@ class Kinect() :
         #Resets timers and counters
         #----------------------------------------------------------------------
         
+        if threading :
+            
+            for proc in self.threads:
+                proc.join();
+        
         self.threads = [];
         self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
@@ -305,6 +310,11 @@ class Kinect() :
                 
         #Stops stream saving and saves metadata
         #----------------------------------------------------------------------
+        
+        if threading :
+            
+            for proc in self.threads:
+                proc.join();
         
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
