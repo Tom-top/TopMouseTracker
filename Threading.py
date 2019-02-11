@@ -227,8 +227,9 @@ class Kinect() :
         self.frameRate = self.frameCnt/(self.tStart-self.tEnd);
         
         self.saveMetaData();
-                
-        cv2.destroyAllWindows();
+        
+        if self.display :       
+            cv2.destroyAllWindows();
         
     def saveMetaData(self) :
         
