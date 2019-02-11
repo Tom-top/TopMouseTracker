@@ -15,7 +15,8 @@ import cv2;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 import TopMouseTracker.Utilities as utils;
-import TopMouseTracker._Kinect as kinect;
+import TopMouseTracker._KinectVideoWriter as kinect;
+import TopMouseTracker.Threading as kinectThread;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
@@ -28,6 +29,8 @@ kinectParameters = {"savingDir" : _savingDir,
                     "kinectRGB" : None,
                     "kinectDEPTH" : None,
                     "gridRes" : 20,
+                    "depthMinThresh" : 130,
+                    "depthMaxThresh" : 140,
                     "rawVideoFileName" : None,
                     "depthVideoFileName8Bit" : None,
                     "depthVideoFileName16Bit" : None,
@@ -55,10 +58,20 @@ Kinect = kinect.Kinect(**kinectParameters);
 #[OPTIONAL] Test the kinect for positioning#
 ##############################################################################
 
-Kinect.TestKinect(grid=False); #If grid == True : Displays the calibration grid on depth image
+Kinect.TestKinect(grid=True); #If grid == True : Displays the calibration grid on depth image
 
 #%%###########################################################################
 #Launch saving#
 ##############################################################################
 
-Kinect.PlayAndSave(display=True); #If display == True : Displays the RGB feed from the camera
+""" If display == True the framerate will be aproximatively 20fps for bought RGB and DEPTH streams
+
+    If not the framerate will be slightly higher : 
+        
+    The samplingTime is the time in seconds that the program uses to estimate the maximal framerate of the camera
+"""
+
+Kinect.PlayAndSave(display=True,samplingTime=60); #If display == True : Displays the RGB feed from the camera
+
+
+#%%###########################################################################

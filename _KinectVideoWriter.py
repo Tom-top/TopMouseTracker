@@ -10,6 +10,8 @@ import cv2;
 import time;
 import os;
 import xlwt;
+import threading;
+import multiprocessing;
 from math import pi,tan;
 
 import TopMouseTracker.Utilities as utils;
@@ -134,13 +136,27 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
-    def PlayAndSave(self,display=True) :
+    def PlayAndSave(self,display=True,samplingTime=60) :
         
-        self.trigger = True;
+        self.display = display;
+        
+        #Set timers
+        #----------------------------------------------------------------------
         
         self.time = time.localtime(time.time());
         self.tStart = time.time();
+        self.tNow = time.time();
+        self.tEverySecond = time.time();
+        
+        #Set counters
+        #----------------------------------------------------------------------
+        
         self.frameCnt = 0;
+        self.framesEverySecond = 0;
+        self.frameRates = [];
+        
+        #Set directories
+        #----------------------------------------------------------------------
         
         self.dataDirName = '{0}-{1}-{2}_{3}-{4}-{5}'.format(self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
@@ -149,19 +165,22 @@ class Kinect() :
         self.dataDir = os.path.join(self._args["savingDir"],self.dataDirName);
         utils.CheckDirectoryExists(self.dataDir);
         
+        #Checking frame sizes
+        #----------------------------------------------------------------------
+        
         testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
         
         try :
-            hRGB,wRGB,_ = testFrameRGB.shape
+            hRGB,wRGB,_ = testFrameRGB.shape;
         except : 
-            hRGB,wRGB = testFrameRGB.shape
+            hRGB,wRGB = testFrameRGB.shape;
         
         testFrameDEPTH,_ = self.GetFrame(self._args["kinectDEPTH"],"depth",1);
         
         try :
-            hDEPTH,wDEPTH,_ = testFrameDEPTH.shape
+            hDEPTH,wDEPTH,_ = testFrameDEPTH.shape;
         except :
-            hDEPTH,wDEPTH = testFrameDEPTH.shape
+            hDEPTH,wDEPTH = testFrameDEPTH.shape;
         
         self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
@@ -170,47 +189,102 @@ class Kinect() :
         self.DEPTH8BitString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
-    
-        while True :
-            
-            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
-            self.frameCnt += 1;
+                        
+        self.TestRGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                            'TestRGB.avi'),self._args["fourcc"],20,(wRGB,hRGB));
+                                                
+        self.TestDEPTHWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                'TestDEPTH.avi'),self._args["fourcc"],20,(wDEPTH,hDEPTH));
+                        
+        #Launch framerate sampling
+        #----------------------------------------------------------------------
+        
+        print("\n");
+        print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime));
+        
+        while self.tNow-self.tStart < samplingTime : 
             
             self.tNow = time.time();
+            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+            self.frameCnt += 1;
+            self.framesEverySecond += 1;
             
-            if display :
+            if self.tNow - self.tEverySecond > 1 :
+                self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
+                self.tEverySecond = self.tNow;
+                self.framesEverySecond = 0;
+            
+            if self.display :
 
                 self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
                 cv2.imshow('RGB',self.downSampledRGB);
-                cv2.imshow('DEPTH',self.FrameDEPTH8Bit);
             
-            if self.tStart-self.tNow > 1*60 : #Starts saving the frames after 1 minute of sampling
+            self.TestRGBWriter.write(self.FrameRGB);
+            self.TestDEPTHWriter.write(self.FrameDEPTH8Bit);
+            
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break;
         
-                if self.trigger :
-                    
-                    self.sampledFrameRate = self.frameCnt/(self.tStart-self.tNow);
-                    
-                    self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                            self._args["fourcc"],self.sampledFrameRate,(wRGB,hRGB));
+        #Resets timers and counters
+        #----------------------------------------------------------------------
+        cv2.destroyAllWindows();
+        
+        self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
+        
+        self.TestRGBWriter.release();
+        self.TestDEPTHWriter.release();
+        
+        os.remove(os.path.join(self.dataDir,'TestRGB.avi'));
+        os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'));
+        
+        self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
+                                self._args["fourcc"],self.sampledFrameRate,(wRGB,hRGB));
                                                 
-                    self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
-                                            self._args["fourcc"],self.sampledFrameRate,(wDEPTH,hDEPTH));
-                                                      
-                    self.trigger = False;
+        self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
+                                self._args["fourcc"],self.sampledFrameRate,(wDEPTH,hDEPTH));
+        
+        self.tStart = time.time();
+        self.frameCnt = 0;  
+        
+        #Launch real saving
+        #----------------------------------------------------------------------
+        
+        print("\n");
+        print("[INFO] Starting video recording...");
+        
+        while True :
             
-                self.RGBWriter.write(self.FrameRGB);
-                self.DEPTHWriter.write(self.FrameDEPTH8Bit);
+            self.tNow = time.time();
+            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+            self.frameCnt += 1;
+            self.framesEverySecond += 1;
+            
+            if self.tNow - self.tEverySecond > 1 :
+                self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
+                self.tEverySecond = self.tNow;
+                self.framesEverySecond = 0;
+            
+            if self.display :
+
+                self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+                cv2.imshow('RGB',self.downSampledRGB);
+            
+            self.RGBWriter.write(self.FrameRGB);
+            self.DEPTH8BitWriter.write(self.FrameDEPTH8Bit);
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break;
+                
+        #Stops stream saving and saves metadata
+        #----------------------------------------------------------------------
         
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
         
         self.tEnd = time.time();
-        self.frameRate = self.frameCnt/(self.tStart-self.tEnd);
+        self.frameRate = self.frameCnt/(self.tEnd-self.tStart);
         
         self.saveMetaData();
                 

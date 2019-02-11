@@ -35,7 +35,9 @@ _mainPath = os.path.expanduser("~");
 _desktopPath = _mainPath+"/Desktop";
 
 screenResString = os.popen("xrandr | grep '*'").read();
-resolution = screenResString.split()[0];
-_width, _height = resolution.split('x');
-_width = int(_width);
-_height = int(_height);
+
+if not screenResString == '':
+    resolution = screenResString.split()[0];
+    _width, _height = resolution.split('x');
+    _width = int(_width);
+    _height = int(_height);
