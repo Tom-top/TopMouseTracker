@@ -136,9 +136,44 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
-    def PlayAndSave(self,display=True,samplingTime=60) :
+    def threadedSaveFrames(self,Writer1,Writer2) :
         
-        self.display = display;
+        self.lock.acquire();
+        self.tNow = time.time();
+        self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+        self.frameCnt += 1;
+        self.framesEverySecond += 1;
+        
+        if self.tNow - self.tEverySecond > 1 :
+            self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
+            self.tEverySecond = self.tNow;
+            self.framesEverySecond = 0;
+        
+        Writer1.write(self.FrameRGB);
+        Writer2.write(self.FrameDEPTH8Bit);
+            
+        self.lock.release();
+        
+    def saveFrames(self,Writer1,Writer2) :
+        
+        self.tNow = time.time();
+        self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+        self.frameCnt += 1;
+        self.framesEverySecond += 1;
+        
+        if self.tNow - self.tEverySecond > 1 :
+            self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
+            self.tEverySecond = self.tNow;
+            self.framesEverySecond = 0;
+        
+        Writer1.write(self.FrameRGB);
+        Writer2.write(self.FrameDEPTH8Bit);
+        
+    def PlayAndSave(self,threading=True,samplingTime=60) :
+        
+        #self.display = display;
+        self.lock = threading.Lock();
+        self.threads = [];
         
         #Set timers
         #----------------------------------------------------------------------
@@ -204,23 +239,18 @@ class Kinect() :
         
         while self.tNow-self.tStart < samplingTime : 
             
-            self.tNow = time.time();
-            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
-            self.frameCnt += 1;
-            self.framesEverySecond += 1;
-            
-            if self.tNow - self.tEverySecond > 1 :
-                self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
-                self.tEverySecond = self.tNow;
-                self.framesEverySecond = 0;
-            
-            if self.display :
+            if threading : 
+                
+                thread = threading.Thread(target = self.threadedSaveFrames, args = (self.TestRGBWriter,self.TestDEPTHWriter));
+                self.threads.append(thread);
+                thread.start();
+                
+            else :
+                
+                self.saveFrames(self.TestRGBWriter,self.TestDEPTHWriter);
 
-                self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-                cv2.imshow('RGB',self.downSampledRGB);
-            
-            self.TestRGBWriter.write(self.FrameRGB);
-            self.TestDEPTHWriter.write(self.FrameDEPTH8Bit);
+            self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+            cv2.imshow('RGB',self.downSampledRGB);
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break;
@@ -228,6 +258,7 @@ class Kinect() :
         #Resets timers and counters
         #----------------------------------------------------------------------
         
+        self.threads = [];
         self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
         self.TestRGBWriter.release();
@@ -256,23 +287,18 @@ class Kinect() :
         
         while True :
             
-            self.tNow = time.time();
-            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
-            self.frameCnt += 1;
-            self.framesEverySecond += 1;
-            
-            if self.tNow - self.tEverySecond > 1 :
-                self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
-                self.tEverySecond = self.tNow;
-                self.framesEverySecond = 0;
-            
-            if self.display :
+            if threading : 
+                
+                thread = threading.Thread(target = self.threadedSaveFrames, args = (self.RGBWriter,self.DEPTH8BitWriter));
+                self.threads.append(thread);
+                thread.start();
+                
+            else :
+                
+                self.saveFrames(self.RGBWriter,self.DEPTH8BitWriter);
 
-                self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-                cv2.imshow('RGB',self.downSampledRGB);
-            
-            self.RGBWriter.write(self.FrameRGB);
-            self.DEPTH8BitWriter.write(self.FrameDEPTH8Bit);
+            self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+            cv2.imshow('RGB',self.downSampledRGB);
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break;
