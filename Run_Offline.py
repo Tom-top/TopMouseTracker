@@ -104,4 +104,3 @@ res = 1;
 Plot.CompleteTrackingPlot(res,limit=6,save=True);
 #Plot.TrackingPlot(res,limit=6);
 #Plot.HeatMapPlot(PlotParameters["gridsize"]);
-        

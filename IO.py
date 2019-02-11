@@ -216,7 +216,9 @@ class CroppingROI():
         
         self.refPt = [];
         self.frame = frame.copy();
+        self.W, self.H, _ = self.frame.shape
         cv2.namedWindow("image", cv2.WINDOW_NORMAL);
+        cv2.resizeWindow("image", self.H,self.W);
         cv2.setMouseCallback("image", self.clickAndCrop);
         self.clone = self.frame.copy();
         # keep looping until the 'q' key is pressed
@@ -234,7 +236,9 @@ class CroppingROI():
                 break;
         # close all open windows
         cv2.destroyAllWindows();
-        cv2.destroyAllWindows();
+        for i in range (1,5):
+            cv2.waitKey(1);
+        # cv2.destroyAllWindows();
     
     def clickAndCrop(self, event, x, y, flags, param):
         
