@@ -12,7 +12,8 @@ import time;
 import os;
 import xlwt;
 from math import pi,tan;
-from threading import Thread;
+import threading;
+import multiprocessing;
 
 import TopMouseTracker.Utilities as utils;
 
@@ -138,7 +139,8 @@ class Kinect() :
         
     def startThread(self) :
         
-        Thread(target=self.update, args=()).start();
+        threading.Thread(target=self.update, args=()).start();
+        #multiprocessing.Process(target=self.update).start();
         return self;
     
     def update(self) :
