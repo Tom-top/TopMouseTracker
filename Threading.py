@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Sun Feb  3 11:31:48 2019
-@author: ADMIN
+Created on Mon Feb 11 08:19:06 2019
+
+@author: tomtop
 """
 
 import numpy as np;
@@ -11,6 +12,7 @@ import time;
 import os;
 import xlwt;
 from math import pi,tan;
+from threading import Thread;
 
 import TopMouseTracker.Utilities as utils;
 
@@ -134,8 +136,51 @@ class Kinect() :
                 
         cv2.destroyAllWindows();
         
+    def startThread(self) :
+        
+        Thread(target=self.update, args=()).start();
+        return self;
+    
+    def update(self) :
+        
+        while True :
+            
+            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+            self.frameCnt += 1;
+            
+            self.tNow = time.time();
+            
+            if self.display :
+        
+                self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+                cv2.imshow('RGB',self.downSampledRGB);
+                cv2.imshow('DEPTH',self.FrameDEPTH8Bit);
+            
+            if self.tStart-self.tNow > 1*60 : #Starts saving the frames after 1 minute of sampling
+        
+                if self.trigger :
+                    
+                    self.sampledFrameRate = self.frameCnt/(self.tStart-self.tNow);
+                    
+                    self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
+                                            self._args["fourcc"],self.sampledFrameRate,(self.wRGB,self.hRGB));
+                                                
+                    self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
+                                            self._args["fourcc"],self.sampledFrameRate,(self.wDEPTH,self.hDEPTH));
+                                                      
+                    self.trigger = False;
+            
+                self.RGBWriter.write(self.FrameRGB);
+                self.DEPTHWriter.write(self.FrameDEPTH8Bit);
+                
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break;
+
     def PlayAndSave(self,display=True) :
         
+        self.display = display;
         self.trigger = True;
         
         self.time = time.localtime(time.time());
@@ -152,16 +197,16 @@ class Kinect() :
         testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
         
         try :
-            hRGB,wRGB,_ = testFrameRGB.shape
+            self.hRGB,self.wRGB,_ = testFrameRGB.shape
         except : 
-            hRGB,wRGB = testFrameRGB.shape
+            self.hRGB,self.wRGB = testFrameRGB.shape
         
         testFrameDEPTH,_ = self.GetFrame(self._args["kinectDEPTH"],"depth",1);
         
         try :
-            hDEPTH,wDEPTH,_ = testFrameDEPTH.shape
+            self.hDEPTH,self.wDEPTH,_ = testFrameDEPTH.shape
         except :
-            hDEPTH,wDEPTH = testFrameDEPTH.shape
+            self.hDEPTH,self.wDEPTH = testFrameDEPTH.shape
         
         self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
@@ -171,40 +216,7 @@ class Kinect() :
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec;
     
-        while True :
-            
-            self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
-            self.frameCnt += 1;
-            
-            self.tNow = time.time();
-            
-            if display :
-
-                self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-                cv2.imshow('RGB',self.downSampledRGB);
-                cv2.imshow('DEPTH',self.FrameDEPTH8Bit);
-            
-            if self.tStart-self.tNow > 1*60 : #Starts saving the frames after 1 minute of sampling
-        
-                if self.trigger :
-                    
-                    self.sampledFrameRate = self.frameCnt/(self.tStart-self.tNow);
-                    
-                    self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                            self._args["fourcc"],self.sampledFrameRate,(wRGB,hRGB));
-                                                
-                    self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                            '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
-                                            self._args["fourcc"],self.sampledFrameRate,(wDEPTH,hDEPTH));
-                                                      
-                    self.trigger = False;
-            
-                self.RGBWriter.write(self.FrameRGB);
-                self.DEPTHWriter.write(self.FrameDEPTH8Bit);
-                
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break;
+        self.startThread();
         
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
