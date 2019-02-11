@@ -11,7 +11,7 @@ Created on Tue Feb  5 13:29:39 2019
 
 import os;
 import cv2;
-#import matplotlib.pyplot as plt;
+import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 import TopMouseTracker.Utilities as utils;
@@ -64,14 +64,19 @@ Kinect.TestKinect(grid=True); #If grid == True : Displays the calibration grid o
 #Launch saving#
 ##############################################################################
 
-""" If display == True the framerate will be aproximatively 20fps for bought RGB and DEPTH streams
+""" If display == True the framerate will be aproximatively 20fps for both RGB and DEPTH streams
+    [INFO] To stop the code press Cntrl+C
 
-    If not the framerate will be slightly higher : 
-        
+    If display == False the framerate will be slightly higher, approximatively 21fps for both RGB and DEPTH streams
+    [INFO] To stop the code press Q
+    
+    The parallel variable is used to parallelize the video saving (Work in progress)
     The samplingTime is the time in seconds that the program uses to estimate the maximal framerate of the camera
 """
 
-Kinect.PlayAndSave(display=True,samplingTime=60); #If display == True : Displays the RGB feed from the camera
+samplingTime = 5*60; #5 minutes
+
+Kinect.PlayAndSave(display=True,parallel=False,samplingTime=samplingTime);
 
 
 #%%###########################################################################

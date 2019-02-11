@@ -169,9 +169,10 @@ class Kinect() :
         Writer1.write(self.FrameRGB);
         Writer2.write(self.FrameDEPTH8Bit);
         
-    def PlayAndSave(self,Thread=True,SamplingTime=60) :
+    def PlayAndSave(self,display=True,parallel=False,samplingTime=60) :
         
-        #self.display = display;
+        self.display = display;
+        self.samplingTime = samplingTime;
         self.lock = threading.Lock();
         self.threads = [];
         
@@ -235,40 +236,49 @@ class Kinect() :
         #----------------------------------------------------------------------
         
         print("\n");
-        print("[INFO] Starting framerate sampling for {0}s...".format(SamplingTime));
+        print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime));
         
-        while self.tNow-self.tStart < SamplingTime : 
+        try :
             
-            if Thread : 
-                
-                thread = threading.Thread(target = self.threadedSaveFrames, args = (self.TestRGBWriter,self.TestDEPTHWriter));
-                self.threads.append(thread);
-                thread.start();
-                
-            else :
-                
-                self.saveFrames(self.TestRGBWriter,self.TestDEPTHWriter);
-
-            self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-            cv2.imshow('RGB',self.downSampledRGB);
+            while self.tNow-self.tStart < self.samplingTime : 
             
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break;
-        
+                if parallel : 
+                    
+                    thread = threading.Thread(target = self.threadedSaveFrames, args = (self.TestRGBWriter,self.TestDEPTHWriter));
+                    thread.daemon = True;
+                    self.threads.append(thread);
+                    thread.start();
+            
+                else :
+                    
+                    self.saveFrames(self.TestRGBWriter,self.TestDEPTHWriter);
+                    
+                if self.display :
+                    
+                    self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+                    cv2.imshow('RGB',self.downSampledRGB);
+                    
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break;
+                
+        except KeyboardInterrupt:
+            
+            pass;
+    
         #Resets timers and counters
         #----------------------------------------------------------------------
-        
-        if Thread :
-            
-            [t.join() for t in self.threads];
-
-        self.threads = [];
-        self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
         self.TestRGBWriter.release();
         self.TestDEPTHWriter.release();
         
         cv2.destroyAllWindows();
+        
+        if parallel :
+            
+            [t.join() for t in self.threads];
+
+        self.threads = [];
+        self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
         os.remove(os.path.join(self.dataDir,'TestRGB.avi'));
         os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'));
@@ -289,28 +299,36 @@ class Kinect() :
         
         print("[INFO] Starting video recording...");
         
-        while True :
+        try :
             
-            if Thread : 
+            while True :
                 
-                thread = threading.Thread(target = self.threadedSaveFrames, args = (self.RGBWriter,self.DEPTH8BitWriter));
-                self.threads.append(thread);
-                thread.start();
+                if parallel : 
+                    
+                    thread = threading.Thread(target = self.threadedSaveFrames, args = (self.RGBWriter,self.DEPTH8BitWriter));
+                    self.threads.append(thread);
+                    thread.start();
+                    
+                else :
+                    
+                    self.saveFrames(self.RGBWriter,self.DEPTH8BitWriter);
                 
-            else :
+                if self.display :
+                    
+                    self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+                    cv2.imshow('RGB',self.downSampledRGB);
+                        
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break;
+                    
+        except KeyboardInterrupt:
                 
-                self.saveFrames(self.RGBWriter,self.DEPTH8BitWriter);
-
-            self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-            cv2.imshow('RGB',self.downSampledRGB);
-                
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break;
-                
+            pass;
+            
         #Stops stream saving and saves metadata
         #----------------------------------------------------------------------
         
-        if Thread :
+        if parallel :
             
             [t.join() for t in self.threads];
         
