@@ -227,12 +227,13 @@ class Kinect() :
         
         #Resets timers and counters
         #----------------------------------------------------------------------
-        cv2.destroyAllWindows();
         
         self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
         self.TestRGBWriter.release();
         self.TestDEPTHWriter.release();
+        
+        cv2.destroyAllWindows();
         
         os.remove(os.path.join(self.dataDir,'TestRGB.avi'));
         os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'));
@@ -251,7 +252,6 @@ class Kinect() :
         #Launch real saving
         #----------------------------------------------------------------------
         
-        print("\n");
         print("[INFO] Starting video recording...");
         
         while True :
