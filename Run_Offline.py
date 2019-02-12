@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8
 """
 Created on Fri Dec  7 13:58:46 2018
 
@@ -21,39 +21,59 @@ _resultDir = os.path.join(_mainDir,"TopMouseTracker");
 _workingDir = os.path.join(_resultDir,"190207-01");
 
 utils.CheckDirectoryExists(_resultDir);
-        
+
+mainParameters = {"resultDir" : _resultDir,
+                  "workingDir" : _workingDir,
+                  "mouse" : None,
+                  "capturesRGB" : None,
+                  "capturesDEPTH" : None,
+                  "testFrameRGB" : None,
+                  "playSound" : True,
+                  };
+                  
 segmentationParameters = {
-                "resultDir" : _resultDir,
-                "workingDir" : _workingDir,
-                "mouse" : None,
-                "capturesRGB" : None,
-                "capturesDEPTH" : None,
-                "testFrame" : None,
-                "framerate" : None,
-                "threshMinMouse" : np.array([0, 0, 0],np.uint8),
-                "threshMaxMouse" : np.array([179, 255, 93],np.uint8),
+                "threshMinRGB" : np.array([0, 0, 0],np.uint8),
+                "threshMaxRGB" : np.array([179, 255, 80],np.uint8),
+                "threshMinCotton" : np.array([0, 50, 130],np.uint8),
+                "threshMaxCotton" : np.array([110, 130, 200],np.uint8),
                 "kernel" : np.ones((5,5),np.uint8),
-                "minAreaMask" : 800.0,
+                "minAreaMask" : 1000.0,
                 "maxAreaMask" : 8000.0,
-                "minDist" : 3.0,
-                "showStream" : False,
-                "saveStream" : False,
+                "minDist" : 0.2,
+                "minCottonSize" : 300.,
+                "nestCottonSize" : 20000.,
                 "cageLength" : 50.,
                 "cageWidth" : 25.,
-                "playSound" : True,
                 };
-
+        
+displayParameters = {
+        "showStream" : True,
+        };
+        
+savingParameters = {
+        "framerate" : None,
+        "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
+        "saveStream" : True,
+        };
+        
+trackerParameters = {
+        "main" : mainParameters,
+        "segmentation" : segmentationParameters,
+        "display" : displayParameters,
+        "saving" : savingParameters,
+        };
+        
 #%%###########################################################################
 # Loading images to memory#
 ##############################################################################
 
-segmentationParameters["capturesRGB"], segmentationParameters["capturesDEPTH"], segmentationParameters["testFrame"] = IO.VideoLoader(_workingDir,**segmentationParameters);
+mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["testFrameRGB"] = IO.VideoLoader(_workingDir,**segmentationParameters);
 
 #%%###########################################################################
 #Initializes the tracker object#
 ##############################################################################
 
-segmentationParameters["mouse"] = "217";
+mainParameters["mouse"] = "217";
 
 data = tracker.TopMouseTracker(**segmentationParameters);
 
