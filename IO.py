@@ -12,6 +12,7 @@ import shlex;
 import numpy as np;
 import cv2;
 from natsort import natsorted;
+import skvideo.io;
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Settings as settings;
@@ -131,66 +132,40 @@ def VideoLoader(directory,**kwargs) :
             
             if file.split('_')[0] == "Raw" :
                 
-                cap = cv2.VideoCapture(os.path.join(directory,file));
+                #cap = cv2.VideoCapture(os.path.join(directory,file));
+                cap = skvideo.io.vreader(os.path.join(directory,file));
                 RGBCaptures.append(cap);
                 
-                if cap.isOpened() :
-                
-                    ret, frame = cap.read();
-                    ret, frame = cap.read();
+                frame = next(cap);
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
                     
-                    if counter == 0 :
-                        testFrame.append(frame);
-                        counter+=1;
-                        
-                    if ret == False :
-                    
-                      utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
+                if counter == 0 :
+                    testFrame.append(frame);
+                    counter+=1;
+
+                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                       
-                    else :
-                
-                      utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                if kwargs["playSound"] :
                       
-                      if kwargs["playSound"] :
-                          
-                          try :  
-                            utils.PlaySound(1,params.sounds['Purr']);
-                          except :
-                            pass;
-                        
-                else :
-                    
-                    utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
+                    try :  
+                        utils.PlaySound(1,params.sounds['Purr']);
+                    except :
+                        pass;
                 
             elif file.split('_')[0] == "Depth" :
                 
-                cap = cv2.VideoCapture(os.path.join(directory,file));
+                #cap = cv2.VideoCapture(os.path.join(directory,file));
+                cap = skvideo.io.vreader(os.path.join(directory,file));
                 DEPTHCaptures.append(cap);
                 
-                if cap.isOpened() :
-                
-                    ret, frame = cap.read();
-                    ret, frame = cap.read();
-                    
-                    if ret == False :
-                    
-                      utils.PrintColoredMessage("[WARNING] The video failed to load !!","darkred");
-                    
-                    else :
-                
-                      utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                       
-                      if kwargs["playSound"] :
-                        
-                          try :  
-                            utils.PlaySound(1,params.sounds['Purr']);
-                          except :
-                            pass;
-                    
-                else :
-                    
-                    utils.PrintColoredMessage("[WARNING] The video failed to initialize !!", "darkred");
-            
+                if kwargs["playSound"] :
+                
+                    try :  
+                        utils.PlaySound(1,params.sounds['Purr']);
+                    except :
+                        pass;
     
     if counter == 0 :
         
@@ -238,7 +213,6 @@ class CroppingROI():
         cv2.destroyAllWindows();
         for i in range (1,5):
             cv2.waitKey(1);
-        # cv2.destroyAllWindows();
     
     def clickAndCrop(self, event, x, y, flags, param):
         

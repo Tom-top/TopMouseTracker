@@ -38,8 +38,8 @@ segmentationParameters = {
                 "minDist" : 3.0,
                 "showStream" : False,
                 "saveStream" : False,
-                "cageLength" : 25.,
-                "cageWidth" : 50.,
+                "cageLength" : 50.,
+                "cageWidth" : 25.,
                 "playSound" : True,
                 };
 

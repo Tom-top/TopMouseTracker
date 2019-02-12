@@ -115,7 +115,8 @@ class TopMouseTracker():
         #Selects only the ROI part of the image for future analysis
         #----------------------------------------------------------------------------------------------------------------------------------
         
-        self.distanceRatio = abs(self.upLeftX-self.lowRightX)/self._args["cageLength"]; #Defines the resizing factor for the cage
+        self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["cageLength"]+\
+                              abs(self.upLeftY-self.lowRightY)/self._args["cageWidth"])/2; #Defines the resizing factor for the cage
         
         self.croppedFrame = self.RGBFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
         
