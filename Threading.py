@@ -195,6 +195,12 @@ class VideoWriter(threading.Thread):
                     
                     self.tEverySecond = self.tCurr;
                     self.framesEverySecond = 0;
+                    
+                cv2.imshow("frame",self.frame);
+                
+                if cv2.waitKey(1) & 0XFF == ord("q") :
+                    
+                    break;
                 
         self.writer.release();
     

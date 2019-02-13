@@ -11,6 +11,8 @@ Created on Tue Feb  5 13:29:39 2019
 
 import os;
 import cv2;
+import threading;
+import Queue;
 import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
@@ -80,3 +82,30 @@ Kinect.PlayAndSave(display=True,parallel=False,samplingTime=samplingTime);
 
 
 #%%###########################################################################
+#THREADING TEST
+##############################################################################
+
+import TopMouseTracker.Threading as thread;
+
+RGB_Queue = Queue.Queue();
+DEPTH_Queue = Queue.Queue();
+
+MetaData = thread.MetaData();
+
+RGB_Grabber = thread.ImageGrabber(kinectParameters["kinectRGB"], "rgb", RGB_Queue);
+DEPTH_Grabber = thread.ImageGrabber(kinectParameters["kinectDEPTH"], "depth", DEPTH_Queue);
+
+RGB_Writer = thread.VideoWriter(MetaData.RGBWriter,RGB_Queue);
+DEPTH_Writer = thread.VideoWriter(MetaData.DEPTHWriter,DEPTH_Queue);
+
+RGB_Grabber.start();
+DEPTH_Grabber.start();
+
+RGB_Writer.start();
+DEPTH_Writer.start();
+
+RGB_Grabber.join();
+DEPTH_Grabber.join();
+
+RGB_Writer.join();
+DEPTH_Writer.join();
