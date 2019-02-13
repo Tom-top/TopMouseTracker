@@ -32,7 +32,7 @@ class TopMouseTracker():
         #----------------------------------------------------------------------
         self._args = kwargs; #Arguments
         self._mouse = self._args["main"]["mouse"]; #Name of the mouse
-        self._testFrameRGB = self._args["main"]["testFrameRGB"].copy(); #A test RGB frame for ROI setup
+        self._testFrameRGB = self._args["main"]["testFrameRGB"][0].copy(); #A test RGB frame for ROI setup
         self._H, self._W, self._D = self._testFrameRGB.shape; #Height, Width and Depth of the RGB frames
         self.metaDataSize = 750;
         self._registrationResize = 2.95 #Parameters for resizing of the depth image for registration
@@ -116,7 +116,7 @@ class TopMouseTracker():
             
             self.videoString = "Tracking_{0}.avi".format(self._mouse);
             self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["workingDir"],\
-                                self.videoString), self._args["fourcc"], self._framerate,\
+                                self.videoString), self._args["saving"]["fourcc"], self._framerate,\
                                 (self._W+self.metaDataSize,self._H));
         
         
@@ -127,7 +127,7 @@ class TopMouseTracker():
         Output : _refPt (tuple) : tuple of top-right and low-left coordinates of the ROI
         '''
         
-        self._refPt = IO.CroppingROI(self._args["testFrame"][0].copy()).roi(); #Defining the ROI for segmentation
+        self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"][0].copy()).roi(); #Defining the ROI for segmentation
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -139,8 +139,8 @@ class TopMouseTracker():
         
         #Get frame from capture
         #----------------------------------------------------------------------
-        self.RGBFrame = next(self._args["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
-        self.DEPTHFrame = next(self._args["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
+        self.RGBFrame = next(self._args["main"]["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
+        self.DEPTHFrame = next(self._args["main"]["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
         
         self.frameNumber += 1; #Increments the frame number variable
         self.curTime = self.frameNumber/self._framerate; #Sets the time
@@ -165,7 +165,7 @@ class TopMouseTracker():
         self.RunSegmentationMouse(); #Runs the mouse segmentation on the ROI
         self.RunSegmentationCotton(); #Runs the cotton segmentation on the ROI
         
-        if self._args["showStream"] or self._args["saveStream"] :
+        if self._args["display"]["showStream"] or self._args["saving"]["saveStream"] :
 
             self.CreateDisplay();
             
@@ -178,8 +178,8 @@ class TopMouseTracker():
         
         self.cloneFrame = self.RGBFrame.copy(); #[DISPLAY ONLY] Creates a clone frame for display purposes
         
-        self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["cageLength"]+\
-                              abs(self.upLeftY-self.lowRightY)/self._args["cageWidth"])/2; #Defines the resizing factor for the cage
+        self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["segmentation"]["cageLength"]+\
+                              abs(self.upLeftY-self.lowRightY)/self._args["segmentation"]["cageWidth"])/2; #Defines the resizing factor for the cage
         
         self.croppedFrame = self.RGBFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
 
@@ -191,9 +191,9 @@ class TopMouseTracker():
         
         self.hsvFrame = cv2.cvtColor(self.croppedFrame, cv2.COLOR_BGR2HSV); #Changes the croppedFrame LUT to HSV for segmentation
         self.blur = cv2.blur(self.hsvFrame,(5,5)); #Applies a Gaussian Blur to smoothen the image
-        self.maskMouse = cv2.inRange(self.blur, self._args["threshMinMouse"], self._args["threshMaxMouse"]); #Thresholds the image to binary
-        self.openingMouse = cv2.morphologyEx(self.maskMouse,cv2.MORPH_OPEN,self._args["kernel"], iterations = 1); #Applies opening operation to the mask for dot removal
-        self.closingMouse = cv2.morphologyEx(self.openingMouse,cv2.MORPH_CLOSE,self._args["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
+        self.maskMouse = cv2.inRange(self.blur, self._args["segmentation"]["threshMinMouse"], self._args["segmentation"]["threshMaxMouse"]); #Thresholds the image to binary
+        self.openingMouse = cv2.morphologyEx(self.maskMouse,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 1); #Applies opening operation to the mask for dot removal
+        self.closingMouse = cv2.morphologyEx(self.openingMouse,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
         self.cnts = cv2.findContours(self.closingMouse.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
         
         #Finding the Mouse
@@ -204,7 +204,7 @@ class TopMouseTracker():
             self.biggestContour = max(self.cnts, key=cv2.contourArea); #Finds the biggest contour of the binary mask
             self.area = cv2.contourArea(self.biggestContour); #Computes the area of the biggest object from the binary mask
             
-            if self.area > self._args["minAreaMask"] and self.area < self._args["maxAreaMask"] : #Future computation is done only if the area of the detected object is meaningful
+            if self.area > self._args["segmentation"]["minAreaMask"] and self.area < self._args["segmentation"]["maxAreaMask"] : #Future computation is done only if the area of the detected object is meaningful
                 
                 ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(self.biggestContour);
                 self.M = cv2.moments(self.biggestContour); #Computes the Moments of the detected object
@@ -229,9 +229,9 @@ class TopMouseTracker():
         #Filtering the ROI from noise
         #----------------------------------------------------------------------------------------------------------------------------------
 
-        self.maskCotton = cv2.inRange(self.blur, self._args["threshMinCotton"], self._args["threshMaxCotton"]); #Thresholds the image to binary
-        self.openingCotton = cv2.morphologyEx(self.maskCotton,cv2.MORPH_OPEN,self._args["kernel"], iterations = 2); #Applies opening operation to the mask for dot removal
-        self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
+        self.maskCotton = cv2.inRange(self.blur, self._args["segmentation"]["threshMinCotton"], self._args["segmentation"]["threshMaxCotton"]); #Thresholds the image to binary
+        self.openingCotton = cv2.morphologyEx(self.maskCotton,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 2); #Applies opening operation to the mask for dot removal
+        self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 1); #Applies closing operation to the mask for large object filling
         self.cntsCotton = cv2.findContours(self.closingCotton.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
         
         self.objectIntensities = []; #List that will hold all the information about the detected contours
@@ -387,7 +387,7 @@ class TopMouseTracker():
                 self.realTimeSpeed = sqrt((self.realTimePosition[1][0]-self.realTimePosition[0][0])**2+\
                                       (self.realTimePosition[1][1]-self.realTimePosition[0][1])**2)/self.distanceRatio; #Computes distance
     
-                if self.realTimeSpeed >= self._args["minDist"] : #If the distance is higher than the minimal distance (filtering for movement noise)
+                if self.realTimeSpeed >= self._args["segmentation"]["minDist"] : #If the distance is higher than the minimal distance (filtering for movement noise)
                     
                     self._distance += (self.realTimeSpeed); #Adds the value to the cumulative distance varaible
            
@@ -418,7 +418,7 @@ class TopMouseTracker():
         
         self._errors += 1;
         
-        if self._args["showStream"] :
+        if self._args["display"]["showStream"] :
             
             if self._errors == 1 :
                 
@@ -432,7 +432,7 @@ class TopMouseTracker():
                 
     def ReturnTracking(self) :
         
-        if self._args["showStream"] :
+        if self._args["display"]["showStream"] :
             
             try :
                 
@@ -450,7 +450,7 @@ def TopTracker(data,**kwargs) :
     
     Tracker = data; #Initialize all variables
 
-    for capture in kwargs["capturesRGB"] :
+    for capture in kwargs["main"]["capturesRGB"] :
     
         #Starts segmentation#W+700
         while(True):
@@ -483,7 +483,7 @@ def TopTracker(data,**kwargs) :
                     Tracker.frameNumber = 0;
                     break;
 
-            if kwargs["showStream"] :
+            if kwargs["display"]["showStream"] :
                 
                 if tracker != [] :
                     
@@ -494,7 +494,7 @@ def TopTracker(data,**kwargs) :
                         
         cv2.destroyAllWindows();
         
-        if kwargs["saveStream"] :
+        if kwargs["saving"]["saveStream"] :
             
             data.videoWriter.release();
 

@@ -67,7 +67,7 @@ trackerParameters = {
 # Loading images to memory#
 ##############################################################################
 
-mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["testFrameRGB"] = IO.VideoLoader(_workingDir,**segmentationParameters);
+mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["testFrameRGB"] = IO.VideoLoader(_workingDir,**mainParameters);
 
 #%%###########################################################################
 #Initializes the tracker object#
@@ -75,7 +75,7 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["
 
 mainParameters["mouse"] = "217";
 
-data = tracker.TopMouseTracker(**segmentationParameters);
+data = tracker.TopMouseTracker(**trackerParameters);
 
 #%%############################################################################
 #Creating ROI for analysis#
@@ -87,7 +87,7 @@ data.SetROI();
 #Launch segmentation on video(s)#
 ###############################################################################  
 
-tracker.TopTracker(data,**segmentationParameters);
+tracker.TopTracker(data,**trackerParameters);
 
 #%%############################################################################
 #Save segmentation results
