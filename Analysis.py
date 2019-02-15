@@ -143,10 +143,10 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-    def CompleteTrackingPlot(self,res,cBefore='b',cAfter='r',limit=6,save=False) :
+    def CompleteTrackingPlot(self,cBefore='b',cAfter='r') :
         
         fig = plt.figure(figsize=(20,10));
-        fig.suptitle("Tracking Mouse {0}".format(self._args["mouse"]), fontsize = 12, y = 0.97);
+        fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
 
         ax0 = plt.subplot2grid((3, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
@@ -172,8 +172,8 @@ class Plot(tracker.TopMouseTracker) :
         ax2.set_title("Mask area over time", fontsize = 10);
         ax2.set_ylabel("Mask area (px^2)");
         ax2.set_xlabel("time (h)");
-        ax2.set_xticks(np.arange(0,limit*3600*self._framerate,100000));
-        ax2.set_xticklabels(np.arange(0,limit+1,1));
+        ax2.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
+        ax2.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
         
         ax3 = plt.subplot2grid((3, 4), (0, 0), rowspan=3, colspan=3);
         
@@ -185,29 +185,29 @@ class Plot(tracker.TopMouseTracker) :
         
         self.posBefore = self._positions[0:self._tStartBehav*self._framerate];
         
-        if len(self.posBefore) >= limit*3600*self._framerate :
-            self.posBefore = self._positions[0:limit*3600*self._framerate];
+        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
+            self.posBefore = self._positions[0:self._args["plot"]["limit"]*3600*self._framerate];
         
         self.posAfter = self._positions[self._tStartBehav*self._framerate:self._Length*self._framerate];
         
-        if len(self.posBefore)+len(self.posAfter) >= limit*3600*self._framerate :
-            self.posAfter = self._positions[self._tStartBehav*self._framerate:limit*3600*self._framerate];
+        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
+            self.posAfter = self._positions[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
         
-        self.filteredPosBefore = self.posBefore[0::res];
-        self.filteredPosAfter = self.posAfter[0::res];
+        self.filteredPosBefore = self.posBefore[0::self._args["plot"]["res"]];
+        self.filteredPosAfter = self.posAfter[0::self._args["plot"]["res"]];
         
         self.befPlot = ax3.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-',markersize=1,alpha=0.5,color='blue',label='Before Initiation');
         self.aftPlot = ax3.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-',markersize=1,alpha=0.5,color='red',label='After Initiation');
         
         self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._tStartBehav*self._framerate]);
         
-        if len(self.posBefore) >= limit*3600*self._framerate :
-            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:limit*3600*self._framerate]);
+        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
+            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._args["plot"]["limit"]*3600*self._framerate]);
             
         self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:self._Length*self._framerate]);
             
-        if len(self.posBefore)+len(self.posAfter) >= limit*3600*self._framerate :
-            self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:limit*3600*self._framerate]);
+        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
+            self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate]);
                     
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100);
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100);
@@ -237,9 +237,9 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-        if save :
+        if self._args["plot"]["save"] :
             
-            plt.savefig(os.path.join(self._args["baseDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
+            plt.savefig(os.path.join(self._args["main"]["workingDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
         
     def HeatMapPlot(self,gridsize) :
         
