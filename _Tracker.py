@@ -102,6 +102,8 @@ class TopMouseTracker():
         self._Start = None; #Time at which the segmentation starts
         self._End = None; #Time at which the segmentation ends
         self._mouse = self._args["main"]["mouse"]; #Loads the name of the mouse
+        self._cageWidth = self._args["segmentation"]["cageWidth"];
+        self._cageLength = self._args["segmentation"]["cageLength"];
         self._testFrameRGB = self._args["main"]["testFrameRGB"][0].copy(); #Loads a test RGB frame
         self._H_RGB, self._W_RGB = self._testFrameRGB.shape[0], self._testFrameRGB.shape[1]; #Height, Width of the RGB frames
         self._testFrameDEPTH = self._args["main"]["testFrameDEPTH"][0].copy(); #Loads a test DEPTH frame

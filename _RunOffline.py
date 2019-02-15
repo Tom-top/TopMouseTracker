@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt;
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker.IO as IO;
-import TopMouseTracker.Tracker as tracker;
+import TopMouseTracker._Tracker as tracker;
+import TopMouseTracker.Analysis as analysis;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
@@ -59,11 +60,20 @@ savingParameters = {
         "resizeTracking" : 4.,
         };
         
+plotParameters = {
+                "minDist" : 0.5,
+                "maxDist" : 10,
+                "res" : 1,
+                "limit" : 6.,
+                "gridsize" : 100,
+                };
+        
 trackerParameters = {
         "main" : mainParameters,
         "segmentation" : segmentationParameters,
         "display" : displayParameters,
         "saving" : savingParameters,
+        "plot" : plotParameters,
         };
         
 #%%###########################################################################
@@ -94,34 +104,10 @@ data.SetROI();
 tracker.TopTracker(data,**trackerParameters);
 
 #%%############################################################################
-#Save segmentation results
-###############################################################################  
-
-tracker.SaveTracking(data,_workingDir); 
-
-#%%############################################################################
 #Plotting and Analysis
 ###############################################################################  
-
-workDir = os.path.join(baseDir,"181217-201");                   
-videoDir = os.path.join(workDir, "Raw_Data/");
-resultDir = os.path.join(videoDir,"Results/");
-
-PlotParameters = {
-                "baseDir" : segmentationParameters["baseDir"],
-                "directory" : videoDir+'Results',
-                "mouse" : "201",
-                "cageLength" : 21.8,
-                "cageWidth" : 36.4,
-                "minDist" : 0.5,
-                "maxDist" : 10,
-                "framerate" : segmentationParameters["framerate"],
-                "gridsize" : 100,
-                };
         
-Plot = analysis.Plot(**PlotParameters);
-
-res = 1;
+Plot = analysis.Plot(**trackerParameters);
 
 #Plot.CheckTracking();
 Plot.CompleteTrackingPlot(res,limit=6,save=True);
