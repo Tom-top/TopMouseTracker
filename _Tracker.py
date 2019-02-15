@@ -164,7 +164,7 @@ class TopMouseTracker():
                                          
             self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["workingDir"],\
                                 self.videoString), self._args["saving"]["fourcc"], self._framerate,\
-                                (self.testCanvas.shape[1],self.testCanvas.shape[0]));
+                                (self.testCanvas.shape[0],self.testCanvas.shape[1]));
     
     def SetRegistrationParameters(self) : 
         
@@ -210,7 +210,7 @@ class TopMouseTracker():
 
                 videoInfoWorkbook = pd.read_excel(path2File,header=None); #Load video info excel sheet
                 
-            if fnmatch.fnmatch(file, 'MetaData*.xlsx'): 
+            if fnmatch.fnmatch(file, 'MetaData*.xls'): 
                 
                 metaDataWorkbook = pd.read_excel(path2File,header=None); #Load video info excel sheet
         
@@ -239,7 +239,7 @@ class TopMouseTracker():
             
             head = str(line[0]);
             
-            if head == "TimeStamp" :
+            if head == "Time_Stamp" :
                 
                 self._date = line[1];
                 
@@ -247,7 +247,7 @@ class TopMouseTracker():
                 
                 self._elapsedTime = line[1];
                 
-            elif head == "Framerate" :
+            elif head == "Real_Framerate" :
                 
                 self._framerate = line[1];
                 
@@ -307,8 +307,11 @@ class TopMouseTracker():
     def RunSegmentations(self) :
         
         self.RunSegmentationMouse(); #Runs the mouse segmentation on the ROI
-        self.RegisterDepth();
-        self.RunSegmentationCotton(); #Runs the cotton segmentation on the ROI
+        
+        if self._args["saving"]["segmentCotton"] :
+        
+            self.RegisterDepth();
+            self.RunSegmentationCotton(); #Runs the cotton segmentation on the ROI
         
         if self._args["display"]["showStream"] or self._args["saving"]["saveStream"] :
 
@@ -497,61 +500,64 @@ class TopMouseTracker():
                     self.textFontSize,
                     (255,255,255),
                     self.textFontThickness); #Displays the mouse speed in real-time
+                    
+        if self._args["saving"]["segmentCotton"] : 
         
-        #Writes the fourth information
-        #----------------------------------------------------------------------   
-        cv2.putText(self.metaDataDisplay,
-                    '{0} obj; height : {1}'.format(self.largeObjects,self.averagePixelIntensity),
-                    (8,pos+70*3),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    self.textFontSize,
-                    (255,255,255),
-                    self.textFontThickness); #Displays the number of cotton objects detected
-        
-        #Writes the fifth information
-        #----------------------------------------------------------------------
-        
-        #If a nest is detected
-        if self.cntNest != None :
-            
+            #Writes the fourth information
+            #----------------------------------------------------------------------   
             cv2.putText(self.metaDataDisplay,
-                        'Nest Detected',
-                        (8,pos+70*4),
+                        '{0} obj; height : {1}'.format(self.largeObjects,self.averagePixelIntensity),
+                        (8,pos+70*3),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         self.textFontSize,
-                        (0,255,0),
-                        self.textFontThickness); #Displays the current status of nest detection
-                        
-            cv2.drawContours(self.maskDisplay, self.cntsCotton, self.cntNest, (255,255,0), self.contourThickness); #Draws the contour of the nest
+                        (255,255,255),
+                        self.textFontThickness); #Displays the number of cotton objects detected   
+                    
+            #Writes the fifth information
+            #----------------------------------------------------------------------
             
-            self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
-            cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+            #If a nest is detected
+            if self.cntNest != None :
+                
+                cv2.putText(self.metaDataDisplay,
+                            'Nest Detected',
+                            (8,pos+70*4),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            self.textFontSize,
+                            (0,255,0),
+                            self.textFontThickness); #Displays the current status of nest detection
+                            
+                cv2.drawContours(self.maskDisplay, self.cntsCotton, self.cntNest, (255,255,0), self.contourThickness); #Draws the contour of the nest
+                
+                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+                
+    #            for cnt in self.cntLarge :
+    #                if cnt != self.cntNest :
+    #                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+                
+    #            for cnt in range(len(self.cntsCotton)) :
+    #                if cnt != self.cntNest :
+    #                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
             
-#            for cnt in self.cntLarge :
-#                if cnt != self.cntNest :
-#                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+            #If no nest is detected
             
-#            for cnt in range(len(self.cntsCotton)) :
-#                if cnt != self.cntNest :
-#                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
-        
-        #If no nest is detected
-        else : 
-            
-            cv2.putText(self.metaDataDisplay,
-                        'No Nest',
-                        (8,pos+70*4),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        self.textFontSize,
-                        (0,0,255),
-                        self.textFontThickness); #Displays the current status of nest detection
-                        
-            self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
-            cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
-            
-#            for cnt in self.cntLarge :
-#                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
-            #cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness); #Draws all the cotton contours that are not the nest
+            else : 
+                
+                cv2.putText(self.metaDataDisplay,
+                            'No Nest',
+                            (8,pos+70*4),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            self.textFontSize,
+                            (0,0,255),
+                            self.textFontThickness); #Displays the current status of nest detection
+                            
+                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+                
+    #            for cnt in self.cntLarge :
+    #                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+                #cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness); #Draws all the cotton contours that are not the nest
         
         
         #Writes the sixth information
@@ -774,19 +780,24 @@ def SaveTracking(Tracker,**kwargs) :
     sheet.write(0, 1, kwargs["main"]["mouse"]);
     
     sheet.write(1, 0, "refPt");
-    sheet.write(1, 1, Tracker._refPt);
+    sheet.write(1, 1, "[({0},{1}),({2},{3})]".format(Tracker._refPt[0][0],\
+                        Tracker._refPt[0][1],Tracker._refPt[1][0],Tracker._refPt[1][1]));
     
     sheet.write(2, 0, "ThreshMinMouse");
-    sheet.write(2, 1, kwargs["segmentation"]["threshMinMouse"]);
+    sheet.write(2, 1, "[{0},{1},{2}]".format(kwargs["segmentation"]["threshMinMouse"][0],\
+                kwargs["segmentation"]["threshMinMouse"][1],kwargs["segmentation"]["threshMinMouse"][2]));
     
     sheet.write(3, 0, "ThreshMaxMouse");
-    sheet.write(3, 1, kwargs["segmentation"]["threshMaxMouse"]);
+    sheet.write(3, 1, "[{0},{1},{2}]".format(kwargs["segmentation"]["threshMaxMouse"][0],\
+                kwargs["segmentation"]["threshMaxMouse"][1],kwargs["segmentation"]["threshMaxMouse"][2]));
     
     sheet.write(4, 0, "threshMinCotton");
-    sheet.write(4, 1, kwargs["segmentation"]["threshMinCotton"]);
+    sheet.write(4, 1, "[{0},{1},{2}]".format(kwargs["segmentation"]["threshMinCotton"][0],\
+                kwargs["segmentation"]["threshMinCotton"][1],kwargs["segmentation"]["threshMinCotton"][2]));
     
     sheet.write(5, 0, "threshMaxCotton");
-    sheet.write(5, 1, kwargs["segmentation"]["threshMaxCotton"]);
+    sheet.write(5, 1, "[{0},{1},{2}]".format(kwargs["segmentation"]["threshMaxCotton"][0],\
+                kwargs["segmentation"]["threshMaxCotton"][1],kwargs["segmentation"]["threshMaxCotton"][2]));
     
     sheet.write(6, 0, "ElapsedTime");
     sheet.write(6, 1, Tracker._End-Tracker._Start);

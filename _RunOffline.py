@@ -19,7 +19,7 @@ import TopMouseTracker.Analysis as analysis;
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
 _resultDir = os.path.join(_mainDir,"TopMouseTracker");
-_workingDir = os.path.join(_resultDir,"190207-01");
+_workingDir = os.path.join(_resultDir,"14-2-2019_9-27-36");
 
 utils.CheckDirectoryExists(_resultDir);
 
@@ -30,11 +30,11 @@ mainParameters = {"resultDir" : _resultDir,
                   "capturesDEPTH" : None,
                   "testFrameRGB" : None,
                   "testFrameDEPTH" : None,
-                  "playSound" : True,
+                  "playSound" : False,
                   };
                   
 segmentationParameters = {
-                "threshMinMouse" : np.array([0, 0, 0],np.uint8),
+                "threshMinMouse" : np.array([100, 70, 0],np.uint8),
                 "threshMaxMouse" : np.array([179, 255, 50],np.uint8),
                 "threshMinCotton" : np.array([0, 20, 150],np.uint8),
                 "threshMaxCotton" : np.array([110, 105, 250],np.uint8),
@@ -55,9 +55,10 @@ displayParameters = {
 savingParameters = {
         "framerate" : None,
         "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
+        "segmentCotton" : False,
         "saveStream" : True,
-        "saveCottonMask" : True,
-        "resizeTracking" : 4.,
+        "saveCottonMask" : False,
+        "resizeTracking" : 2.,
         };
         
 plotParameters = {
@@ -88,7 +89,7 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
 #Initializes the tracker object#
 ##############################################################################
 
-mainParameters["mouse"] = "217";
+mainParameters["mouse"] = "1";
 
 data = tracker.TopMouseTracker(**trackerParameters);
 
@@ -96,7 +97,7 @@ data = tracker.TopMouseTracker(**trackerParameters);
 #Creating ROI for analysis#
 ###############################################################################
 
-data.SetROI();    
+data.SetROI();
    
 #%%############################################################################
 #Launch segmentation on video(s)#
