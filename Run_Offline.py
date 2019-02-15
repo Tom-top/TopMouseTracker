@@ -28,32 +28,34 @@ mainParameters = {"resultDir" : _resultDir,
                   "capturesRGB" : None,
                   "capturesDEPTH" : None,
                   "testFrameRGB" : None,
+                  "testFrameDEPTH" : None,
                   "playSound" : True,
                   };
                   
 segmentationParameters = {
-                "threshMinRGB" : np.array([0, 0, 0],np.uint8),
-                "threshMaxRGB" : np.array([179, 255, 80],np.uint8),
-                "threshMinCotton" : np.array([0, 50, 130],np.uint8),
-                "threshMaxCotton" : np.array([110, 130, 200],np.uint8),
+                "threshMinMouse" : np.array([0, 0, 0],np.uint8),
+                "threshMaxMouse" : np.array([179, 255, 50],np.uint8),
+                "threshMinCotton" : np.array([0, 20, 150],np.uint8),
+                "threshMaxCotton" : np.array([110, 105, 250],np.uint8),
                 "kernel" : np.ones((5,5),np.uint8),
                 "minAreaMask" : 1000.0,
                 "maxAreaMask" : 8000.0,
-                "minDist" : 0.2,
-                "minCottonSize" : 300.,
+                "minDist" : 0.3,
+                "minCottonSize" : 1000.,
                 "nestCottonSize" : 20000.,
                 "cageLength" : 50.,
                 "cageWidth" : 25.,
                 };
         
 displayParameters = {
-        "showStream" : True,
+        "showStream" : False,
         };
         
 savingParameters = {
         "framerate" : None,
         "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
         "saveStream" : True,
+        "saveCottonMask" : True,
         };
         
 trackerParameters = {
@@ -67,7 +69,8 @@ trackerParameters = {
 # Loading images to memory#
 ##############################################################################
 
-mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["testFrameRGB"] = IO.VideoLoader(_workingDir,**segmentationParameters);
+mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
+ mainParameters["testFrameRGB"], mainParameters["testFrameDEPTH"] = IO.VideoLoader(_workingDir,**mainParameters);
 
 #%%###########################################################################
 #Initializes the tracker object#
@@ -75,7 +78,7 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"], mainParameters["
 
 mainParameters["mouse"] = "217";
 
-data = tracker.TopMouseTracker(**segmentationParameters);
+data = tracker.TopMouseTracker(**trackerParameters);
 
 #%%############################################################################
 #Creating ROI for analysis#
@@ -87,14 +90,68 @@ data.SetROI();
 #Launch segmentation on video(s)#
 ###############################################################################  
 
-tracker.TopTracker(data,**segmentationParameters);
+tracker.TopTracker(data,**trackerParameters);
+
+#%%
+
+
+from matplotlib.widgets import MultiCursor
+
+data.depthFrame = cv2.resize(data.DEPTHFrame,(0,0),fx = data._resizingFactorRegistration,fy = data._resizingFactorRegistration)
+        
+data._H_DEPTH_RESIZED,data._W_DEPTH_RESIZED = data.depthFrame.shape[0],data.depthFrame.shape[1]
+
+start_X = 0;
+end_X = start_X+data._H_DEPTH_RESIZED;
+start_Y = 295;
+end_Y = start_Y+data._W_DEPTH_RESIZED;
+
+if end_X >= data._H_RGB :
+    end_X_foreground = data._H_RGB-start_X;
+else :
+    end_X_foreground = data._H_RGB;
+    
+if end_Y >= data._W_RGB :
+    end_Y_foreground = data._W_RGB-start_Y;
+else : 
+    end_Y_foreground = data._W_RGB;
+
+start_X_foreground = 100;
+start_Y_foreground = 0;
+
+if start_X_foreground != 0 :
+    end_X = end_X-start_X_foreground
+    end_X_foreground = end_X_foreground+start_X_foreground
+if start_Y_foreground != 0 :
+    end_Y = end_Y-start_Y_foreground
+    end_Y_foreground = end_Y_foreground+start_Y_foreground
+    
+registeredDepth = np.zeros([data._H_RGB,data._W_RGB,3],dtype=np.uint8);
+
+data.blend = cv2.addWeighted(data.depthFrame[start_X_foreground:end_X_foreground,start_Y_foreground:end_Y_foreground,:],
+                1,
+                registeredDepth[start_X:end_X,start_Y:end_Y,:],
+                0,
+                0,
+                registeredDepth);
+                        
+registeredDepth[start_X:end_X,start_Y:end_Y,:] = data.blend; 
+
+croppedFrameDEPTH = registeredDepth[data.upLeftY:data.lowRightY,data.upLeftX:data.lowRightX]; #Crops the initial frame to the ROI
+cv2.drawContours(croppedFrameDEPTH,data.cntsCotton,-1,(255,0,0))
+
+fig = plt.figure(figsize=(20,10))
+ax1 = plt.subplot(121)
+ax1.imshow(data.croppedFrame)
+ax2 = plt.subplot(122,sharex=ax1,sharey=ax1)
+ax2.imshow(croppedFrameDEPTH)
+multi = MultiCursor(fig.canvas, (ax1, ax2), horizOn=True, vertOn=True, color='r', lw=1)
 
 #%%############################################################################
 #Save segmentation results
 ###############################################################################  
 
-tracker.SaveTracking(data,videoDir); 
-#tracker.SaveStream(data,videoDir);
+tracker.SaveTracking(data,_workingDir); 
 
 #%%############################################################################
 #Plotting and Analysis

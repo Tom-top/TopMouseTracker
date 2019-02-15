@@ -121,10 +121,13 @@ def VideoLoader(directory,**kwargs) :
         testFrame (array) : test frame that is loaded for the croppingROI function
     '''
     
-    counter = 0;
+    RGBTrigger = False;
+    DEPTHTrigger = False;
+    
     RGBCaptures = [];
     DEPTHCaptures = [];
-    testFrame = [];
+    RGBTestFrame = [];
+    DEPTHTestFrame = [];
     
     for file in natsorted(os.listdir(directory)) :
         
@@ -139,9 +142,9 @@ def VideoLoader(directory,**kwargs) :
                 frame = next(cap);
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
                     
-                if counter == 0 :
-                    testFrame.append(frame);
-                    counter+=1;
+                if not RGBTrigger :
+                    RGBTestFrame.append(frame);
+                    RGBTrigger = True;
 
                 utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                       
@@ -158,6 +161,12 @@ def VideoLoader(directory,**kwargs) :
                 cap = skvideo.io.vreader(os.path.join(directory,file));
                 DEPTHCaptures.append(cap);
                 
+                frame = next(cap);
+                
+                if not DEPTHTrigger :
+                    DEPTHTestFrame.append(frame);
+                    DEPTHTrigger = True;
+                
                 utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                       
                 if kwargs["playSound"] :
@@ -167,11 +176,11 @@ def VideoLoader(directory,**kwargs) :
                     except :
                         pass;
     
-    if counter == 0 :
+    if not RGBTrigger and not DEPTHTrigger:
         
         utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found","darkred");
             
-    return RGBCaptures,DEPTHCaptures,testFrame;
+    return RGBCaptures,DEPTHCaptures,RGBTestFrame,DEPTHTestFrame;
 
 
 class CroppingROI():
