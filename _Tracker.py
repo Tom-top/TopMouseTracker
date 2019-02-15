@@ -12,6 +12,7 @@ import time;
 import numpy as np;
 import pandas as pd;
 import fnmatch;
+import xlwt;
 from math import sqrt;
 
 import TopMouseTracker.Parameters as params;
@@ -20,9 +21,76 @@ import TopMouseTracker.IO as IO;
 
 class TopMouseTracker():
     
-    '''Class that holds all parameters usefull for the segmentation and launches the tracker
+    '''Main tracking class :
+        
+       Methods :
+           
+           • __init__ : Sets all the parameters usefull for the tracking,
+           displaying and saving processes.
+           
+           • SetRegistrationParameters : Computes and sets variables for depth 
+           registration based on the size of RGB and DEPTH images.
+           
+           • SetMetaDataParameters : Loads all the metadata from excel files : 
+           The 'Mice_Video_Info.xlsx' file that contains all timing data for 
+           each animal. The 'MetaData*.xlsx' file that contains all video meta-
+           data.
+           
+           • SetROI : Displays the first frame from the video for the user to
+           select the ROI where the segmentation has to run. Press 'r' to reset
+           the ROI; Press 'c' to set the ROI.
+           
+           • Main : Retrieves the next RGB and DEPTH frames and runs the
+           segmentation on them.
+           
+           • RunSegmentations : Wrapper to run the Mouse segmentation, the DEPTH
+           registration, and the Cotton segmentation in one method call
+           
+           • RunSegmentationMouse : Segments the Mouse position. Steps :
+               
+               1) RGB --> HSV (Hue, Saturation, Value) LUT conversion
+               2) Gaussian blur
+               3) Binarization based on HSV parameters
+               4) Opening to filter salt and pepper noise
+               5) Closing to fill the objects with holes
+               6) Contour detection on the binary mask
+               7) Detection of the biggest contour
+               8) Computation of the centroid of the largest detected object
     
-    Params :
+           • RunSegmentationCotton : Segments the Cotton average height. Steps :
+               
+               * Using the blurred HSV image from RunSegmentationMouse Method
+               1) Binarization based on HSV parameters
+               2) Opening to filter salt and pepper noise
+               3) Closing to fill the objects with holes
+               4) Contour detection on the binary mask
+               5) Bitwise AND operation between binary mask and registered depth
+               6) Computing the average height values of the pixels inside the Bitwise AND mask
+               7) Computing the number of Large/Small objects based on contour area sizes
+    
+           • RegisterDepth : Registers DEPTH image onto the RGB image
+           
+           • CreateDisplay : Creates the canvas for the segmentation display
+           and saving
+           
+           • WriteDisplay : Writes metadata information on the created canvas 
+           
+           • SaveTracking : Saves tracking as a video
+           
+           • ComputeDistanceTraveled : Computes the distance travelled between 
+           the previous and the current position in (cm)
+           
+           • UpdatePosition : Updates the position of the mouse 
+           
+           • StorePosition : Stores the position of the mouse
+           
+           • Error : Stores the number of times that the program failed to detect
+           the Mouse
+           
+           • ReturnTracking : Returns the tracking canvas for display purposes
+           
+    Parameters :
+        
         **kwargs (dict) : dictionnary with all the parameters useful for the tracker
     '''
     
@@ -31,6 +99,8 @@ class TopMouseTracker():
         #General variables
         #----------------------------------------------------------------------
         self._args = kwargs; #Loads the main arguments
+        self._Start = None; #Time at which the segmentation starts
+        self._End = None; #Time at which the segmentation ends
         self._mouse = self._args["main"]["mouse"]; #Loads the name of the mouse
         self._testFrameRGB = self._args["main"]["testFrameRGB"][0].copy(); #Loads a test RGB frame
         self._H_RGB, self._W_RGB = self._testFrameRGB.shape[0], self._testFrameRGB.shape[1]; #Height, Width of the RGB frames
@@ -78,16 +148,21 @@ class TopMouseTracker():
         
         #Saving variables
         #----------------------------------------------------------------------
-        self._time = time.localtime(time.time());
         self._startSaving = False;
         self._startSavingMask = False;
         
         if self._args["saving"]["saveStream"] :
             
             self.videoString = "Tracking_{0}.avi".format(self._mouse);
+            
+            self.testCanvas = np.zeros((self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
+            self.testCanvas = cv2.resize(self.testCanvas, (0,0),\
+                                 fx = 1./self._args["saving"]["resizeTracking"],\
+                                 fy = 1./self._args["saving"]["resizeTracking"]);
+                                         
             self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["workingDir"],\
                                 self.videoString), self._args["saving"]["fourcc"], self._framerate,\
-                                (self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
+                                (self.testCanvas.shape[1],self.testCanvas.shape[0]));
     
     def SetRegistrationParameters(self) : 
         
@@ -180,11 +255,6 @@ class TopMouseTracker():
         
     def SetROI(self) :
         
-        '''Function to select and set ROI for analysis
-        
-        Output : _refPt (tuple) : tuple of top-right and low-left coordinates of the ROI
-        '''
-        
         self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"][0].copy()).roi(); #Defining the ROI for segmentation
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
@@ -224,36 +294,12 @@ class TopMouseTracker():
             if self.curTime >= self._tStart and self.curTime <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
                 
                 self.RunSegmentations();
-                
-                if self._args["saving"]["saveStream"] :
-                
-                    if not self._startSaving :
-                        
-                        self._startSaving = True;
-                        
-                if self._args["saving"]["saveCottonMask"] :
-                
-                    if not self._startSavingMask :
-                        
-                        self._startSavingMask = True;
 
         elif self.videoNumber != 0 : #If the one of the next videos is being processed
             
             if self.curTime <= self._tEnd[self.videoNumber] : #If the video is not finished
                 
                 self.RunSegmentations();
-                
-                if self._args["saving"]["saveStream"] :
-                
-                    if not self._startSaving :
-                        
-                        self._startSaving = True;
-                        
-                if self._args["saving"]["saveCottonMask"] :
-                
-                    if not self._startSavingMask :
-                        
-                        self._startSavingMask = True;
                 
                     
     def RunSegmentations(self) :
@@ -265,6 +311,18 @@ class TopMouseTracker():
         if self._args["display"]["showStream"] or self._args["saving"]["saveStream"] :
 
             self.CreateDisplay();
+            
+        if self._args["saving"]["saveStream"] :
+                
+            if not self._startSaving :
+                
+                self._startSaving = True;
+                        
+        if self._args["saving"]["saveCottonMask"] :
+        
+            if not self._startSavingMask :
+                
+                self._startSavingMask = True;
      
             
     def RunSegmentationMouse(self) :
@@ -348,11 +406,6 @@ class TopMouseTracker():
         for i in range(len(self.cntsCotton)): #for every detected object as a cotton piece...
 
             area = cv2.contourArea(self.cntsCotton[i]); #Computes its area
-#            canvas = np.zeros_like(self.registeredDepth); #Creates a canvas to draw the individual objects
-#            cv2.drawContours(canvas, self.cntsCotton, i, color=255, thickness=-1); #Draws individual contours on the canvas...
-#
-#            pts = np.where(canvas == 255); #checks where the contours are on the canvas
-#            self.objectIntensities.append(self.registeredDepth[pts[0], pts[1]]); #Appends the information about each object (pixel intensities) to the sink list = self.objectIntensities
             
             if area >= self._args["segmentation"]["minCottonSize"] : #If the area in bigger than a certain threshold
                 
@@ -366,11 +419,6 @@ class TopMouseTracker():
             if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
                 
                 self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
-            
-#        self.averageObjectIntensities = [[sum(x)/len(x) for x in element] for element in self.objectIntensities]; #Computes the average intensity of each pixel of each detected object
-#        self.averageObjectIntensities = [item for sublist in self.averageObjectIntensities for item in sublist];
-# 
-#        self._cottonContours.append(self.objectIntensities); #Appends the list with all the information about the detected contours to the main list holding this info for each frame
                 
     def RegisterDepth(self) :
         
@@ -403,6 +451,10 @@ class TopMouseTracker():
         cv2.rectangle(self.cloneFrame, (self.upLeftX,self.upLeftY), (self.lowRightX,self.lowRightY),(255,0,0), self.contourThickness); #Displays the ROI square on the image
         
         self.hStack = np.hstack((self.metaDataDisplay, self.cloneFrame)); #Generates a horizontal stacked image with useful info and stream
+        
+        self.hStack = cv2.resize(self.hStack, (0,0),\
+                                 fx = 1./self._args["saving"]["resizeTracking"],\
+                                 fy = 1./self._args["saving"]["resizeTracking"]);
         
     def WriteDisplay(self,pos) :
         
@@ -470,9 +522,12 @@ class TopMouseTracker():
                         
             cv2.drawContours(self.maskDisplay, self.cntsCotton, self.cntNest, (255,255,0), self.contourThickness); #Draws the contour of the nest
             
-            for cnt in self.cntLarge :
-                if cnt != self.cntNest :
-                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+            self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+            cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+            
+#            for cnt in self.cntLarge :
+#                if cnt != self.cntNest :
+#                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
             
 #            for cnt in range(len(self.cntsCotton)) :
 #                if cnt != self.cntNest :
@@ -488,9 +543,12 @@ class TopMouseTracker():
                         self.textFontSize,
                         (0,0,255),
                         self.textFontThickness); #Displays the current status of nest detection
+                        
+            self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+            cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
             
-            for cnt in self.cntLarge :
-                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+#            for cnt in self.cntLarge :
+#                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
             #cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness); #Draws all the cotton contours that are not the nest
         
         
@@ -611,6 +669,8 @@ def TopTracker(Tracker,**kwargs) :
     utils.PrintColoredMessage("#########################################################","darkgreen");
     utils.PrintColoredMessage("[INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen");
     utils.PrintColoredMessage("#########################################################","darkgreen");
+                              
+    Tracker._Start = time.time();
 
     for capture in kwargs["main"]["capturesRGB"] :
         
@@ -684,43 +744,58 @@ def TopTracker(Tracker,**kwargs) :
         if kwargs["saving"]["saveCottonMask"] :
             
             Tracker.depthMaskWriter.release();
+            
+        Tracker._End = time.time();
+        
+        SaveTracking(Tracker,**kwargs);
 
-def SaveTracking(data,directory):
-    
-    savingDir = directory+'Results';
-    utils.CheckDirectoryExists(savingDir);
+
+def SaveTracking(Tracker,**kwargs) :
         
     first = 0;
 
-    for point in data._positions :
+    for point in Tracker._positions :
         if point == None :
             first += 1;
     
-    for n,point in enumerate(data._positions) :
+    for n,point in enumerate(Tracker._positions) :
         if point == None :
-            data._positions[n] = data._positions[first];
+            Tracker._positions[n] = Tracker._positions[first];
             
-    np.save(os.path.join(savingDir,'Mouse_Data_All_'+str(data._mouse)+'_Points.npy'),data._positions);
-    np.save(os.path.join(savingDir,'Mouse_Data_All_'+str(data._mouse)+'_refPt.npy'),data._refPt);
-    np.save(os.path.join(savingDir,'Mouse_Data_All_'+str(data._mouse)+'_Areas.npy'),data._maskAreas);
+    metaDataString = "Segmentation_MetaData_{0}".format(Tracker._mouse);
+    metaDataFile = os.path.join(kwargs["main"]["workingDir"],'{0}.xls'.format(metaDataString));
     
-def SaveStream(data,directory):
+    metaData = xlwt.Workbook();
+    sheet = metaData.add_sheet("MetaData");
     
-    savingDir = directory+'Results';
-    utils.CheckDirectoryExists(savingDir);
+    sheet.write(0, 0, "Mouse");
+    sheet.write(0, 1, kwargs["main"]["mouse"]);
     
-    name = 'Tracking_{0}.avi'.format(data._mouse);
-
-    images = data.trackingStream;
-    frame = images[0];
-    _H, _W, _L = frame.shape;
+    sheet.write(1, 0, "refPt");
+    sheet.write(1, 1, Tracker._refPt);
     
-    video = cv2.VideoWriter(os.path.join(savingDir,name), 0, 1, (_W,_H));
+    sheet.write(2, 0, "ThreshMinMouse");
+    sheet.write(2, 1, kwargs["segmentation"]["threshMinMouse"]);
     
-    for image in images:
-        video.write(image);
+    sheet.write(3, 0, "ThreshMaxMouse");
+    sheet.write(3, 1, kwargs["segmentation"]["threshMaxMouse"]);
     
-    cv2.destroyAllWindows();
-    video.release();
-
+    sheet.write(4, 0, "threshMinCotton");
+    sheet.write(4, 1, kwargs["segmentation"]["threshMinCotton"]);
+    
+    sheet.write(5, 0, "threshMaxCotton");
+    sheet.write(5, 1, kwargs["segmentation"]["threshMaxCotton"]);
+    
+    sheet.write(6, 0, "ElapsedTime");
+    sheet.write(6, 1, Tracker._End-Tracker._Start);
+    
+    sheet.write(7, 0, "Errors");
+    sheet.write(7, 1, Tracker._errors);
+    
+    metaData.save(metaDataFile);
+            
+    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Points.npy'),Tracker._positions);
+    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
+    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
+    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
                 

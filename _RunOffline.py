@@ -56,6 +56,7 @@ savingParameters = {
         "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
         "saveStream" : True,
         "saveCottonMask" : True,
+        "resizeTracking" : 4.,
         };
         
 trackerParameters = {
@@ -91,6 +92,41 @@ data.SetROI();
 ###############################################################################  
 
 tracker.TopTracker(data,**trackerParameters);
+
+#%%############################################################################
+#Save segmentation results
+###############################################################################  
+
+tracker.SaveTracking(data,_workingDir); 
+
+#%%############################################################################
+#Plotting and Analysis
+###############################################################################  
+
+workDir = os.path.join(baseDir,"181217-201");                   
+videoDir = os.path.join(workDir, "Raw_Data/");
+resultDir = os.path.join(videoDir,"Results/");
+
+PlotParameters = {
+                "baseDir" : segmentationParameters["baseDir"],
+                "directory" : videoDir+'Results',
+                "mouse" : "201",
+                "cageLength" : 21.8,
+                "cageWidth" : 36.4,
+                "minDist" : 0.5,
+                "maxDist" : 10,
+                "framerate" : segmentationParameters["framerate"],
+                "gridsize" : 100,
+                };
+        
+Plot = analysis.Plot(**PlotParameters);
+
+res = 1;
+
+#Plot.CheckTracking();
+Plot.CompleteTrackingPlot(res,limit=6,save=True);
+#Plot.TrackingPlot(res,limit=6);
+#Plot.HeatMapPlot(PlotParameters["gridsize"]);
 
 #%%
 
@@ -146,38 +182,3 @@ ax1.imshow(data.croppedFrame)
 ax2 = plt.subplot(122,sharex=ax1,sharey=ax1)
 ax2.imshow(croppedFrameDEPTH)
 multi = MultiCursor(fig.canvas, (ax1, ax2), horizOn=True, vertOn=True, color='r', lw=1)
-
-#%%############################################################################
-#Save segmentation results
-###############################################################################  
-
-tracker.SaveTracking(data,_workingDir); 
-
-#%%############################################################################
-#Plotting and Analysis
-###############################################################################  
-
-workDir = os.path.join(baseDir,"181217-201");                   
-videoDir = os.path.join(workDir, "Raw_Data/");
-resultDir = os.path.join(videoDir,"Results/");
-
-PlotParameters = {
-                "baseDir" : segmentationParameters["baseDir"],
-                "directory" : videoDir+'Results',
-                "mouse" : "201",
-                "cageLength" : 21.8,
-                "cageWidth" : 36.4,
-                "minDist" : 0.5,
-                "maxDist" : 10,
-                "framerate" : segmentationParameters["framerate"],
-                "gridsize" : 100,
-                };
-        
-Plot = analysis.Plot(**PlotParameters);
-
-res = 1;
-
-#Plot.CheckTracking();
-Plot.CompleteTrackingPlot(res,limit=6,save=True);
-#Plot.TrackingPlot(res,limit=6);
-#Plot.HeatMapPlot(PlotParameters["gridsize"]);
