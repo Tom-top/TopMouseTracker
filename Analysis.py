@@ -35,8 +35,8 @@ class Plot() :
   
         self._positions = np.load(os.path.join(self._args["directory"],'Mouse_Data_All_'+self._args["mouse"]+'_Points.npy'));
         
-        self._refPt = np.load(os.path.join(self._args["directory"],'Mouse_Data_All_'+self._args["mouse"]+'_refPt.npy'));
-        self._areas = np.load(os.path.join(self._args["directory"],'Mouse_Data_All_'+self._args["mouse"]+'_Areas.npy'));
+        self._refPt = np.load(os.path.join(self._args["directory"],'Data_'+self._args["mouse"]+'_refPt.npy'));
+        self._areas = np.load(os.path.join(self._args["directory"],'Data_'+self._args["mouse"]+'_Areas.npy'));
         
         self._cageWidth = self._args["cageWidth"];
         self._cageLength = self._args["cageLength"];
