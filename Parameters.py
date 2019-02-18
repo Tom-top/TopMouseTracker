@@ -19,7 +19,7 @@ if os.path.exists("/System/Library/Sounds/") :
     
 else :
     
-    sound = None;
+    sounds = None;
     print("/!\ [WARNING] The directory : {0} for sound files doesn't exist".format("/System/Library/Sounds/"));
                          
 ##############################################################################

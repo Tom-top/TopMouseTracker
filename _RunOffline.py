@@ -19,7 +19,7 @@ import TopMouseTracker.Analysis as analysis;
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
 _resultDir = os.path.join(_mainDir,"TopMouseTracker");
-_workingDir = os.path.join(_resultDir,"14-2-2019_9-27-36");
+_workingDir = os.path.join(_resultDir,"190207-01");
 
 utils.CheckDirectoryExists(_resultDir);
 
@@ -37,7 +37,7 @@ segmentationParameters = {
                 "threshMinMouse" : np.array([100, 70, 0],np.uint8),
                 "threshMaxMouse" : np.array([179, 255, 50],np.uint8),
                 "threshMinCotton" : np.array([0, 20, 150],np.uint8),
-                "threshMaxCotton" : np.array([110, 105, 250],np.uint8),
+                "threshMaxCotton" : np.array([110, 120, 250],np.uint8),
                 "kernel" : np.ones((5,5),np.uint8),
                 "minAreaMask" : 1000.0,
                 "maxAreaMask" : 8000.0,
@@ -55,7 +55,7 @@ displayParameters = {
 savingParameters = {
         "framerate" : None,
         "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
-        "segmentCotton" : False,
+        "segmentCotton" : True,
         "saveStream" : True,
         "saveCottonMask" : False,
         "resizeTracking" : 4.,
@@ -89,7 +89,7 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
 #Initializes the tracker object#
 ##############################################################################
 
-mainParameters["mouse"] = "1";
+mainParameters["mouse"] = "217";
 
 data = tracker.TopMouseTracker(**trackerParameters);
 

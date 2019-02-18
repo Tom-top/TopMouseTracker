@@ -100,6 +100,7 @@ class TopMouseTracker():
         #----------------------------------------------------------------------
         self._args = kwargs; #Loads the main arguments
         self._Start = None; #Time at which the segmentation starts
+        self._Stop = False; #Trigger to stop segmentation when video is empty
         self._End = None; #Time at which the segmentation ends
         self._mouse = self._args["main"]["mouse"]; #Loads the name of the mouse
         self._cageWidth = self._args["segmentation"]["cageWidth"];
@@ -202,9 +203,9 @@ class TopMouseTracker():
             
     def SetMetaDataParameters(self) :
         
-        for file in os.listdir(self._args["main"]["resultDir"]) :
+        for file in os.listdir(self._args["main"]["workingDir"]) :
             
-            path2File = os.path.join(self._args["main"]["resultDir"],file);
+            path2File = os.path.join(self._args["main"]["workingDir"],file);
             
             if fnmatch.fnmatch(file, 'Mice_Video_Info.xlsx'): 
 
@@ -289,27 +290,33 @@ class TopMouseTracker():
         
         try :
             
-        self.RGBFrame = next(self._args["main"]["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
-        self.DEPTHFrame = next(self._args["main"]["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
+            self.RGBFrame = next(self._args["main"]["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
+            self.DEPTHFrame = next(self._args["main"]["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
+            
+        except StopIteration :
+            
+            self._Stop = True;
         
-        self.frameNumber += 1; #Increments the frame number variable
-        self.curTime = self.frameNumber/self._framerate; #Sets the time
-           
-        #If capture still has frames, and the following frame was successfully retrieved
-        #----------------------------------------------------------------------
+        if not self._Stop :
             
-        if self.videoNumber == 0 : #If the first video is being processed
-            
-            if self.curTime >= self._tStart and self.curTime <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
+            self.frameNumber += 1; #Increments the frame number variable
+            self.curTime = self.frameNumber/self._framerate; #Sets the time
+               
+            #If capture still has frames, and the following frame was successfully retrieved
+            #----------------------------------------------------------------------
                 
-                self.RunSegmentations();
-
-        elif self.videoNumber != 0 : #If the one of the next videos is being processed
-            
-            if self.curTime <= self._tEnd[self.videoNumber] : #If the video is not finished
+            if self.videoNumber == 0 : #If the first video is being processed
                 
-                self.RunSegmentations();
+                if self.curTime >= self._tStart and self.curTime <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
+                    
+                    self.RunSegmentations();
+    
+            elif self.videoNumber != 0 : #If the one of the next videos is being processed
                 
+                if self.curTime <= self._tEnd[self.videoNumber] : #If the video is not finished
+                    
+                    self.RunSegmentations();
+                    
                     
     def RunSegmentations(self) :
         
@@ -395,8 +402,8 @@ class TopMouseTracker():
         #----------------------------------------------------------------------------------------------------------------------------------
 
         self.maskCotton = cv2.inRange(self.blur, self._args["segmentation"]["threshMinCotton"], self._args["segmentation"]["threshMaxCotton"]); #Thresholds the image to binary
-        self.openingCotton = cv2.morphologyEx(self.maskCotton,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 2); #Applies opening operation to the mask for dot removal
-        self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 2); #Applies closing operation to the mask for large object filling
+        self.openingCotton = cv2.morphologyEx(self.maskCotton,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 3); #Applies opening operation to the mask for dot removal
+        self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 3); #Applies closing operation to the mask for large object filling
         self.cntsCotton = cv2.findContours(self.closingCotton.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
     
         self.cntNest = None; #Variable that determines whether a nest is detected or not
@@ -692,57 +699,78 @@ def TopTracker(Tracker,**kwargs) :
         try :
     
             while(True):
-    
+
                 #Charges a new frame and runs the segmentation
                 #----------------------------------------------------------------------
                 Tracker.Main();
                 
-                #If the tracking has to be saved
-                #----------------------------------------------------------------------
-                if kwargs["saving"]["saveStream"] :
-                    
-                    Tracker.SaveTracking();
+                if not Tracker._Stop :
                 
-                #If the tracking has to be displayed
-                #----------------------------------------------------------------------
-                if kwargs["display"]["showStream"] :
-                    
-                    segmentation = Tracker.ReturnTracking();
-                    
-                    if segmentation != [] :
+                    #If the tracking has to be saved
+                    #----------------------------------------------------------------------
+                    if kwargs["saving"]["saveStream"] :
                         
-                        cv2.imshow('segmentation',segmentation);
+                        Tracker.SaveTracking();
+                    
+                    #If the tracking has to be displayed
+                    #----------------------------------------------------------------------
+                    if kwargs["display"]["showStream"] :
                         
-                        if cv2.waitKey(1) & 0xFF == ord('q'):
+                        segmentation = Tracker.ReturnTracking();
+                        
+                        if segmentation != [] :
+                            
+                            cv2.imshow('segmentation',segmentation);
+                            
+                            if cv2.waitKey(1) & 0xFF == ord('q'):
+                                break;
+                    
+                    #If the video is not empty
+                    #----------------------------------------------------------------------
+                    if not Tracker._tEnd[Tracker.videoNumber] == 0 :
+                        
+                        #VERBOSE
+                        #Runs only every 10 minutes of the video being analyzed
+                        #----------------------------------------------------------------------------------------------------------------------------------
+                        if Tracker.frameNumber%(600*int(Tracker._framerate)) == 0 :
+                            
+                            print('\n'); 
+                            utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.frameNumber)+'/'+str(int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate))+\
+                                ' = '+(str(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)))\
+                                +'% frames from video n°'+str(Tracker.videoNumber)+'/'+str(Tracker._nVideos), "darkgreen");
+                                                      
+                            utils.PrintColoredMessage(utils.PrintLoadingBar(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)),"darkgreen");
+                        
+                        #Runs only if the video is finished
+                        #----------------------------------------------------------------------------------------------------------------------------------
+                        if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate) :
+                
+                            print('\n'); 
+                            utils.PrintColoredMessage('#########################################################',"darkgreen");
+                            utils.PrintColoredMessage("[INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
+                            utils.PrintColoredMessage('#########################################################',"darkgreen");
+                                                      
+                            if kwargs["main"]["playSound"] :
+                                utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
+                            
+                            Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                            Tracker.frameNumber = 0;
                             break;
-                
-                #If the video is not empty
-                #----------------------------------------------------------------------
-                if not Tracker._tEnd[Tracker.videoNumber] == 0 :
+                            
+                else :
                     
-                    #VERBOSE
-                    #Runs only every 10 minutes of the video being analyzed
-                    #----------------------------------------------------------------------------------------------------------------------------------
-                    if Tracker.frameNumber%(600*Tracker._framerate) == 0 :
-                        
-                        utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.frameNumber)+'/'+str(int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate))+\
-                            ' = '+(str(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)))\
-                            +'% frames from video n°'+str(Tracker.videoNumber)+'/'+str(Tracker._nVideos), "darkgreen");
-                                                  
-                        utils.PrintColoredMessage(utils.PrintLoadingBar(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)),"darkgreen");
-                    
-                    #Runs only if the video is finished
-                    #----------------------------------------------------------------------------------------------------------------------------------
-                    if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate) :
-            
-                        print('\n'); 
-                        utils.PrintColoredMessage('#########################################################',"darkgreen");
-                        utils.PrintColoredMessage("[INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
-                        utils.PrintColoredMessage('#########################################################',"darkgreen");
+                    print('\n'); 
+                    utils.PrintColoredMessage('#########################################################',"darkgreen");
+                    utils.PrintColoredMessage("[INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
+                    utils.PrintColoredMessage('#########################################################',"darkgreen");
+                                              
+                    if kwargs["main"]["playSound"] :
                         utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
-                        Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
-                        Tracker.frameNumber = 0;
-                        break;
+                        
+                    Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                    Tracker.frameNumber = 0;
+                    
+                    break;
                         
         except KeyboardInterrupt :
             
