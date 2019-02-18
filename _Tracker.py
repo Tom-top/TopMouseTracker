@@ -157,11 +157,11 @@ class TopMouseTracker():
         self._startSaving = False;
         self._startSavingMask = False;
         
-    def SetTrackingVideoSaving(self) :
+    def SetTrackingVideoSaving(self,i) :
         
         if self._args["saving"]["saveStream"] :
             
-            self.videoString = "Tracking_{0}.avi".format(self._mouse);
+            self.videoString = "Tracking_{0}_{1}.avi".format(self._mouse,i);
             
             self.testCanvas = np.zeros((self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
             self.testCanvas = cv2.resize(self.testCanvas, (0,0),\
@@ -711,11 +711,11 @@ def TopTracker(Tracker,**kwargs) :
                               
     Tracker._Start = time.time();
 
-    for capture in kwargs["main"]["capturesRGB"] :
+    for i,capture in enumerate(kwargs["main"]["capturesRGB"]) :
         
         try :
             
-            Tracker.SetTrackingVideoSaving();
+            Tracker.SetTrackingVideoSaving(i);
     
             while(True):
 

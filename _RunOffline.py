@@ -119,6 +119,6 @@ tracker.TopTracker(data,**trackerParameters);
      
 Plot = analysis.Plot(**trackerParameters);
 
-Plot.CompleteTrackingPlot(cBefore='b',cAfter='r',alpha=0.1, line=True);
+Plot.CompleteTrackingPlot(cBefore='b',cAfter='r',alpha=0.1, line=True, res=1);
 
 #Plot.HeatMapPlot(plotParameters["gridsize"]);

@@ -25,7 +25,7 @@ class Plot(tracker.TopMouseTracker) :
         self._positions = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Points.npy'));
         self._refPt = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_refPt.npy'));
         self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
-        self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
+        self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -167,10 +167,11 @@ class Plot(tracker.TopMouseTracker) :
         
     def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5) :
         
-        self.res = self.framerate*res
+        self.res = self._framerate*res
         
         fig = plt.figure(figsize=(20,10));
         fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
+
 
         ax0 = plt.subplot2grid((4, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
@@ -182,6 +183,7 @@ class Plot(tracker.TopMouseTracker) :
         ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
+        ax0.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
         ax0.tick_params(bottom=False,labelbottom=False);
         
         
@@ -195,19 +197,24 @@ class Plot(tracker.TopMouseTracker) :
         ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         ax1.set_ylabel("Cumulative distance (cm)");
+        ax1.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
         ax1.tick_params(bottom=False,labelbottom=False);
+        
         
         ax2 = plt.subplot2grid((4, 4), (2, 3));
         #ax2 = plt.subplot(3,4,12);
-        ax2.plot(np.arange(0,len(self.areasBefore)),self.areasBefore,color='blue',alpha=0.5);
-        ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
+        #ax2.plot(np.arange(0,len(self.areasBefore)),self.areasBefore,color='blue',alpha=0.5);
+        Before = [np.mean(self.areasBefore[i:i+self.res]) for i in np.arange(0,len(self.areasBefore),self.res)];
+        ax2.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        #ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
+        After = [np.mean(self.areasAfter[i:i+self.res]) for i in np.arange(0,len(self.areasAfter),self.res)];
+        ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax2.set_title("Mask area over time", fontsize = 10);
         ax2.set_ylabel("Mask area (px^2)");
-        ax2.set_xlabel("time (h)");
         ax2.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
-        ax2.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
+        ax2.tick_params(bottom=False,labelbottom=False);
         
-        ######WIP#######
+        
         ax3 = plt.subplot2grid((4, 4), (3, 3));
         #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
         Before = [np.mean(self.cottonBefore[i:i+self.res]) for i in np.arange(0,len(self.cottonBefore),self.res)];
@@ -221,7 +228,7 @@ class Plot(tracker.TopMouseTracker) :
         ax3.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
         ax3.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
         
-        ax4 = plt.subplot2grid((4, 4), (0, 0), rowspan=3, colspan=4);
+        ax4 = plt.subplot2grid((4, 4), (0, 0), rowspan=4, colspan=3);
         
         ax4.set_xlim([0, int(self.ROIWidth)]);
         ax4.set_ylim([0, int(self.ROILength)]);
@@ -307,7 +314,7 @@ class Plot(tracker.TopMouseTracker) :
         
         if self._args["plot"]["save"] :
             
-            plt.savefig(os.path.join(self._args["main"]["workingDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
+            plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
         
     def HeatMapPlot(self,gridsize) :
         
