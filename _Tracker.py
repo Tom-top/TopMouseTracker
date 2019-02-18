@@ -226,7 +226,8 @@ class TopMouseTracker():
                   self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
                   self._tEnd = [int(line[3]),int(line[4]),\
                                int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
-                                
+        
+        self._Length = sum(self._tEnd);
         self._nVideos = 0; #Variable holding the number of videos to be analyzed
         
         for i in self._tEnd :
@@ -264,6 +265,9 @@ class TopMouseTracker():
         self.lowRightX = int(self._refPt[1][0]); #Defines the Low Right ROI corner X coordinates
         self.lowRightY = int(self._refPt[1][1]); #Defines the Low Right ROI corner Y coordinates
         
+        self.ROIWidth = abs(self.lowRightX-self.upLeftX);
+        self.ROILength = abs(self.lowRightY-self.upLeftY);
+        
         self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["segmentation"]["cageLength"]+\
                               abs(self.upLeftY-self.lowRightY)/self._args["segmentation"]["cageWidth"])/2; #Defines the resizing factor for the cage
                               
@@ -282,6 +286,9 @@ class TopMouseTracker():
         
         #Get frame from capture
         #----------------------------------------------------------------------
+        
+        try :
+            
         self.RGBFrame = next(self._args["main"]["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
         self.DEPTHFrame = next(self._args["main"]["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
         
@@ -806,7 +813,8 @@ def SaveTracking(Tracker,**kwargs) :
     sheet.write(7, 1, Tracker._errors);
     
     metaData.save(metaDataFile);
-            
+    
+    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_refPt.npy'),Tracker._refPt);
     np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Points.npy'),Tracker._positions);
     np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
     np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);

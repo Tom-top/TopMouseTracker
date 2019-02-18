@@ -58,7 +58,7 @@ savingParameters = {
         "segmentCotton" : False,
         "saveStream" : True,
         "saveCottonMask" : False,
-        "resizeTracking" : 2.,
+        "resizeTracking" : 4.,
         };
         
 plotParameters = {
@@ -108,9 +108,9 @@ tracker.TopTracker(data,**trackerParameters);
 #%%############################################################################
 #Plotting and Analysis
 ###############################################################################  
-        
+     
 Plot = analysis.Plot(**trackerParameters);
 
-Plot.CompleteTrackingPlot(cBefore='b',cAfter='r');
+Plot.CompleteTrackingPlot(cBefore='b',cAfter='r',alpha=0.1, line=True);
 
 #Plot.HeatMapPlot(plotParameters["gridsize"]);

@@ -27,6 +27,17 @@ class Plot(tracker.TopMouseTracker) :
         self._areas = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
         self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
         
+        self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
+        self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
+        self.lowRightX = int(self._refPt[1][0]); #Defines the Low Right ROI corner X coordinates
+        self.lowRightY = int(self._refPt[1][1]); #Defines the Low Right ROI corner Y coordinates
+        
+        self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["segmentation"]["cageLength"]+\
+                              abs(self.upLeftY-self.lowRightY)/self._args["segmentation"]["cageWidth"])/2; #Defines the resizing factor for the cage
+                              
+        self.ROIWidth = abs(self.lowRightX-self.upLeftX);
+        self.ROILength = abs(self.lowRightY-self.upLeftY);
+        
         self.distance = [sqrt((self._positions[n+1][0]-self._positions[n][0])**2+\
                           (self._positions[n+1][1]-self._positions[n][1])**2) for n in range(len(self._positions)) if n+1 < len(self._positions)];
                 
@@ -34,8 +45,8 @@ class Plot(tracker.TopMouseTracker) :
         self.distanceCorrected = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalized];
         self.distanceCumulative = list(np.cumsum(self.distanceCorrected));
         
-        self.distanceNormalizedBefore = self.distanceNormalized[0:self._tStartBehav*self._framerate];
-        self.areasBefore = self._areas[0:self._tStartBehav*self._framerate];
+        self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._tStartBehav*self._framerate)];
+        self.areasBefore = self._areas[0:int(self._tStartBehav*self._framerate)];
         
         if len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.distanceNormalizedBefore = self.distanceNormalized[0:self._args["plot"]["limit"]*3600*self._framerate];
@@ -43,9 +54,12 @@ class Plot(tracker.TopMouseTracker) :
         
         self.distanceCorrectedBefore = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedBefore];
         self.distanceCumulativeBefore = list(np.cumsum(self.distanceCorrectedBefore));
+        
+        #######################################
+        self._Length = sum(self._tEnd)
             
-        self.distanceNormalizedAfter = self.distanceNormalized[self._tStartBehav*self._framerate:self._Length*self._framerate];
-        self.areasAfter = self._areas[self._tStartBehav*self._framerate:self._Length*self._framerate];
+        self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
+        self.areasAfter = self._areas[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
         
         if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.distanceNormalizedAfter = self.distanceNormalized[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
@@ -53,7 +67,11 @@ class Plot(tracker.TopMouseTracker) :
         
         self.distanceCorrectedAfter = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedAfter];
         self.distanceCumulativeAfter = list(np.cumsum(self.distanceCorrectedAfter));
-        self.distanceCumulativeAfter = [x+self.distanceCumulativeBefore[-1] for x in self.distanceCumulativeAfter];
+        
+        try :
+            self.distanceCumulativeAfter = [x+self.distanceCumulativeBefore[-1] for x in self.distanceCumulativeAfter];
+        except :
+            self.distanceCumulativeAfter = [x for x in self.distanceCumulativeAfter];
         
     def CheckTracking(self) :
          
@@ -143,7 +161,7 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-    def CompleteTrackingPlot(self,cBefore='b',cAfter='r') :
+    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True) :
         
         fig = plt.figure(figsize=(20,10));
         fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
@@ -183,12 +201,12 @@ class Plot(tracker.TopMouseTracker) :
         self.distTraveledBeforeInitiation = 0;
         self.distTraveledAfterInitiation = 0;
         
-        self.posBefore = self._positions[0:self._tStartBehav*self._framerate];
+        self.posBefore = self._positions[0:int(self._tStartBehav*self._framerate)];
         
         if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.posBefore = self._positions[0:self._args["plot"]["limit"]*3600*self._framerate];
         
-        self.posAfter = self._positions[self._tStartBehav*self._framerate:self._Length*self._framerate];
+        self.posAfter = self._positions[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
         
         if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.posAfter = self._positions[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
@@ -196,15 +214,32 @@ class Plot(tracker.TopMouseTracker) :
         self.filteredPosBefore = self.posBefore[0::self._args["plot"]["res"]];
         self.filteredPosAfter = self.posAfter[0::self._args["plot"]["res"]];
         
-        self.befPlot = ax3.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-',markersize=1,alpha=0.5,color='blue',label='Before Initiation');
-        self.aftPlot = ax3.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-',markersize=1,alpha=0.5,color='red',label='After Initiation');
+        if line :
         
-        self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._tStartBehav*self._framerate]);
+            self.befPlot = ax3.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color='blue',label='Before Initiation');
+            self.aftPlot = ax3.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color='red',label='After Initiation');
+            
+        else :
+            
+            self.befPlot = ax3.scatter([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],s=10,alpha=alpha,color='blue',label='Before Initiation');
+            self.aftPlot = ax3.scatter([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],s=10,alpha=alpha,color='red',label='After Initiation');
+        
+#        else :
+#            
+#            for x,y in zip([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore]) :
+#                
+#                self.befPlot = ax3.plot(x,y,'-',markersize=1,alpha=alpha,solid_capstyle="butt",color='blue',label='Before Initiation');
+#                
+#            for x,y in zip([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter]) :
+#                
+#                self.aftPlot = ax3.plot(x,y,'-',markersize=1,alpha=alpha,solid_capstyle="butt",color='red',label='After Initiation');
+        
+        self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._tStartBehav*self._framerate)]);
         
         if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._args["plot"]["limit"]*3600*self._framerate]);
             
-        self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:self._Length*self._framerate]);
+        self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)]);
             
         if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
             self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate]);
@@ -227,11 +262,16 @@ class Plot(tracker.TopMouseTracker) :
         
         ax3.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False);
         
-        ax3.text(int(self.ROIWidth)/6, -7, 'Time before : {0}h {1}m {2}s'.format(str(hB),str(mB),str(sB)),fontdict=fontBefore);
-        ax3.text(int(self.ROIWidth)/6, -3, 'Dist before : {0}'.format(self.distTraveledBeforeInitiation)+'m',fontdict=fontBefore);
-        ax3.text(int(self.ROIWidth)/6+40, -7, 'Time after : {0}h {1}m {2}s'.format(str(hA),str(mA),str(sA)),fontdict=fontAfter);
-        ax3.text(int(self.ROIWidth)/6+40, -3, 'Dist after : {0}'.format(self.distTraveledAfterInitiation)+'m',fontdict=fontAfter)
-        ax3.legend(handles = [self.befPlot[0],self.aftPlot[0]],loc=(0,1.02),shadow=True);
+        ax3.text(int(self.ROIWidth)/6, -20, 'Time before : {0}h {1}m {2}s'.format(str(hB),str(mB),str(sB)),fontdict=fontBefore);
+        ax3.text(int(self.ROIWidth)/6, -10, 'Dist before : {0}'.format(self.distTraveledBeforeInitiation)+'m',fontdict=fontBefore);
+        ax3.text(int(self.ROIWidth)/6+150, -20, 'Time after : {0}h {1}m {2}s'.format(str(hA),str(mA),str(sA)),fontdict=fontAfter);
+        ax3.text(int(self.ROIWidth)/6+150, -10, 'Dist after : {0}'.format(self.distTraveledAfterInitiation)+'m',fontdict=fontAfter);
+        
+        if line : 
+            ax3.legend(handles = [self.befPlot[0],self.aftPlot[0]],loc=(0,1.02),shadow=True);
+            
+        else :
+            ax3.legend(handles = [self.befPlot,self.aftPlot],loc=(0,1.02),shadow=True);
         
         plt.gca().invert_yaxis();
         
