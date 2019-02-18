@@ -165,4 +165,40 @@ def CheckDirectoryExists(directory) :
         
         raise RuntimeError("{0} is not a valid directory!".format(directory));
         
+def ClearDirectory(directory) :
+    
+    if isinstance(directory,str) :
+        
+        if os.path.dirname(directory) != "" :
+            
+            if os.listdir(directory) != [] :
+                
+                Input = input("Type [y]/n to clean {0} :   ".format(directory));
+                    
+                if Input == 'y' :
+                
+                    for obj in os.listdir(directory) :
+                    
+                        os.remove(os.path.join(directory,obj));
+                        
+                elif Input == 'n' :
+                    
+                    PrintColoredMessage("{0} was kept untouched!".format(directory),"darkgreen");
+                    
+                else :
+                    
+                    PrintColoredMessage("Wrong input!".format(directory),"darkgreen");
+                    
+            else :
+                
+                PrintColoredMessage("{0} was already empty!".format(directory),"darkgreen");
+                
+        else :
+            
+            raise RuntimeError("{0} is not a valid directory!".format(directory));
+            
+    else :
+        
+        raise RuntimeError("{0} is not a valid directory!".format(directory));
+        
         

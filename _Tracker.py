@@ -126,9 +126,12 @@ class TopMouseTracker():
         self._positions = []; #Position of the mouse every s/frameRate
         self._maskAreas = []; #Size of the mouse mask every s/frameRate
         self._distances = []; #Distances traveled by the mouse every s/frameRate
+        self._cottonAveragePixelIntensities = []; #List containing all the depth information of segmented objects coming from the cotton mask
+        self._largeObjects = []; #List containing the number of large objects detected every s/framerate
+        self._smallObjects = []; #List containing the number of small objects detected every s/framerate
+        self._detectedNest = []; #List containing the detection status of the nest
         self._distance = 0.; #Cumulative distance traveled by the mouse
         self._errors = 0; #Counter for the number of times that the trackers fails to segment the animal
-        self._cottonAveragePixelIntensities = []; #List containing all the depth information of segmented objects coming from the cotton mask
         
         #Real-Time tracking variables
         #----------------------------------------------------------------------
@@ -154,6 +157,8 @@ class TopMouseTracker():
         self._startSaving = False;
         self._startSavingMask = False;
         
+    def SetTrackingVideoSaving(self) :
+        
         if self._args["saving"]["saveStream"] :
             
             self.videoString = "Tracking_{0}.avi".format(self._mouse);
@@ -163,7 +168,7 @@ class TopMouseTracker():
                                  fx = 1./self._args["saving"]["resizeTracking"],\
                                  fy = 1./self._args["saving"]["resizeTracking"]);
                                          
-            self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["workingDir"],\
+            self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
                                 self.videoString), self._args["saving"]["fourcc"], self._framerate,\
                                 (self.testCanvas.shape[0],self.testCanvas.shape[1]));
     
@@ -278,7 +283,7 @@ class TopMouseTracker():
         if self._args["saving"]["saveCottonMask"] :
             
             self.depthMaskString = "Mask_Cotton_{0}.avi".format(self._mouse);
-            self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["workingDir"],\
+            self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
                                 self.depthMaskString), self._args["saving"]["fourcc"], self._framerate,\
                                 (self._W_RGB_CROPPED, self._H_RGB_CROPPED));
         
@@ -438,6 +443,18 @@ class TopMouseTracker():
             if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
                 
                 self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
+                
+        self._largeObjects.append(self.largeObjects);
+        self._smallObjects.append(self.smallObjects);
+        
+        if self.cntNest == None :
+            
+            self._detectedNest.append(False);
+            
+        else :
+            
+            self._detectedNest.append(True);
+        
                 
     def RegisterDepth(self) :
         
@@ -688,15 +705,17 @@ class TopMouseTracker():
 def TopTracker(Tracker,**kwargs) :
     
     print("\n");
-    utils.PrintColoredMessage("#########################################################","darkgreen");
-    utils.PrintColoredMessage("[INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen");
-    utils.PrintColoredMessage("#########################################################","darkgreen");
+    utils.PrintColoredMessage("##################################################################################################################","darkgreen");
+    utils.PrintColoredMessage("                                  [INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen");
+    utils.PrintColoredMessage("##################################################################################################################","darkgreen");
                               
     Tracker._Start = time.time();
 
     for capture in kwargs["main"]["capturesRGB"] :
         
         try :
+            
+            Tracker.SetTrackingVideoSaving();
     
             while(True):
 
@@ -746,9 +765,9 @@ def TopTracker(Tracker,**kwargs) :
                         if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate) :
                 
                             print('\n'); 
-                            utils.PrintColoredMessage('#########################################################',"darkgreen");
-                            utils.PrintColoredMessage("[INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
-                            utils.PrintColoredMessage('#########################################################',"darkgreen");
+                            utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+                            utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
+                            utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
                                                       
                             if kwargs["main"]["playSound"] :
                                 utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
@@ -760,9 +779,9 @@ def TopTracker(Tracker,**kwargs) :
                 else :
                     
                     print('\n'); 
-                    utils.PrintColoredMessage('#########################################################',"darkgreen");
-                    utils.PrintColoredMessage("[INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
-                    utils.PrintColoredMessage('#########################################################',"darkgreen");
+                    utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+                    utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
+                    utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
                                               
                     if kwargs["main"]["playSound"] :
                         utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
@@ -806,7 +825,7 @@ def SaveTracking(Tracker,**kwargs) :
             Tracker._positions[n] = Tracker._positions[first];
             
     metaDataString = "Segmentation_MetaData_{0}".format(Tracker._mouse);
-    metaDataFile = os.path.join(kwargs["main"]["workingDir"],'{0}.xls'.format(metaDataString));
+    metaDataFile = os.path.join(kwargs["main"]["resultDir"],'{0}.xls'.format(metaDataString));
     
     metaData = xlwt.Workbook();
     sheet = metaData.add_sheet("MetaData");
@@ -842,9 +861,9 @@ def SaveTracking(Tracker,**kwargs) :
     
     metaData.save(metaDataFile);
     
-    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_refPt.npy'),Tracker._refPt);
-    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Points.npy'),Tracker._positions);
-    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
-    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
-    np.save(os.path.join(kwargs["main"]["workingDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_refPt.npy'),Tracker._refPt);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Points.npy'),Tracker._positions);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
                 

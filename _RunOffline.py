@@ -18,13 +18,17 @@ import TopMouseTracker.Analysis as analysis;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
-_resultDir = os.path.join(_mainDir,"TopMouseTracker");
-_workingDir = os.path.join(_resultDir,"190207-01");
+_tmtDir = os.path.join(_mainDir,"TopMouseTracker");
+_workingDir = os.path.join(_tmtDir,"190207-01");
+_resultDir = os.path.join(_workingDir,"Results");
 
+utils.CheckDirectoryExists(_tmtDir);
 utils.CheckDirectoryExists(_resultDir);
+utils.ClearDirectory(_resultDir);
 
-mainParameters = {"resultDir" : _resultDir,
+mainParameters = {"tmtDir" : _tmtDir,
                   "workingDir" : _workingDir,
+                  "resultDir" : _resultDir,
                   "mouse" : None,
                   "capturesRGB" : None,
                   "capturesDEPTH" : None,
@@ -43,7 +47,7 @@ segmentationParameters = {
                 "maxAreaMask" : 8000.0,
                 "minDist" : 0.3,
                 "minCottonSize" : 1000.,
-                "nestCottonSize" : 20000.,
+                "nestCottonSize" : 12000.,
                 "cageLength" : 50.,
                 "cageWidth" : 25.,
                 };
@@ -51,10 +55,14 @@ segmentationParameters = {
 displayParameters = {
         "showStream" : False,
         };
+
+        
+#FOURCC : cv2.VideoWriter_fourcc(*'DIVX');
+# cv2.VideoWriter_fourcc(*'MJPG')
         
 savingParameters = {
         "framerate" : None,
-        "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
+        "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'), 
         "segmentCotton" : True,
         "saveStream" : True,
         "saveCottonMask" : False,

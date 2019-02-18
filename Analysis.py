@@ -22,9 +22,9 @@ class Plot(tracker.TopMouseTracker) :
         
         tracker.TopMouseTracker.__init__(self,**kwargs);
   
-        self._positions = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_Points.npy'));
-        self._refPt = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_refPt.npy'));
-        self._areas = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
+        self._positions = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Points.npy'));
+        self._refPt = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_refPt.npy'));
+        self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
         self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["workingDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
@@ -165,15 +165,21 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True) :
+    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5) :
+        
+        self.res = self.framerate*res
         
         fig = plt.figure(figsize=(20,10));
         fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
 
         ax0 = plt.subplot2grid((4, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
-        ax0.plot(np.arange(0,len(self.distanceCorrectedBefore)),self.distanceCorrectedBefore,color='blue',alpha=0.5);
-        ax0.plot(np.arange(len(self.distanceCorrectedBefore),len(self.distanceCorrectedBefore)+len(self.distanceCorrectedAfter)),self.distanceCorrectedAfter,color='red',alpha=0.5);
+        #ax0.plot(np.arange(0,len(self.distanceCorrectedBefore)),self.distanceCorrectedBefore,color='blue',alpha=0.5);
+        Before = [np.mean(self.distanceCorrectedBefore[i:i+self.res]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
+        ax0.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        #ax0.plot(np.arange(len(self.distanceCorrectedBefore),len(self.distanceCorrectedBefore)+len(self.distanceCorrectedAfter)),self.distanceCorrectedAfter,color='red',alpha=0.5);
+        After = [np.mean(self.distanceCorrectedAfter[i:i+self.res]) for i in np.arange(0,len(self.distanceCorrectedAfter),self.res)];
+        ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
         ax0.tick_params(bottom=False,labelbottom=False);
@@ -181,8 +187,12 @@ class Plot(tracker.TopMouseTracker) :
         
         ax1 = plt.subplot2grid((4, 4), (1, 3));
         #ax1 = plt.subplot(3,4,8);
-        ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5);
-        ax1.plot(np.arange(len(self.distanceCumulativeBefore),len(self.distanceCumulativeBefore)+len(self.distanceCumulativeAfter)),self.distanceCumulativeAfter,color='red',alpha=0.5);
+        #ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5);
+        Before = [np.mean(self.distanceCumulativeBefore[i:i+self.res]) for i in np.arange(0,len(self.distanceCumulativeBefore),self.res)]
+        ax1.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        #ax1.plot(np.arange(len(self.distanceCumulativeBefore),len(self.distanceCumulativeBefore)+len(self.distanceCumulativeAfter)),self.distanceCumulativeAfter,color='red',alpha=0.5);
+        After = [np.mean(self.distanceCumulativeAfter[i:i+self.res]) for i in np.arange(0,len(self.distanceCumulativeAfter),self.res)];
+        ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         ax1.set_ylabel("Cumulative distance (cm)");
         ax1.tick_params(bottom=False,labelbottom=False);
@@ -199,9 +209,12 @@ class Plot(tracker.TopMouseTracker) :
         
         ######WIP#######
         ax3 = plt.subplot2grid((4, 4), (3, 3));
-        #ax2 = plt.subplot(3,4,12);
-        ax3.plot(np.arange(0,len(self.cottonBefore),self.cottonBefore,color='blue',alpha=0.5);
-        ax3.plot(np.arange(len(self.cottonBefore),len(self.cottonBefore)+len(self.cottonAfter)),self.cottonAfter,color='red',alpha=0.5);
+        #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
+        Before = [np.mean(self.cottonBefore[i:i+self.res]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        ax3.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        #ax3.plot(np.arange(len(self.cottonBefore),len(self.cottonBefore)+len(self.cottonAfter)),self.cottonAfter,color='red',alpha=0.5);
+        After = [np.mean(self.cottonAfter[i:i+self.res]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+        ax3.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax3.set_title("Cotton height over time", fontsize = 10);
         ax3.set_ylabel("Average pixel intensity (n.a)");
         ax3.set_xlabel("time (h)");
