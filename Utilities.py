@@ -117,12 +117,13 @@ def PlaySound(n,sound) :
         n = 1;
     
     #Checks if sound argument is correct
-    if sound in params.sounds :
+    if sound in params.sounds or not sound == None :
         
         #Checks that the operating system is OS X
         if settings._platform == "darwin" :
         
             for i in range(n) :
+                
                 os.system('afplay /System/Library/Sounds/'+str(sound)+'.aiff');
         
         else :
@@ -131,7 +132,15 @@ def PlaySound(n,sound) :
             
     else :
         
-        PrintColoredMessage("[WARNING] The sound parameter for utils.PlaySound is unavailable or not correct!","darkred");
+        if settings._platform == "linux" :
+            
+            for i in range(n) :
+                
+                os.system("/usr/bin/canberra-gtk-play --id='bell'")
+                
+        else :
+        
+            PrintColoredMessage("[WARNING] The sound parameter for utils.PlaySound is unavailable or not correct!","darkred");
         
 def CheckDirectoryExists(directory) :
     

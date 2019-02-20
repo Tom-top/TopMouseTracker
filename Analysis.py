@@ -15,6 +15,8 @@ import matplotlib.colors as mcolors;
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker._Tracker as tracker;
+from scipy.ndimage.filters import gaussian_filter;
+import matplotlib.cm as cm;
 
 class Plot(tracker.TopMouseTracker) :
     
@@ -50,9 +52,9 @@ class Plot(tracker.TopMouseTracker) :
         self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._tStartBehav*self._framerate)];
         
         if len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distanceNormalizedBefore = self.distanceNormalized[0:self._args["plot"]["limit"]*3600*self._framerate];
-            self.areasBefore = self._areas[0:self._args["plot"]["limit"]*3600*self._framerate];
-            self.cottonBefore = self._cottonAveragePixelIntensities[0:self._args["plot"]["limit"]*3600*self._framerate];
+            self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
+            self.areasBefore = self._areas[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
+            self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
         
         self.distanceCorrectedBefore = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedBefore];
         self.distanceCumulativeBefore = list(np.cumsum(self.distanceCorrectedBefore));
@@ -65,9 +67,9 @@ class Plot(tracker.TopMouseTracker) :
         self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
         
         if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distanceNormalizedAfter = self.distanceNormalized[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
-            self.areasAfter = self._areas[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
-            self.cottonAfter = self._cottonAveragePixelIntensities[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
+            self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
+            self.areasAfter = self._areas[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
+            self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
         
         self.distanceCorrectedAfter = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedAfter];
         self.distanceCumulativeAfter = list(np.cumsum(self.distanceCorrectedAfter));
@@ -183,7 +185,7 @@ class Plot(tracker.TopMouseTracker) :
         ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
-        ax0.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
+        ax0.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
         ax0.tick_params(bottom=False,labelbottom=False);
         
         
@@ -197,7 +199,7 @@ class Plot(tracker.TopMouseTracker) :
         ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         ax1.set_ylabel("Cumulative distance (cm)");
-        ax1.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
+        ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
         ax1.tick_params(bottom=False,labelbottom=False);
         
         
@@ -208,10 +210,10 @@ class Plot(tracker.TopMouseTracker) :
         ax2.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
         #ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
         After = [np.mean(self.areasAfter[i:i+self.res]) for i in np.arange(0,len(self.areasAfter),self.res)];
-        ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
+        ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax2.set_title("Mask area over time", fontsize = 10);
         ax2.set_ylabel("Mask area (px^2)");
-        ax2.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
+        ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
         ax2.tick_params(bottom=False,labelbottom=False);
         
         
@@ -223,9 +225,9 @@ class Plot(tracker.TopMouseTracker) :
         After = [np.mean(self.cottonAfter[i:i+self.res]) for i in np.arange(0,len(self.cottonAfter),self.res)];
         ax3.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
         ax3.set_title("Cotton height over time", fontsize = 10);
-        ax3.set_ylabel("Average pixel intensity (n.a)");
+        ax3.set_ylabel("Average pixel intensity *8bit (a.u)");
         ax3.set_xlabel("time (h)");
-        ax3.set_xticks(np.arange(0,self._args["plot"]["limit"]*3600*self._framerate,100000));
+        ax3.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
         ax3.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
         
         ax4 = plt.subplot2grid((4, 4), (0, 0), rowspan=4, colspan=3);
@@ -239,12 +241,12 @@ class Plot(tracker.TopMouseTracker) :
         self.posBefore = self._positions[0:int(self._tStartBehav*self._framerate)];
         
         if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.posBefore = self._positions[0:self._args["plot"]["limit"]*3600*self._framerate];
+            self.posBefore = self._positions[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
         
         self.posAfter = self._positions[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
         
         if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.posAfter = self._positions[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate];
+            self.posAfter = self._positions[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
         
         self.filteredPosBefore = self.posBefore[0::self._args["plot"]["res"]];
         self.filteredPosAfter = self.posAfter[0::self._args["plot"]["res"]];
@@ -272,12 +274,12 @@ class Plot(tracker.TopMouseTracker) :
         self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._tStartBehav*self._framerate)]);
         
         if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._args["plot"]["limit"]*3600*self._framerate]);
+            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._args["plot"]["limit"]*3600*self._framerate)]);
             
         self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)]);
             
         if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distTraveledAfterInitiation = sum(self.distanceCorrected[self._tStartBehav*self._framerate:self._args["plot"]["limit"]*3600*self._framerate]);
+            self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)]);
                     
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100);
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100);
@@ -316,9 +318,9 @@ class Plot(tracker.TopMouseTracker) :
             
             plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
         
-    def HeatMapPlot(self,gridsize) :
+    def HeatMapPlot(self,bins=1000,sigma=16) :
         
-        fig = plt.figure();
+        fig = plt.figure(figsize=(20,10));
         ax0 = plt.subplot();
 
         ax0.set_xlim([0, int(self.ROIWidth)]);
@@ -327,10 +329,17 @@ class Plot(tracker.TopMouseTracker) :
         self._x = [x[0] for x in self._positions]+[0,int(self.ROIWidth)];
         self._y = [x[1] for x in self._positions]+[int(self.ROILength),0];
         
-        cmap = plt.get_cmap('jet');
-        norm = mcolors.LogNorm();
+        #cmap = plt.get_cmap('jet');
+        #norm = mcolors.LogNorm();
         
-        ax0.hexbin(self._x, self._y, gridsize=gridsize, cmap=cmap, norm=norm);
+        heatmap, xedges, yedges = np.histogram2d(self._x, self._y, bins=bins);
+        heatmap = gaussian_filter(heatmap, sigma=sigma);
+
+        extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+        
+        ax0.imshow(heatmap.T, extent=extent, origin='lower', cmap=cm.jet)
+        
+        #ax0.hexbin(self._x, self._y, gridsize=gridsize, cmap=cmap, norm=norm);
         ax0.set_title('Tracking Mouse {0}'.format(self._mouse));
         ax0.tick_params(top=False, bottom=False, left=False, right=False);
         

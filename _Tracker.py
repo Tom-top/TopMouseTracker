@@ -226,13 +226,21 @@ class TopMouseTracker():
             
             if not np.isnan(line[0]) : 
                 
-              if str(int(line[0])) == self._args["main"]["mouse"] :
-                  
-                  self._tStart = int(line[1]); #Moment at which the cotton is added (s)
-                  self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
-                  self._tEnd = [int(line[3]),int(line[4]),\
-                               int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
-        
+                if str(int(line[0])) == self._args["main"]["mouse"] :
+                      
+                    self._tStart = int(line[1]); #Moment at which the cotton is added (s)
+                      
+                    if line[2] == 'N.A' :
+                          
+                        self._tStartBehav = 100000;
+                          
+                    else :
+                          
+                        self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
+                          
+                    self._tEnd = [int(line[3]),int(line[4]),\
+                                 int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
+            
         self._Length = sum(self._tEnd);
         self._nVideos = 0; #Variable holding the number of videos to be analyzed
         
@@ -431,7 +439,7 @@ class TopMouseTracker():
 
             area = cv2.contourArea(self.cntsCotton[i]); #Computes its area
             
-            if area >= self._args["segmentation"]["minCottonSize"] : #If the area in bigger than a certain threshold
+            if area >= self._args["segmentation"]["minCottonSize"] and area <= self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
                 
                 self.largeObjects+=1; #Adds the object to the count of large cotton pieces
                 self.cntLarge.append(i);
@@ -442,6 +450,7 @@ class TopMouseTracker():
                 
             if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
                 
+                self.largeObjects+=1; #Adds the object to the count of large cotton pieces
                 self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
                 
         self._largeObjects.append(self.largeObjects);
@@ -782,9 +791,9 @@ def TopTracker(Tracker,**kwargs) :
                     utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
                     utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
                     utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
-                                              
+                    
                     if kwargs["main"]["playSound"] :
-                        utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
+                        utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
                         
                     Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
                     Tracker.frameNumber = 0;
@@ -795,21 +804,21 @@ def TopTracker(Tracker,**kwargs) :
             
             pass;
               
-        if kwargs["display"]["showStream"] :       
-            
-            cv2.destroyAllWindows();
+    if kwargs["display"]["showStream"] :       
         
-        if kwargs["saving"]["saveStream"] :
-            
-            Tracker.videoWriter.release();
-            
-        if kwargs["saving"]["saveCottonMask"] :
-            
-            Tracker.depthMaskWriter.release();
-            
-        Tracker._End = time.time();
+        cv2.destroyAllWindows();
+    
+    if kwargs["saving"]["saveStream"] :
         
-        SaveTracking(Tracker,**kwargs);
+        Tracker.videoWriter.release();
+        
+    if kwargs["saving"]["saveCottonMask"] :
+        
+        Tracker.depthMaskWriter.release();
+        
+    Tracker._End = time.time();
+    
+    SaveTracking(Tracker,**kwargs);
 
 
 def SaveTracking(Tracker,**kwargs) :
