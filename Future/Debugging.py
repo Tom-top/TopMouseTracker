@@ -102,7 +102,44 @@ for frame in cap :
         break;
         
 cv2.destroyAllWindows();
-    
+
+fig = plt.figure(figsize=(20,10))
+ax0 = plt.subplot(221)
+test = data.croppedFrame.copy();
+cv2.drawContours(test,data.cnts,-1,(255,255,0),2)
+cv2.drawContours(test,data.cntsCotton,-1,(0,255,255),2)
+cv2.circle(test, data.center, 2, (255,0,0), 8);
+ax0.imshow(test)   
+ax0.set_title("RGB image with overlays of Mouse(Yellow)/Cotton(Cyan) contours")
+ax0.set_yticklabels([])
+ax0.set_xticklabels([])
+ax0.set_yticks([])
+ax0.set_xticks([])
+ax1 = plt.subplot(223)
+ax1.imshow(data.closingMouse) 
+ax1.set_title("Mouse binary mask")
+ax1.set_yticklabels([])
+ax1.set_xticklabels([])
+ax1.set_yticks([])
+ax1.set_xticks([])
+ax2 = plt.subplot(224)
+ax2.imshow(data.closingCotton) 
+ax2.set_yticklabels([])
+ax2.set_xticklabels([])
+ax2.set_yticks([])
+ax2.set_xticks([])
+ax2.set_title("Cotton binary mask")
+ax3 = plt.subplot(222)
+test2 = data.croppedRegisteredDepth.copy()
+cv2.drawContours(test2,data.cntsCotton,-1,(0,255,255),2)
+ax3.imshow(test2)
+ax3.set_title("Registered depth image with overlays of Cotton contours")
+ax3.set_yticklabels([])
+ax3.set_xticklabels([])
+ax3.set_yticks([])
+ax3.set_xticks([])
+
+plt.savefig("/home/thomas.topilko/Desktop/Tracking_Overlay.png",dpi=200)
     
     
     

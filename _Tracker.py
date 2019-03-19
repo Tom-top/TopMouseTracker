@@ -176,7 +176,7 @@ class TopMouseTracker():
         
         self.start_X = 0;
         self.end_X = self.start_X+self._H_DEPTH_RESIZED;
-        self.start_Y = 290;
+        self.start_Y = 292;
         self.end_Y = self.start_Y+self._W_DEPTH_RESIZED;
         
         if self.end_X >= self._H_RGB :
@@ -193,7 +193,7 @@ class TopMouseTracker():
             
             self.end_Y_foreground = self._W_RGB;
         
-        self.start_X_foreground = 75;
+        self.start_X_foreground = 97;
         self.start_Y_foreground = 0;
         
         if self.start_X_foreground != 0 :
@@ -223,11 +223,30 @@ class TopMouseTracker():
         videoInfo = videoInfoWorkbook.as_matrix(); #Transforms it into a matrix
         
         for line in videoInfo :
-            
-            if not np.isnan(line[0]) : 
+
+            try :
                 
-                if str(int(line[0])) == self._args["main"]["mouse"] :
-                      
+                if not np.isnan(line[0]) : 
+                    
+                    if str(int(line[0])) == self._args["main"]["mouse"] :
+                          
+                        self._tStart = int(line[1]); #Moment at which the cotton is added (s)
+                          
+                        if line[2] == 'N.A' :
+                              
+                            self._tStartBehav = 100000;
+                              
+                        else :
+                              
+                            self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
+                              
+                        self._tEnd = [int(line[3]),int(line[4]),\
+                                     int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
+                                      
+            except :
+                
+                if str(line[0]) == self._args["main"]["mouse"] :
+                          
                     self._tStart = int(line[1]); #Moment at which the cotton is added (s)
                       
                     if line[2] == 'N.A' :

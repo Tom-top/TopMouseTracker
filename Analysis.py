@@ -125,8 +125,8 @@ class Plot(tracker.TopMouseTracker) :
         self.filteredPosBefore = self.posBefore[0::res];
         self.filteredPosAfter = self.posAfter[0::res];
         
-        self.befPlot = ax0.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=0.1,color='blue',label='Before Initiation');
-        self.aftPlot = ax0.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=0.1,color='red',label='After Initiation');
+        self.befPlot = ax0.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=0.1,color=cBefore,label='Before Initiation');
+        self.aftPlot = ax0.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=0.1,color=cAfter,label='After Initiation');
         
         self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._tStartBehav*self._framerate]);
         
@@ -178,11 +178,11 @@ class Plot(tracker.TopMouseTracker) :
         ax0 = plt.subplot2grid((4, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
         #ax0.plot(np.arange(0,len(self.distanceCorrectedBefore)),self.distanceCorrectedBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.distanceCorrectedBefore[i:i+self.res]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
-        ax0.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        Before = [np.mean(self.distanceCorrectedBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
+        ax0.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
         #ax0.plot(np.arange(len(self.distanceCorrectedBefore),len(self.distanceCorrectedBefore)+len(self.distanceCorrectedAfter)),self.distanceCorrectedAfter,color='red',alpha=0.5);
-        After = [np.mean(self.distanceCorrectedAfter[i:i+self.res]) for i in np.arange(0,len(self.distanceCorrectedAfter),self.res)];
-        ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
+        After = [np.mean(self.distanceCorrectedAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedAfter),self.res)];
+        ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
         ax0.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
@@ -192,11 +192,11 @@ class Plot(tracker.TopMouseTracker) :
         ax1 = plt.subplot2grid((4, 4), (1, 3));
         #ax1 = plt.subplot(3,4,8);
         #ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.distanceCumulativeBefore[i:i+self.res]) for i in np.arange(0,len(self.distanceCumulativeBefore),self.res)]
-        ax1.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        Before = [np.mean(self.distanceCumulativeBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCumulativeBefore),self.res)]
+        ax1.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
         #ax1.plot(np.arange(len(self.distanceCumulativeBefore),len(self.distanceCumulativeBefore)+len(self.distanceCumulativeAfter)),self.distanceCumulativeAfter,color='red',alpha=0.5);
-        After = [np.mean(self.distanceCumulativeAfter[i:i+self.res]) for i in np.arange(0,len(self.distanceCumulativeAfter),self.res)];
-        ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
+        After = [np.mean(self.distanceCumulativeAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCumulativeAfter),self.res)];
+        ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         ax1.set_ylabel("Cumulative distance (cm)");
         ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
@@ -206,11 +206,11 @@ class Plot(tracker.TopMouseTracker) :
         ax2 = plt.subplot2grid((4, 4), (2, 3));
         #ax2 = plt.subplot(3,4,12);
         #ax2.plot(np.arange(0,len(self.areasBefore)),self.areasBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.areasBefore[i:i+self.res]) for i in np.arange(0,len(self.areasBefore),self.res)];
-        ax2.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        Before = [np.mean(self.areasBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.areasBefore),self.res)];
+        ax2.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
         #ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
-        After = [np.mean(self.areasAfter[i:i+self.res]) for i in np.arange(0,len(self.areasAfter),self.res)];
-        ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
+        After = [np.mean(self.areasAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.areasAfter),self.res)];
+        ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         ax2.set_title("Mask area over time", fontsize = 10);
         ax2.set_ylabel("Mask area (px^2)");
         ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
@@ -219,11 +219,11 @@ class Plot(tracker.TopMouseTracker) :
         
         ax3 = plt.subplot2grid((4, 4), (3, 3));
         #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.cottonBefore[i:i+self.res]) for i in np.arange(0,len(self.cottonBefore),self.res)];
-        ax3.plot(np.arange(0,len(Before)),Before,color='blue',alpha=0.5);
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        ax3.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
         #ax3.plot(np.arange(len(self.cottonBefore),len(self.cottonBefore)+len(self.cottonAfter)),self.cottonAfter,color='red',alpha=0.5);
-        After = [np.mean(self.cottonAfter[i:i+self.res]) for i in np.arange(0,len(self.cottonAfter),self.res)];
-        ax3.plot(np.arange(len(Before),len(Before)+len(After)),After,color='red',alpha=0.5);
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+        ax3.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         ax3.set_title("Cotton height over time", fontsize = 10);
         ax3.set_ylabel("Average pixel intensity *8bit (a.u)");
         ax3.set_xlabel("time (h)");
@@ -253,13 +253,13 @@ class Plot(tracker.TopMouseTracker) :
         
         if line :
         
-            self.befPlot = ax4.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color='blue',label='Before Initiation');
-            self.aftPlot = ax4.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color='red',label='After Initiation');
+            self.befPlot = ax4.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color=cBefore,label='Before Initiation');
+            self.aftPlot = ax4.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=alpha,solid_capstyle="butt",color=cAfter,label='After Initiation');
             
         else :
             
-            self.befPlot = ax4.scatter([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],s=10,alpha=alpha,color='blue',label='Before Initiation');
-            self.aftPlot = ax4.scatter([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],s=10,alpha=alpha,color='red',label='After Initiation');
+            self.befPlot = ax4.scatter([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],s=10,alpha=alpha,color=cBefore,label='Before Initiation');
+            self.aftPlot = ax4.scatter([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],s=10,alpha=alpha,color=cAfter,label='After Initiation');
         
 #        else :
 #            
