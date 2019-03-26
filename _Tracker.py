@@ -14,6 +14,7 @@ import pandas as pd;
 import fnmatch;
 import xlwt;
 from math import sqrt;
+import skvideo.io;
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Utilities as utils;
@@ -130,6 +131,8 @@ class TopMouseTracker():
         self._largeObjects = []; #List containing the number of large objects detected every s/framerate
         self._smallObjects = []; #List containing the number of small objects detected every s/framerate
         self._detectedNest = []; #List containing the detection status of the nest
+        self._cottonSpread = []; #List containing the spread of cotton
+        self._cottonCenter = []; #List containing the center of the cotton mask
         self._distance = 0.; #Cumulative distance traveled by the mouse
         self._errors = 0; #Counter for the number of times that the trackers fails to segment the animal
         
@@ -141,6 +144,7 @@ class TopMouseTracker():
         self.realTimeSpeed = 0.; #Speed of the mouse in real time
         self.center = None; #Centroid (x,y) of the mouse binary mask in real time
         self.correctedCenter = None; #Corrected centroid (x,y) of the mouse binary mask in real time
+        self.correctedCenterCotton = None; #Corrected centroid (x,y) of the cotton binary mask in real time
         
         #Tracking canvas variables
         #----------------------------------------------------------------------
@@ -161,16 +165,24 @@ class TopMouseTracker():
         
         if self._args["saving"]["saveStream"] :
             
-            self.videoString = "Tracking_{0}_{1}.avi".format(self._mouse,i);
+            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,i,self._args["saving"]["extension"]);
             
-            self.testCanvas = np.zeros((self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
+            #self.testCanvas = np.zeros((self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
+            self.testCanvas = np.zeros((self._W_RGB_CROPPED,self._H_RGB_CROPPED));
+            
             self.testCanvas = cv2.resize(self.testCanvas, (0,0),\
                                  fx = 1./self._args["saving"]["resizeTracking"],\
                                  fy = 1./self._args["saving"]["resizeTracking"]);
+                                   
+            if self._args["saving"]["fourcc"] == None :
+                
+                self.videoWriter = skvideo.io.FFmpegWriter(self._args["main"]["resultDir"]+"/"+self.videoString);
+                
+            else :
                                          
-            self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
-                                self.videoString), self._args["saving"]["fourcc"], self._framerate,\
-                                (self.testCanvas.shape[0],self.testCanvas.shape[1]));
+                self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
+                                    self.videoString), self._args["saving"]["fourcc"], self._framerate,\
+                                    (self.testCanvas.shape[0],self.testCanvas.shape[1]));
     
     def SetRegistrationParameters(self) : 
         
@@ -310,9 +322,16 @@ class TopMouseTracker():
         if self._args["saving"]["saveCottonMask"] :
             
             self.depthMaskString = "Mask_Cotton_{0}.avi".format(self._mouse);
-            self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
-                                self.depthMaskString), self._args["saving"]["fourcc"], self._framerate,\
-                                (self._W_RGB_CROPPED, self._H_RGB_CROPPED));
+            
+            if self._args["saving"]["fourcc"] == None :
+                
+                self.depthMaskWriter = skvideo.io.FFmpegWriter(self._args["main"]["resultDir"]+"/"+self.depthMaskString);
+            
+            else :
+                
+                self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
+                                    self.depthMaskString), self._args["saving"]["fourcc"], self._framerate,\
+                                    (self._W_RGB_CROPPED, self._H_RGB_CROPPED));
         
         
     def Main(self):
@@ -454,23 +473,91 @@ class TopMouseTracker():
         
         self._cottonAveragePixelIntensities.append(self.averagePixelIntensity);
         
-        for i in range(len(self.cntsCotton)): #for every detected object as a cotton piece...
-
+        #Connecting mask centers to estimate cotton spread
+        #----------------------------------------------------------------------------------------------------------------------------------
+        
+        self.largestCotton = 0;
+        self.indexLargestCotton = 0;
+        self.cottonCenters = [];
+        
+        for i,contour in enumerate(self.cntsCotton) :
+            
+            area = cv2.contourArea(contour);
+            
+            if area > self.largestCotton :
+                
+                self.largestCotton = area;
+                self.indexLargestCotton = i;
+            
+        for i,contour in enumerate(self.cntsCotton):
+            
             area = cv2.contourArea(self.cntsCotton[i]); #Computes its area
             
-            if area >= self._args["segmentation"]["minCottonSize"] and area <= self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
+            if i != self.indexLargestCotton :
+            
+                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
+                    
+                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+                    center = (int(self.x),int(self.y));
+                    self.cottonCenters.append(center);
+                    
+                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+                    self.cntLarge.append(i);
                 
-                self.largeObjects+=1; #Adds the object to the count of large cotton pieces
-                self.cntLarge.append(i);
+                else : #If the area is smaller than a certain threshold
+                    
+                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces
+                    
+            if i == self.indexLargestCotton :
                 
-            else : #If the area in smaller than a certain threshold
+                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
+                    
+                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+                    center = (int(self.x),int(self.y));
+                    self.cottonCenters.append(center);
+                    
+                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+                    self.cntLarge.append(i);
                 
-                self.smallObjects+=1; #Adds the object to the count of small cotton pieces
+                if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
+                    
+                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+                    center = (int(self.x),int(self.y));
+                    self.cottonCenters.append(center);
+                    
+                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+                    self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
+                    
+                else : #If the area is smaller than a certain threshold
+                    
+                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces   
+
+
+
+        self.closingCottonClone = self.closingCotton.copy();
+
+        for center in range(1,len(self.cottonCenters)) :
+            
+            cv2.line(self.closingCottonClone, self.cottonCenters[center-1],\
+                     self.cottonCenters[center], 255, 10);
+        
+        self.cntsAllCottons = cv2.findContours(self.closingCottonClone.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2];
+        self.biggestContourCotton = max(self.cntsAllCottons, key=cv2.contourArea); #Finds the biggest contour of the binary mask
+        
+        
+        
+        if self.cntsAllCottons != [] :
+            
+            ((self.mainX,self.mainY), self.mainRadius) = cv2.minEnclosingCircle(self.biggestContourCotton);
+        
+            if self.mainX and self.mainY != None :
                 
-            if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
-                
-                self.largeObjects+=1; #Adds the object to the count of large cotton pieces
-                self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
+                self.correctedCenterCotton = (int(self.mainX)+self.upLeftX,\
+                                              int(self.mainY)+self.upLeftY);
+        
+            self._cottonCenter.append((self.mainX,self.mainY));
+            self._cottonSpread.append(self.mainRadius);
+            
                 
         self._largeObjects.append(self.largeObjects);
         self._smallObjects.append(self.smallObjects);
@@ -511,10 +598,16 @@ class TopMouseTracker():
                         self.upLeftX:self.upLeftX+self.maskDisplay.shape[1]] = self.maskDisplay; 
                         
         cv2.circle(self.cloneFrame, self.correctedCenter, self.centerSize, (0, 0, 255), self.centerThickness); #Draws a the object Centroid as a point
+        
+        if self.correctedCenterCotton != None :
+            
+            cv2.circle(self.cloneFrame, self.correctedCenterCotton, int(self.mainRadius), (255,0,255), self.contourThickness);
  
         cv2.rectangle(self.cloneFrame, (self.upLeftX,self.upLeftY), (self.lowRightX,self.lowRightY),(255,0,0), self.contourThickness); #Displays the ROI square on the image
         
-        self.hStack = np.hstack((self.metaDataDisplay, self.cloneFrame)); #Generates a horizontal stacked image with useful info and stream
+        #self.hStack = np.hstack((self.metaDataDisplay, self.cloneFrame)); #Generates a horizontal stacked image with useful info and stream
+        
+        self.hStack = self.cloneFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Crops the initial frame to the ROI
         
         self.hStack = cv2.resize(self.hStack, (0,0),\
                                  fx = 1./self._args["saving"]["resizeTracking"],\
@@ -590,14 +683,6 @@ class TopMouseTracker():
                 
                 self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
                 cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
-                
-    #            for cnt in self.cntLarge :
-    #                if cnt != self.cntNest :
-    #                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
-                
-    #            for cnt in range(len(self.cntsCotton)) :
-    #                if cnt != self.cntNest :
-    #                    cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
             
             #If no nest is detected
             
@@ -649,13 +734,28 @@ class TopMouseTracker():
     def SaveTracking(self) :
         
         if self._startSaving :
-        
-            self.videoWriter.write(self.hStack);
+            
+            if self._args["saving"]["fourcc"] == None :
+                
+                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
+                self.videoWriter.writeFrame(self.hStack);
+            
+            else :
+                
+               self.videoWriter.write(self.hStack);
+            
             
         if self._startSavingMask :
             
             self.bitwiseDepthCottonMaskSave = cv2.cvtColor(self.bitwiseDepthCottonMask,cv2.COLOR_GRAY2RGB);
-            self.depthMaskWriter.write(self.bitwiseDepthCottonMaskSave);
+            
+            if self._args["saving"]["fourcc"] == None :
+                
+                self.depthMaskWriter.writeFrame(self.bitwiseDepthCottonMaskSave);
+                
+            else :
+            
+                self.depthMaskWriter.write(self.bitwiseDepthCottonMaskSave);
             
     
     def ComputeDistanceTraveled(self) :
@@ -829,11 +929,23 @@ def TopTracker(Tracker,**kwargs) :
     
     if kwargs["saving"]["saveStream"] :
         
-        Tracker.videoWriter.release();
+        if kwargs["saving"]["fourcc"] == None :
+            
+            Tracker.videoWriter.close();
+        
+        else :
+            
+            Tracker.videoWriter.release();
         
     if kwargs["saving"]["saveCottonMask"] :
         
-        Tracker.depthMaskWriter.release();
+        if kwargs["saving"]["fourcc"] == None :
+            
+            Tracker.depthMaskWriter.close();
+        
+        else :
+        
+            Tracker.depthMaskWriter.release();
         
     Tracker._End = time.time();
     
@@ -894,4 +1006,5 @@ def SaveTracking(Tracker,**kwargs) :
     np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
     np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
     np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
+    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonSpread.npy'),Tracker._cottonSpread);
                 

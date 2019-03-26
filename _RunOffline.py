@@ -19,9 +19,9 @@ import TopMouseTracker.Analysis as analysis;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
-_tmtDir = os.path.join(_mainDir,"TopMouseTracker");
-_workingDir = os.path.join(_tmtDir,"190221-01/21-2-2019_10-11-11");
-_resultDir = os.path.join(_workingDir,"252");#Results-252
+_tmtDir = "/mnt/raid/TopMouseTracker";
+_workingDir = os.path.join(_tmtDir,"190222-01/22-2-2019_9-30-28");
+_resultDir = os.path.join(_workingDir,"247");#Results-252
 
 utils.CheckDirectoryExists(_tmtDir);
 utils.CheckDirectoryExists(_resultDir);
@@ -43,13 +43,14 @@ segmentationParameters = {
                 "threshMinMouse" : np.array([100, 70, 0],np.uint8),
                 "threshMaxMouse" : np.array([179, 255, 50],np.uint8),
                 "threshMinCotton" : np.array([0, 20, 150],np.uint8),
-                "threshMaxCotton" : np.array([120, 120, 250],np.uint8),
+                #"threshMaxCotton" : np.array([120, 120, 250],np.uint8), #Upper Side
+                "threshMaxCotton" : np.array([120, 90, 250],np.uint8), #Lower Side
                 "kernel" : np.ones((5,5),np.uint8),
                 "minAreaMask" : 1000.0,
                 "maxAreaMask" : 8000.0,
                 "minDist" : 0.3,
-                "minCottonSize" : 1000.,
-                "nestCottonSize" : 12000.,
+                "minCottonSize" : 4000.,
+                "nestCottonSize" : 15000.,
                 "cageLength" : 50.,
                 "cageWidth" : 25.,
                 };
@@ -67,7 +68,8 @@ X264 : cv2.VideoWriter_fourcc(*'X264') --> Gives small videos
        
 savingParameters = {
         "framerate" : None,
-        "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'), 
+        "fourcc" : None, #cv2.VideoWriter_fourcc(*'XVID')
+        "extension" : "avi",
         "segmentCotton" : True,
         "saveStream" : True,
         "saveCottonMask" : False,
@@ -102,14 +104,13 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
 #Initializes the tracker object#
 ##############################################################################
 
-mainParameters["mouse"] = "252";
+mainParameters["mouse"] = "247";
 
 data = tracker.TopMouseTracker(**trackerParameters);
 
 #%%############################################################################
 #Creating ROI for analysis#
 ###############################################################################
-
 data.SetROI();
    
 #%%############################################################################
@@ -122,10 +123,10 @@ tracker.TopTracker(data,**trackerParameters);
 #Plotting and Analysis
 ###############################################################################  
      
-mainParameters["mouse"] = "248bis"
+mainParameters["mouse"] = "215"
 
 Plot = analysis.Plot(**trackerParameters);
 
-Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1);
+Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=100);
 
 #Plot.HeatMapPlot(bins=1000,sigma=6);
