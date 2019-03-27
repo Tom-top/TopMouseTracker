@@ -102,12 +102,12 @@ trackerParameters = {
 
 if mainParameters["email"] != None :
     
-    mainParameters["password"] = input("Type the password for your email : {0}".format(mainParameters["email"]));
+    mainParameters["password"] = input("Type the password for your email {0} : ".format(mainParameters["email"]));
     utils.PrintColoredMessage("Emailing mode has been enabled","darkgreen");
     
     try :
         
-        server = smtplib.SMTP_SSL(mainParameters["smtp"], mainParameters["port"]);
+        server = smtplib.SMTP(mainParameters["smtp"], mainParameters["port"]);
         server.starttls();
         server.login(mainParameters["email"], mainParameters["password"]);
         trackerParameters["server"] = server;
