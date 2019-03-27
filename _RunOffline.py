@@ -10,6 +10,7 @@ import os;
 import numpy as np;
 import cv2;
 import matplotlib.pyplot as plt;
+import smtplib;
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Utilities as utils;
@@ -20,16 +21,21 @@ import TopMouseTracker.Analysis as analysis;
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
 _tmtDir = "/mnt/raid/TopMouseTracker";
-_workingDir = os.path.join(_tmtDir,"190222-01/22-2-2019_9-30-28");
-_resultDir = os.path.join(_workingDir,"247");#Results-252
+_workingDir = os.path.join(_tmtDir,"190220-01/20-2-2019_10-5-34");
+_resultDir = os.path.join(_workingDir,"254");#Results-252
 
 utils.CheckDirectoryExists(_tmtDir);
 utils.CheckDirectoryExists(_resultDir);
 utils.ClearDirectory(_resultDir);
 
-mainParameters = {"tmtDir" : _tmtDir,
+mainParameters = {"workingStation" : "Black Sabbath",
+                  "tmtDir" : _tmtDir,
                   "workingDir" : _workingDir,
                   "resultDir" : _resultDir,
+                  "email" : "thomas.topilko@gmail.com",
+                  "password" : None,
+                  "smtp" : "smtp.gmail.com",
+                  "port" : 587, #587 TLS, 465 SSL
                   "mouse" : None,
                   "capturesRGB" : None,
                   "capturesDEPTH" : None,
@@ -43,8 +49,8 @@ segmentationParameters = {
                 "threshMinMouse" : np.array([100, 70, 0],np.uint8),
                 "threshMaxMouse" : np.array([179, 255, 50],np.uint8),
                 "threshMinCotton" : np.array([0, 20, 150],np.uint8),
-                #"threshMaxCotton" : np.array([120, 120, 250],np.uint8), #Upper Side
-                "threshMaxCotton" : np.array([120, 90, 250],np.uint8), #Lower Side
+                "threshMaxCotton" : np.array([120, 120, 250],np.uint8), #Upper Side
+                #"threshMaxCotton" : np.array([120, 90, 250],np.uint8), #Lower Side
                 "kernel" : np.ones((5,5),np.uint8),
                 "minAreaMask" : 1000.0,
                 "maxAreaMask" : 8000.0,
@@ -68,12 +74,12 @@ X264 : cv2.VideoWriter_fourcc(*'X264') --> Gives small videos
        
 savingParameters = {
         "framerate" : None,
-        "fourcc" : None, #cv2.VideoWriter_fourcc(*'XVID')
+        "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'), #cv2.VideoWriter_fourcc(*'XVID')
         "extension" : "avi",
         "segmentCotton" : True,
         "saveStream" : True,
         "saveCottonMask" : False,
-        "resizeTracking" : 4.,
+        "resizeTracking" : 1.,
         };
         
 plotParameters = {
@@ -91,7 +97,31 @@ trackerParameters = {
         "display" : displayParameters,
         "saving" : savingParameters,
         "plot" : plotParameters,
+        "server" : None,
         };
+
+if mainParameters["email"] != None :
+    
+    mainParameters["password"] = input("Type the password for your email : {0}".format(mainParameters["email"]));
+    utils.PrintColoredMessage("Emailing mode has been enabled","darkgreen");
+    
+    try :
+        
+        server = smtplib.SMTP_SSL(mainParameters["smtp"], mainParameters["port"]);
+        server.starttls();
+        server.login(mainParameters["email"], mainParameters["password"]);
+        trackerParameters["server"] = server;
+        utils.PrintColoredMessage("Successfully connected to {0}".format(mainParameters["email"]),"darkgreen");
+        
+    except :
+        
+        utils.PrintColoredMessage("Failed to connect to {0}".format(mainParameters["email"]),"darkred");
+    
+else :
+    
+    utils.PrintColoredMessage("Emailing mode has been disabled","darkgreen");
+    
+
         
 #%%###########################################################################
 # Loading images to memory#
@@ -104,7 +134,7 @@ mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
 #Initializes the tracker object#
 ##############################################################################
 
-mainParameters["mouse"] = "247";
+mainParameters["mouse"] = "254";
 
 data = tracker.TopMouseTracker(**trackerParameters);
 
@@ -123,7 +153,7 @@ tracker.TopTracker(data,**trackerParameters);
 #Plotting and Analysis
 ###############################################################################  
      
-mainParameters["mouse"] = "215"
+mainParameters["mouse"] = "254"
 
 Plot = analysis.Plot(**trackerParameters);
 

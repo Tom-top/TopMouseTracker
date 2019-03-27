@@ -910,6 +910,11 @@ def TopTracker(Tracker,**kwargs) :
                     utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
                     utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
                     utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+                                              
+                    if kwargs["server"] != None :
+                        
+                        kwargs["server"].sendemail(kwargs["main"]["email"],kwargs["main"]["email"],\
+                              "Analysis of mouse {0} finished on {1}".format(kwargs["main"]["mouse"], kwargs["main"]["workingStation"]));
                     
                     if kwargs["main"]["playSound"] :
                         utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
@@ -922,6 +927,8 @@ def TopTracker(Tracker,**kwargs) :
         except KeyboardInterrupt :
             
             pass;
+            
+    kwargs["server"].quit();
               
     if kwargs["display"]["showStream"] :       
         

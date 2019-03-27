@@ -236,7 +236,18 @@ class Plot(tracker.TopMouseTracker) :
         ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         
         All = Before+After;
+#        peaks = [];
+#        
+#        for i,data in enumerate(All) :
+#            
+#            if data[i] >= data[i+1] or data[i] <= data[i+1] :
+                
+                
+            
+            
+        
         peaks = peakutils.indexes(All, thres=0.8, min_dist=1); 
+        
         #print(peaks)
         #ax3.scatter(peaks,[All[i] for i in peaks], c='black');
         
