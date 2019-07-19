@@ -341,7 +341,55 @@ class TopMouseTracker():
                 self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
                                     self.depthMaskString), self._args["saving"]["fourcc"], self._framerate[self.videoNumber],\
                                     (self._W_RGB_CROPPED, self._H_RGB_CROPPED));
+    
+    def Nothing(self,x) :
         
+        pass;
+    
+    def AdjustThresholding(self) :
+        
+        cv2.namedWindow('Adjust Thresholding');
+        
+        cv2.createTrackbar('H_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][0],255,self.Nothing);
+        cv2.createTrackbar('H_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][0],255,self.Nothing);
+        
+        cv2.createTrackbar('S_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][1],255,self.Nothing);
+        cv2.createTrackbar('S_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][1],255,self.Nothing);
+        
+        cv2.createTrackbar('V_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][2],255,self.Nothing);
+        cv2.createTrackbar('V_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][2],255,self.Nothing);
+        
+        self.testCroppedFrame = self._args["main"]["testFrameRGB"].copy()[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
+        self.testHsvFrame = cv2.cvtColor(self.testCroppedFrame, cv2.COLOR_BGR2HSV);
+        self.testBlur = cv2.blur(self.testHsvFrame,(5,5));
+        
+        while True:
+        
+            # get current positions of four trackbars
+            h_l = cv2.getTrackbarPos('H_Low','Adjust Thresholding');
+            h_h = cv2.getTrackbarPos('H_High','Adjust Thresholding');
+            
+            s_l = cv2.getTrackbarPos('S_Low','Adjust Thresholding');
+            s_h = cv2.getTrackbarPos('S_High','Adjust Thresholding');
+            
+            v_l = cv2.getTrackbarPos('V_Low','Adjust Thresholding');
+            v_h = cv2.getTrackbarPos('V_High','Adjust Thresholding');
+            
+            self.testMaskMouse = cv2.inRange(self.testBlur, (h_l,s_l,v_l),(h_h,s_h,v_h));
+            self.overlay = cv2.bitwise_and(self.testHsvFrame, self.testHsvFrame, mask=self.testMaskMouse);
+            
+            cv2.imshow('Adjust Thresholding',self.overlay);
+            
+            key = cv2.waitKey(10) & 0xFF;
+        
+            if key == ord("q"):
+                break;
+        
+        cv2.destroyAllWindows();
+        
+        for i in range (1,5):
+            cv2.waitKey(1);
+    
         
     def Main(self,rgbCapture,depthCapture):
         
