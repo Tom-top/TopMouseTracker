@@ -15,6 +15,13 @@ import fnmatch;
 import xlwt;
 from math import sqrt;
 import skvideo.io;
+import smtplib;
+import moviepy.editor as mpy;
+import smtplib;
+from email.mime.text import MIMEText;
+from email.mime.image import MIMEImage;
+from email.mime.multipart import MIMEMultipart;
+from PIL import Image;
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Utilities as utils;
@@ -100,27 +107,31 @@ class TopMouseTracker():
         #General variables
         #----------------------------------------------------------------------
         self._args = kwargs; #Loads the main arguments
+        self._break = False; #Checks if the tracker was manually aborted to resume segmentation
         self._Start = None; #Time at which the segmentation starts
-        self._Stop = False; #Trigger to stop segmentation when video is empty
         self._End = None; #Time at which the segmentation ends
+        self._Stop = False; #Trigger to stop segmentation when video is empty
         self._mouse = self._args["main"]["mouse"]; #Loads the name of the mouse
         self._cageWidth = self._args["segmentation"]["cageWidth"];
         self._cageLength = self._args["segmentation"]["cageLength"];
-        self._testFrameRGB = self._args["main"]["testFrameRGB"][0].copy(); #Loads a test RGB frame
+        self._testFrameRGB = self._args["main"]["testFrameRGB"].copy(); #Loads a test RGB frame
         self._H_RGB, self._W_RGB = self._testFrameRGB.shape[0], self._testFrameRGB.shape[1]; #Height, Width of the RGB frames
-        self._testFrameDEPTH = self._args["main"]["testFrameDEPTH"][0].copy(); #Loads a test DEPTH frame
-        self._H_DEPTH, self._W_DEPTH = self._testFrameDEPTH.shape[0], self._testFrameDEPTH.shape[1]; #Height, Width of the DEPTH frames
+        
+        if self._args["saving"]["segmentCotton"] :
+            self._testFrameDEPTH = self._args["main"]["testFrameDEPTH"].copy(); #Loads a test DEPTH frame
+            self._H_DEPTH, self._W_DEPTH = self._testFrameDEPTH.shape[0], self._testFrameDEPTH.shape[1]; #Height, Width of the DEPTH frames
+            
+        self._framerate = [x.fps for x in self._args["main"]["capturesRGB"]];
         
         #Registration variables
         #---------------------------------------------------------------------- 
         self._resizingFactorRegistration = 2.95; #Parameters for resizing of the depth image for registration
-        self._testFrameDEPTHResized = cv2.resize(self._testFrameDEPTH,(0,0),fx = self._resizingFactorRegistration,fy = self._resizingFactorRegistration);
-        self._H_DEPTH_RESIZED,self._W_DEPTH_RESIZED = self._testFrameDEPTHResized.shape[0],self._testFrameDEPTHResized.shape[1]; 
-        self.SetRegistrationParameters(); #Computes all the placement parameters for registration
         
-        #MetaData variables
-        #---------------------------------------------------------------------- 
-        self.SetMetaDataParameters();
+        if self._args["saving"]["segmentCotton"] :
+            self._testFrameDEPTHResized = cv2.resize(self._testFrameDEPTH,(0,0),fx = self._resizingFactorRegistration,fy = self._resizingFactorRegistration);
+            self._H_DEPTH_RESIZED,self._W_DEPTH_RESIZED = self._testFrameDEPTHResized.shape[0],self._testFrameDEPTHResized.shape[1]; 
+            
+            self.SetRegistrationParameters(); #Computes all the placement parameters for registration
 
         #Global tracking variables
         #----------------------------------------------------------------------
@@ -140,11 +151,17 @@ class TopMouseTracker():
         #----------------------------------------------------------------------
         self.videoNumber = 0;
         self.frameNumber = 0;
+        self.fn = 0;
         self.realTimePosition = []; #Position of the mouse in real time
         self.realTimeSpeed = 0.; #Speed of the mouse in real time
         self.center = None; #Centroid (x,y) of the mouse binary mask in real time
         self.correctedCenter = None; #Corrected centroid (x,y) of the mouse binary mask in real time
         self.correctedCenterCotton = None; #Corrected centroid (x,y) of the cotton binary mask in real time
+        
+        #MetaData variables
+        #---------------------------------------------------------------------- 
+        self.SetMetaDataParameters();
+        self._videoLength = sum(self._tEnd)-self._tStart;
         
         #Tracking canvas variables
         #----------------------------------------------------------------------
@@ -158,16 +175,16 @@ class TopMouseTracker():
         
         #Saving variables
         #----------------------------------------------------------------------
+        self._displayOutputShape = True;
         self._startSaving = False;
         self._startSavingMask = False;
         
-    def SetTrackingVideoSaving(self,i) :
+    def SetTrackingVideoSaving(self) :
         
         if self._args["saving"]["saveStream"] :
             
-            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,i,self._args["saving"]["extension"]);
-            
-            #self.testCanvas = np.zeros((self._W_RGB+self._metaDataCanvasSize,self._H_RGB));
+            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,0,self._args["saving"]["extension"]);
+
             self.testCanvas = np.zeros((self._W_RGB_CROPPED,self._H_RGB_CROPPED));
             
             self.testCanvas = cv2.resize(self.testCanvas, (0,0),\
@@ -176,13 +193,28 @@ class TopMouseTracker():
                                    
             if self._args["saving"]["fourcc"] == None :
                 
-                self.videoWriter = skvideo.io.FFmpegWriter(self._args["main"]["resultDir"]+"/"+self.videoString);
+                self.videoWriter = skvideo.io.FFmpegWriter(os.path.join(self._args["main"]["resultDir"],self.videoString),\
+                                                           inputdict={
+                                                                      '-r': str(self._framerate[self.videoNumber]),
+                                                                    },
+                                                           outputdict={
+                                                                      '-r': str(self._framerate[self.videoNumber]),
+                                                                    });
+                
+                utils.PrintColoredMessage("\n[INFO] Default skvideo video saving mode selected","darkgreen");
+                
+            elif self._args["saving"]["fourcc"] == "Frame" :
+                
+                utils.PrintColoredMessage("\n[INFO] Image saving mode selected \n","darkgreen");
                 
             else :
                                          
                 self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
-                                    self.videoString), self._args["saving"]["fourcc"], self._framerate,\
+                                    self.videoString), self._args["saving"]["fourcc"], self._framerate[self.videoNumber],\
                                     (self.testCanvas.shape[0],self.testCanvas.shape[1]));
+                
+                utils.PrintColoredMessage("\n[INFO] Video saving mode selected","darkgreen");
+                utils.PrintColoredMessage("[INFO] VideoWriter : {0} ; {1} \n".format( (self.testCanvas.shape[0],self.testCanvas.shape[1]) , self._args["saving"]["fourcc"]),"darkgreen");
     
     def SetRegistrationParameters(self) : 
         
@@ -220,20 +252,16 @@ class TopMouseTracker():
             
     def SetMetaDataParameters(self) :
         
-        for file in os.listdir(self._args["main"]["workingDir"]) :
+        for file in os.listdir(self._args["main"]["tmtDir"]) :
             
-            path2File = os.path.join(self._args["main"]["workingDir"],file);
-            
+            path2File = os.path.join(self._args["main"]["tmtDir"],file);
+
             if fnmatch.fnmatch(file, 'Mice_Video_Info.xlsx'): 
 
                 videoInfoWorkbook = pd.read_excel(path2File,header=None); #Load video info excel sheet
-                
-            if fnmatch.fnmatch(file, 'MetaData*.xls'): 
-                
-                metaDataWorkbook = pd.read_excel(path2File,header=None); #Load video info excel sheet
         
         videoInfo = videoInfoWorkbook.as_matrix(); #Transforms it into a matrix
-        
+
         for line in videoInfo :
 
             try :
@@ -243,6 +271,7 @@ class TopMouseTracker():
                     if str(int(line[0])) == self._args["main"]["mouse"] :
                           
                         self._tStart = int(line[1]); #Moment at which the cotton is added (s)
+                        self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]);
                           
                         if line[2] == 'N.A' :
                               
@@ -252,14 +281,14 @@ class TopMouseTracker():
                               
                             self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
                               
-                        self._tEnd = [int(line[3]),int(line[4]),\
-                                     int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
+                        self._tEnd = [int(line[3]),int(line[4]),int(line[5])]; #Length of each video of the experiment (max 4 videos)
                                       
             except :
                 
                 if str(line[0]) == self._args["main"]["mouse"] :
                           
                     self._tStart = int(line[1]); #Moment at which the cotton is added (s)
+                    self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]);
                       
                     if line[2] == 'N.A' :
                           
@@ -269,41 +298,17 @@ class TopMouseTracker():
                           
                         self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
                           
-                    self._tEnd = [int(line[3]),int(line[4]),\
-                                 int(line[5]),int(line[6])]; #Length of each video of the experiment (max 4 videos)
-            
+                    self._tEnd = [int(line[3]),int(line[4]),int(line[5])]; #Length of each video of the experiment (max 4 videos)
+                    
         self._Length = sum(self._tEnd);
-        self._nVideos = 0; #Variable holding the number of videos to be analyzed
-        
-        for i in self._tEnd :
-            if i != 0 :
-                self._nVideos+=1;
-        
-        metaData = metaDataWorkbook.as_matrix(); #Transforms it into a matrix
-        
-        for line in metaData :
-            
-            head = str(line[0]);
-            
-            if head == "Time_Stamp" :
-                
-                self._date = line[1];
-                
-            elif head == "Elapsed_Time" :
-                
-                self._elapsedTime = line[1];
-                
-            elif head == "Real_Framerate" :
-                
-                self._framerate = line[1];
-                
-            elif head == "nFrames" :
-                
-                self._nFrames = line[1];
+        self._nVideos = len([x for x in self._tEnd if x > 0]);
         
     def SetROI(self) :
         
-        self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"][0].copy()).roi(); #Defining the ROI for segmentation
+        print("\n");
+        utils.PrintColoredMessage("[INFO] Press R to reset ROI, and C to crop the selected ROI","bold");
+        
+        self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"].copy()).roi(); #Defining the ROI for segmentation
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -327,46 +332,56 @@ class TopMouseTracker():
                 
                 self.depthMaskWriter = skvideo.io.FFmpegWriter(self._args["main"]["resultDir"]+"/"+self.depthMaskString);
             
+            elif self._args["saving"]["fourcc"] == "Frame" :
+                
+                pass;
+            
             else :
                 
                 self.depthMaskWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],\
-                                    self.depthMaskString), self._args["saving"]["fourcc"], self._framerate,\
+                                    self.depthMaskString), self._args["saving"]["fourcc"], self._framerate[self.videoNumber],\
                                     (self._W_RGB_CROPPED, self._H_RGB_CROPPED));
         
         
-    def Main(self):
+    def Main(self,rgbCapture,depthCapture):
         
         #Get frame from capture
         #----------------------------------------------------------------------
         
-        try :
+        self.RGBFrame = rgbCapture.get_frame(self.frameNumber/self._framerate[self.videoNumber]); #Reads the following frame from the video capture
+        
+        if self._args["saving"]["segmentCotton"] :
+            self.DEPTHFrame = depthCapture.get_frame(self.frameNumber/self._framerate[self.videoNumber]); #Reads the following frame from the video capture
             
-            self.RGBFrame = next(self._args["main"]["capturesRGB"][self.videoNumber]); #Reads the following frame from the video capture
-            self.DEPTHFrame = next(self._args["main"]["capturesDEPTH"][self.videoNumber]); #Reads the following frame from the video capture
-            
-        except StopIteration :
+        if self.videoNumber == self._nVideos :
             
             self._Stop = True;
-        
+            
         if not self._Stop :
             
-            self.frameNumber += 1; #Increments the frame number variable
-            self.curTime = self.frameNumber/self._framerate; #Sets the time
+            self.curTime = int(self.frameNumber/self._framerate[self.videoNumber]); #Sets the time
                
             #If capture still has frames, and the following frame was successfully retrieved
             #----------------------------------------------------------------------
                 
             if self.videoNumber == 0 : #If the first video is being processed
                 
-                if self.curTime >= self._tStart and self.curTime <= self._tEnd[self.videoNumber] : #If the cotton was added, and if the video is not finished
+                if self.frameNumber < self._tStart*self._framerate[self.videoNumber] :
                     
-                    self.RunSegmentations();
-    
-            elif self.videoNumber != 0 : #If the one of the next videos is being processed
+                    pass;
                 
-                if self.curTime <= self._tEnd[self.videoNumber] : #If the video is not finished
+                elif self.frameNumber >= self._tStart*self._framerate[self.videoNumber] and self.frameNumber <= self._tEnd[self.videoNumber]*self._framerate[self.videoNumber] : #If the cotton was added, and if the video is not finished
                     
                     self.RunSegmentations();
+
+            elif self.videoNumber != 0 : #If one of the next videos is being processed
+                
+                if self.frameNumber <= self._tEnd[self.videoNumber]*self._framerate[self.videoNumber] : #If the video is not finished
+                    
+                    self.RunSegmentations();
+                    
+        self.fn += 1;
+        self.frameNumber += 1; #Increments the frame number variable
                     
                     
     def RunSegmentations(self) :
@@ -444,7 +459,7 @@ class TopMouseTracker():
             self.area = 0; #Resets the area size to 0
             self.StorePosition(); #Stores old position and area
             
-        self.ComputeDistanceTraveled();
+#        self.ComputeDistanceTraveled();
             
             
     def RunSegmentationCotton(self) :
@@ -457,10 +472,10 @@ class TopMouseTracker():
         self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 3); #Applies closing operation to the mask for large object filling
         self.cntsCotton = cv2.findContours(self.closingCotton.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
     
-        self.cntNest = None; #Variable that determines whether a nest is detected or not
-        self.cntLarge = [];
-        self.largeObjects = 0; #Variable that holds the number of detected large cotton objects
-        self.smallObjects = 0; #Variable that holds the number of detected small cotton objects
+#        self.cntNest = None; #Variable that determines whether a nest is detected or not
+#        self.cntLarge = [];
+#        self.largeObjects = 0; #Variable that holds the number of detected large cotton objects
+#        self.smallObjects = 0; #Variable that holds the number of detected small cotton objects
         
         self.croppedRegisteredDepth = self.registeredDepth[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
         self.bitwiseDepthCottonMask = cv2.bitwise_and(self.closingCotton, self.croppedRegisteredDepth[:,:,0]);
@@ -476,99 +491,98 @@ class TopMouseTracker():
         #Connecting mask centers to estimate cotton spread
         #----------------------------------------------------------------------------------------------------------------------------------
         
-        self.largestCotton = 0;
-        self.indexLargestCotton = 0;
-        self.cottonCenters = [];
-        
-        for i,contour in enumerate(self.cntsCotton) :
-            
-            area = cv2.contourArea(contour);
-            
-            if area > self.largestCotton :
-                
-                self.largestCotton = area;
-                self.indexLargestCotton = i;
-            
-        for i,contour in enumerate(self.cntsCotton):
-            
-            area = cv2.contourArea(self.cntsCotton[i]); #Computes its area
-            
-            if i != self.indexLargestCotton :
-            
-                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
-                    
-                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
-                    center = (int(self.x),int(self.y));
-                    self.cottonCenters.append(center);
-                    
-                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
-                    self.cntLarge.append(i);
-                
-                else : #If the area is smaller than a certain threshold
-                    
-                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces
-                    
-            if i == self.indexLargestCotton :
-                
-                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
-                    
-                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
-                    center = (int(self.x),int(self.y));
-                    self.cottonCenters.append(center);
-                    
-                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
-                    self.cntLarge.append(i);
-                
-                if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
-                    
-                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
-                    center = (int(self.x),int(self.y));
-                    self.cottonCenters.append(center);
-                    
-                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
-                    self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
-                    
-                else : #If the area is smaller than a certain threshold
-                    
-                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces   
-
-
-
-        self.closingCottonClone = self.closingCotton.copy();
-
-        for center in range(1,len(self.cottonCenters)) :
-            
-            cv2.line(self.closingCottonClone, self.cottonCenters[center-1],\
-                     self.cottonCenters[center], 255, 10);
-        
-        self.cntsAllCottons = cv2.findContours(self.closingCottonClone.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2];
-        self.biggestContourCotton = max(self.cntsAllCottons, key=cv2.contourArea); #Finds the biggest contour of the binary mask
-        
-        
-        
-        if self.cntsAllCottons != [] :
-            
-            ((self.mainX,self.mainY), self.mainRadius) = cv2.minEnclosingCircle(self.biggestContourCotton);
-        
-            if self.mainX and self.mainY != None :
-                
-                self.correctedCenterCotton = (int(self.mainX)+self.upLeftX,\
-                                              int(self.mainY)+self.upLeftY);
-        
-            self._cottonCenter.append((self.mainX,self.mainY));
-            self._cottonSpread.append(self.mainRadius);
-            
-                
-        self._largeObjects.append(self.largeObjects);
-        self._smallObjects.append(self.smallObjects);
-        
-        if self.cntNest == None :
-            
-            self._detectedNest.append(False);
-            
-        else :
-            
-            self._detectedNest.append(True);
+#        self.largestCotton = 0;
+#        self.indexLargestCotton = 0;
+#        self.cottonCenters = [];
+#        
+#        for i,contour in enumerate(self.cntsCotton) :
+#            
+#            area = cv2.contourArea(contour);
+#            
+#            if area > self.largestCotton :
+#                
+#                self.largestCotton = area;
+#                self.indexLargestCotton = i;
+#            
+#        for i,contour in enumerate(self.cntsCotton):
+#            
+#            area = cv2.contourArea(self.cntsCotton[i]); #Computes its area
+#            
+#            if i != self.indexLargestCotton :
+#            
+#                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
+#                    
+#                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+#                    center = (int(self.x),int(self.y));
+#                    self.cottonCenters.append(center);
+#                    
+#                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+#                    self.cntLarge.append(i);
+#                
+#                else : #If the area is smaller than a certain threshold
+#                    
+#                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces
+#                    
+#            if i == self.indexLargestCotton :
+#                
+#                if area >= self._args["segmentation"]["minCottonSize"] and area < self._args["segmentation"]["nestCottonSize"] : #If the area in bigger than a certain threshold
+#                    
+#                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+#                    center = (int(self.x),int(self.y));
+#                    self.cottonCenters.append(center);
+#                    
+#                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+#                    self.cntLarge.append(i);
+#                
+#                if area >= self._args["segmentation"]["nestCottonSize"] : #If the area has a size of a nest !
+#                    
+#                    ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(contour);
+#                    center = (int(self.x),int(self.y));
+#                    self.cottonCenters.append(center);
+#                    
+#                    self.largeObjects+=1; #Adds the object to the count of large cotton pieces
+#                    self.cntNest = i; #Sets the self.cntNest variable to hold the position of the nest contour
+#                    
+#                else : #If the area is smaller than a certain threshold
+#                    
+#                    self.smallObjects+=1; #Adds the object to the count of small cotton pieces   
+#
+#
+#
+#        self.closingCottonClone = self.closingCotton.copy();
+#
+#        for center in range(1,len(self.cottonCenters)) :
+#            
+#            cv2.line(self.closingCottonClone, self.cottonCenters[center-1],\
+#                     self.cottonCenters[center], 255, 10);
+#        
+#        self.cntsAllCottons = cv2.findContours(self.closingCottonClone.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2];     
+#        
+#        if self.cntsAllCottons != [] :
+#            
+#            self.biggestContourCotton = max(self.cntsAllCottons, key=cv2.contourArea); #Finds the biggest contour of the binary mask
+#            
+#            ((self.mainX,self.mainY), self.mainRadius) = cv2.minEnclosingCircle(self.biggestContourCotton);
+#        
+#            if self.mainX and self.mainY != None :
+#                
+#                self.correctedCenterCotton = (int(self.mainX)+self.upLeftX,\
+#                                              int(self.mainY)+self.upLeftY);
+#        
+#            self._cottonCenter.append((self.mainX,self.mainY));
+#            self._cottonSpread.append(self.mainRadius);
+#            
+#                
+#        self._largeObjects.append(self.largeObjects);
+#        self._smallObjects.append(self.smallObjects);
+#        
+#        if self.cntNest == None :
+#            
+#            self._detectedNest.append(False);
+#            
+#        else :
+#            
+#            self._detectedNest.append(True);
         
                 
     def RegisterDepth(self) :
@@ -599,9 +613,9 @@ class TopMouseTracker():
                         
         cv2.circle(self.cloneFrame, self.correctedCenter, self.centerSize, (0, 0, 255), self.centerThickness); #Draws a the object Centroid as a point
         
-        if self.correctedCenterCotton != None :
-            
-            cv2.circle(self.cloneFrame, self.correctedCenterCotton, int(self.mainRadius), (255,0,255), self.contourThickness);
+#        if self.correctedCenterCotton != None :
+#            
+#            cv2.circle(self.cloneFrame, self.correctedCenterCotton, int(self.mainRadius), (255,0,255), self.contourThickness);
  
         cv2.rectangle(self.cloneFrame, (self.upLeftX,self.upLeftY), (self.lowRightX,self.lowRightY),(255,0,0), self.contourThickness); #Displays the ROI square on the image
         
@@ -653,58 +667,7 @@ class TopMouseTracker():
                     (255,255,255),
                     self.textFontThickness); #Displays the mouse speed in real-time
                     
-        if self._args["saving"]["segmentCotton"] : 
-        
-            #Writes the fourth information
-            #----------------------------------------------------------------------   
-            cv2.putText(self.metaDataDisplay,
-                        '{0} obj; height : {1}'.format(self.largeObjects,self.averagePixelIntensity),
-                        (8,pos+70*3),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        self.textFontSize,
-                        (255,255,255),
-                        self.textFontThickness); #Displays the number of cotton objects detected   
-                    
-            #Writes the fifth information
-            #----------------------------------------------------------------------
-            
-            #If a nest is detected
-            if self.cntNest != None :
-                
-                cv2.putText(self.metaDataDisplay,
-                            'Nest Detected',
-                            (8,pos+70*4),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            self.textFontSize,
-                            (0,255,0),
-                            self.textFontThickness); #Displays the current status of nest detection
-                            
-                cv2.drawContours(self.maskDisplay, self.cntsCotton, self.cntNest, (255,255,0), self.contourThickness); #Draws the contour of the nest
-                
-                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
-                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
-            
-            #If no nest is detected
-            
-            else : 
-                
-                cv2.putText(self.metaDataDisplay,
-                            'No Nest',
-                            (8,pos+70*4),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            self.textFontSize,
-                            (0,0,255),
-                            self.textFontThickness); #Displays the current status of nest detection
-                            
-                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
-                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
-                
-    #            for cnt in self.cntLarge :
-    #                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
-                #cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness); #Draws all the cotton contours that are not the nest
-        
-        
-        #Writes the sixth information
+        #Writes the fourth information
         #----------------------------------------------------------------------
         
         #If a mouse is detected
@@ -712,7 +675,7 @@ class TopMouseTracker():
         
             cv2.putText(self.metaDataDisplay,
                         "Mouse Detected",
-                        (8,pos+70*5),
+                        (8,pos+70*3),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         self.textFontSize,
                         (0,255,0),
@@ -725,11 +688,64 @@ class TopMouseTracker():
         
             cv2.putText(self.metaDataDisplay,
                         "No Mouse",
-                        (8,pos+70*5),
+                        (8,pos+70*3),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         self.textFontSize,
                         (0,0,255),
                         self.textFontThickness); #Displays the current status of mouse detection
+                    
+#        if self._args["saving"]["segmentCotton"] : 
+#        
+#            #Writes the fifth information
+#            #----------------------------------------------------------------------   
+#            cv2.putText(self.metaDataDisplay,
+#                        '{0} obj; height : {1}'.format(self.largeObjects,self.averagePixelIntensity),
+#                        (8,pos+70*4),
+#                        cv2.FONT_HERSHEY_SIMPLEX,
+#                        self.textFontSize,
+#                        (255,255,255),
+#                        self.textFontThickness); #Displays the number of cotton objects detected   
+                    
+            #Writes the sixth information
+            #----------------------------------------------------------------------
+            
+#            #If a nest is detected
+#            if self.cntNest != None :
+#                
+#                cv2.putText(self.metaDataDisplay,
+#                            'Nest Detected',
+#                            (8,pos+70*5),
+#                            cv2.FONT_HERSHEY_SIMPLEX,
+#                            self.textFontSize,
+#                            (0,255,0),
+#                            self.textFontThickness); #Displays the current status of nest detection
+#                            
+#                cv2.drawContours(self.maskDisplay, self.cntsCotton, self.cntNest, (255,255,0), self.contourThickness); #Draws the contour of the nest
+#                
+#                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+#                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+        if self._args["saving"]["segmentCotton"] :
+            
+            cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness);
+            
+            #If no nest is detected
+            
+#            else : 
+#                
+#                cv2.putText(self.metaDataDisplay,
+#                            'No Nest',
+#                            (8,pos+70*5),
+#                            cv2.FONT_HERSHEY_SIMPLEX,
+#                            self.textFontSize,
+#                            (0,0,255),
+#                            self.textFontThickness); #Displays the current status of nest detection
+#                            
+#                self.largeContours = [self.cntsCotton[p] for p in self.cntLarge];
+#                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
+                
+    #            for cnt in self.cntLarge :
+    #                cv2.drawContours(self.maskDisplay, self.cntsCotton, cnt, (0,255,0), self.contourThickness); #Draws all the other cotton contours that are not the nest
+                #cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness); #Draws all the cotton contours that are not the nest
         
     def SaveTracking(self) :
         
@@ -738,9 +754,21 @@ class TopMouseTracker():
             if self._args["saving"]["fourcc"] == None :
                 
                 self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
+#                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_RGB2BGR);
                 self.videoWriter.writeFrame(self.hStack);
+                
+            elif self._args["saving"]["fourcc"] == "Frame" :
+                
+                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
+                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_RGB2BGR);
+                cv2.imwrite(os.path.join(self._args["main"]["segmentationDir"],"{0}.jpg".format(self.fn)),self.hStack);
             
             else :
+            
+               if self._displayOutputShape :
+                   
+                   print(self.hStack.shape);
+                   self._displayOutputShape = False;
                 
                self.videoWriter.write(self.hStack);
             
@@ -753,23 +781,27 @@ class TopMouseTracker():
                 
                 self.depthMaskWriter.writeFrame(self.bitwiseDepthCottonMaskSave);
                 
+            elif self._args["saving"]["fourcc"] == "Frame" :
+                
+                pass;
+                
             else :
             
                 self.depthMaskWriter.write(self.bitwiseDepthCottonMaskSave);
             
     
-    def ComputeDistanceTraveled(self) :
-        
-        if len(self.realTimePosition) == 2 and not None in self.realTimePosition : #Runs only if two positions are available and if previous or current position are not None
-                
-                self.realTimeSpeed = sqrt((self.realTimePosition[1][0]-self.realTimePosition[0][0])**2+\
-                                      (self.realTimePosition[1][1]-self.realTimePosition[0][1])**2)/self.distanceRatio; #Computes distance
-                                          
-                self._distances.append(self.realTimeSpeed);
-    
-                if self.realTimeSpeed >= self._args["segmentation"]["minDist"] : #If the distance is higher than the minimal distance (filtering for movement noise)
-                    
-                    self._distance += (self.realTimeSpeed); #Adds the value to the cumulative distance varaible
+#    def ComputeDistanceTraveled(self) :
+#        
+#        if len(self.realTimePosition) == 2 and not None in self.realTimePosition : #Runs only if two positions are available and if previous or current position are not None
+#                
+#                self.realTimeSpeed = sqrt((self.realTimePosition[1][0]-self.realTimePosition[0][0])**2+\
+#                                      (self.realTimePosition[1][1]-self.realTimePosition[0][1])**2)/self.distanceRatio; #Computes distance
+#                                          
+#                self._distances.append(self.realTimeSpeed);
+#    
+#                if self.realTimeSpeed >= self._args["segmentation"]["minDist"] : #If the distance is higher than the minimal distance (filtering for movement noise)
+#                    
+#                    self._distance += (self.realTimeSpeed); #Adds the value to the cumulative distance varaible
            
             
     def UpdatePosition(self) :
@@ -828,28 +860,60 @@ class TopMouseTracker():
         else :
             
             return [];
-   
+        
+    def SendMail(self):
+        
+        self.now = time.localtime(time.time());
+    
+        msg = MIMEMultipart();
+        msg['Subject'] = 'Mouse {0} analysis completed on {1}!'.format(self._mouse,self._args["workingStation"]);
+        msg['From'] = self._args["email"];
+        msg['To'] = self._args["email"];
+    
+        s = smtplib.SMTP(self._args["smtp"], self._args["port"]);
+        s.ehlo();
+        s.starttls();
+        s.ehlo();
+        s.login(self._args["email"], self._args["password"]);
+        s.sendmail(self._args["email"], self._args["email"], msg.as_string());
+        s.quit();
          
 def TopTracker(Tracker,**kwargs) :
     
-    print("\n");
-    utils.PrintColoredMessage("##################################################################################################################","darkgreen");
-    utils.PrintColoredMessage("                                  [INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen");
-    utils.PrintColoredMessage("##################################################################################################################","darkgreen");
-                              
-    Tracker._Start = time.time();
-
-    for i,capture in enumerate(kwargs["main"]["capturesRGB"]) :
+    if not Tracker._break :
         
-        try :
-            
-            Tracker.SetTrackingVideoSaving(i);
+        print("\n");
+        utils.PrintColoredMessage("##################################################################################################################","darkgreen");
+        utils.PrintColoredMessage("                                  [INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen");
+        utils.PrintColoredMessage("##################################################################################################################","darkgreen");
+                              
+    else :
+        
+        print("\n");
+        utils.PrintColoredMessage("##################################################################################################################","magenta");
+        utils.PrintColoredMessage("                                  [INFO] Resuming segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"magenta");
+        utils.PrintColoredMessage("##################################################################################################################","magenta");
     
-            while(True):
+    Tracker._break = False;
+    Tracker._Start = time.time();
+    startTime = time.localtime();
+    h,m,s = startTime.tm_hour, startTime.tm_min, startTime.tm_sec;
+    Tracker.SetTrackingVideoSaving();
+    utils.PrintColoredMessage("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h,m,s),"darkgreen");
+    
+    nFrames = sum([x*y for x,y in zip(Tracker._tEnd,Tracker._framerate)])-(Tracker._tStart*Tracker._framerate[0]);
 
+    for rgbCapture, depthCapture in zip(kwargs["main"]["capturesRGB"],kwargs["main"]["capturesDEPTH"]) :
+    
+        try :
+        
+            while(True):
+    
                 #Charges a new frame and runs the segmentation
                 #----------------------------------------------------------------------
-                Tracker.Main();
+                Tracker.Main(rgbCapture, depthCapture);
+                
+#                print(Tracker.frameNumber)
                 
                 if not Tracker._Stop :
                 
@@ -877,25 +941,21 @@ def TopTracker(Tracker,**kwargs) :
                     if not Tracker._tEnd[Tracker.videoNumber] == 0 :
                         
                         #VERBOSE
-                        #Runs only every 10 minutes of the video being analyzed
+                        #Runs only every 1 % of the video being analyzed
                         #----------------------------------------------------------------------------------------------------------------------------------
-                        if Tracker.frameNumber%(600*int(Tracker._framerate)) == 0 :
+                        if Tracker.fn % (int(0.01*nFrames)) == 0 :
                             
                             print('\n'); 
-                            utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.frameNumber)+'/'+str(int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate))+\
-                                ' = '+(str(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)))\
-                                +'% frames from video n°'+str(Tracker.videoNumber)+'/'+str(Tracker._nVideos), "darkgreen");
+                            
+                            utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
+                                ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
+                                +'% frames', "darkgreen");
                                                       
-                            utils.PrintColoredMessage(utils.PrintLoadingBar(int(float(Tracker.frameNumber)/float(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate)*100)),"darkgreen");
+                            utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )),"darkgreen");
                         
                         #Runs only if the video is finished
                         #----------------------------------------------------------------------------------------------------------------------------------
-                        if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate) :
-                
-                            print('\n'); 
-                            utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
-                            utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
-                            utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+                        if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate[Tracker.videoNumber]) :
                                                       
                             if kwargs["main"]["playSound"] :
                                 utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
@@ -903,19 +963,17 @@ def TopTracker(Tracker,**kwargs) :
                             Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
                             Tracker.frameNumber = 0;
                             break;
-                            
-                else :
-                    
-                    print('\n'); 
-                    utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
-                    utils.PrintColoredMessage("                      [INFO] Video {0} for mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
-                    utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+
+                else : #If Tracker._Stop :
                                               
-                    if kwargs["server"] != None :
+                    try :
+    
+                        Tracker.SendMail();
+                              
+                    except :
                         
-                        kwargs["server"].sendemail(kwargs["main"]["email"],kwargs["main"]["email"],\
-                              "Analysis of mouse {0} finished on {1}".format(kwargs["main"]["mouse"], kwargs["main"]["workingStation"]));
-                    
+                        utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
+                
                     if kwargs["main"]["playSound"] :
                         utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
                         
@@ -923,12 +981,25 @@ def TopTracker(Tracker,**kwargs) :
                     Tracker.frameNumber = 0;
                     
                     break;
-                        
+                            
         except KeyboardInterrupt :
             
-            pass;
-            
-    kwargs["server"].quit();
+            Tracker._break = True;
+            break;
+    
+    if not Tracker._break :
+        
+        print('\n'); 
+        utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+        utils.PrintColoredMessage("                             [INFO] Mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse),"darkgreen");
+        utils.PrintColoredMessage('##################################################################################################################',"darkgreen");
+                                  
+    else :
+        
+        print('\n'); 
+        utils.PrintColoredMessage('##################################################################################################################',"darkred");
+        utils.PrintColoredMessage("                             [INFO] Tracking for Mouse {1} has been aborted".format(str(Tracker.videoNumber),Tracker._mouse),"darkred");
+        utils.PrintColoredMessage('##################################################################################################################',"darkred");
               
     if kwargs["display"]["showStream"] :       
         
@@ -939,6 +1010,10 @@ def TopTracker(Tracker,**kwargs) :
         if kwargs["saving"]["fourcc"] == None :
             
             Tracker.videoWriter.close();
+            
+        elif kwargs["saving"]["fourcc"] == "Frame" :
+                
+                pass;
         
         else :
             
@@ -949,12 +1024,22 @@ def TopTracker(Tracker,**kwargs) :
         if kwargs["saving"]["fourcc"] == None :
             
             Tracker.depthMaskWriter.close();
+            
+        elif kwargs["saving"]["fourcc"] == "Frame" :
+                
+                pass;
         
         else :
         
             Tracker.depthMaskWriter.release();
         
     Tracker._End = time.time();
+    
+    diff = Tracker._End - Tracker._Start;
+    h,m,s = utils.HoursMinutesSeconds(diff);
+    
+    print("\n")
+    utils.PrintColoredMessage("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h,m,s),"darkgreen");
     
     SaveTracking(Tracker,**kwargs);
 

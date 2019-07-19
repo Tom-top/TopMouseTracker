@@ -13,6 +13,7 @@ import numpy as np;
 import cv2;
 from natsort import natsorted;
 import skvideo.io;
+import moviepy.editor as mpy;
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Settings as settings;
@@ -126,55 +127,66 @@ def VideoLoader(directory,**kwargs) :
     
     RGBCaptures = [];
     DEPTHCaptures = [];
-    RGBTestFrame = [];
-    DEPTHTestFrame = [];
+    RGBTestFrame = None;
+    DEPTHTestFrame = None;
     
-    for file in natsorted(os.listdir(directory)) :
+    print("\n");
+    
+    for folder in natsorted(os.listdir(directory)) :
         
-        if file.split('.')[-1] == 'avi' :
-            
-            if file.split('_')[0] == "Raw" :
+        dirPath = os.path.join(directory,folder);
+        
+        if os.path.isdir(dirPath) and dirPath in kwargs["workingDir"] :
+    
+            for file in natsorted(os.listdir(os.path.join(directory,folder))) :
                 
-                #cap = cv2.VideoCapture(os.path.join(directory,file));
-                cap = skvideo.io.vreader(os.path.join(directory,file));
-                RGBCaptures.append(cap);
-                
-                frame = next(cap);
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                if file.split('.')[-1] == kwargs["extension"] :
                     
-                if not RGBTrigger :
-                    RGBTestFrame.append(frame);
-                    RGBTrigger = True;
-
-                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
-                      
-                if kwargs["playSound"] :
-                      
-                    try :  
-                        utils.PlaySound(1,params.sounds['Purr']);
-                    except :
-                        pass;
-                
-            elif file.split('_')[0] == "Depth" :
-                
-                #cap = cv2.VideoCapture(os.path.join(directory,file));
-                cap = skvideo.io.vreader(os.path.join(directory,file));
-                DEPTHCaptures.append(cap);
-                
-                frame = next(cap);
-                
-                if not DEPTHTrigger :
-                    DEPTHTestFrame.append(frame);
-                    DEPTHTrigger = True;
-                
-                utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
-                      
-                if kwargs["playSound"] :
-                
-                    try :  
-                        utils.PlaySound(1,params.sounds['Purr']);
-                    except :
-                        pass;
+                    if file.split('_')[0] == "Raw" :
+                        #cap = cv2.VideoCapture(os.path.join(directory,file));
+                        cap = mpy.VideoFileClip(os.path.join(dirPath,file));
+                        #cap = skvideo.io.vreader(os.path.join(directory,file));
+                        RGBCaptures.append(cap);
+                        
+                        if not RGBTrigger :
+                        
+                            frame = cap.get_frame(kwargs["testFramePos"]);
+                            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                            
+                            RGBTestFrame = frame;
+                            RGBTrigger = True;
+        
+                        utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                              
+                        if kwargs["playSound"] :
+                              
+                            try :  
+                                utils.PlaySound(1,params.sounds['Purr']);
+                            except :
+                                pass;
+                        
+                    elif file.split('_')[0] == "Depth" :
+                        
+                        #cap = cv2.VideoCapture(os.path.join(directory,file));
+                        cap = mpy.VideoFileClip(os.path.join(dirPath,file));
+                        #cap = skvideo.io.vreader(os.path.join(directory,file));
+                        DEPTHCaptures.append(cap);
+    
+                        if not DEPTHTrigger :
+                            
+                            frame = cap.get_frame(kwargs["testFramePos"]);
+                            
+                            DEPTHTestFrame = frame;
+                            DEPTHTrigger = True;
+                        
+                        utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                              
+                        if kwargs["playSound"] :
+                        
+                            try :  
+                                utils.PlaySound(1,params.sounds['Purr']);
+                            except :
+                                pass;
     
     if not RGBTrigger and not DEPTHTrigger:
         
@@ -198,6 +210,8 @@ class CroppingROI():
     
     def __init__(self, frame):
         
+        utils.PrintColoredMessage("\n[INFO] Select the ROI for segmentation","darkgreen");
+        
         self.refPt = [];
         self.frame = frame.copy();
         self.W, self.H, _ = self.frame.shape
@@ -213,10 +227,12 @@ class CroppingROI():
             key = cv2.waitKey(10) & 0xFF;
             # if the 'r' key is pressed, reset the cropping region
             if key == ord("r"):
+                utils.PrintColoredMessage("[INFO] ROI was reset","darkgreen");
                 self.refPt = [];
                 self.frame = self.clone.copy();
             # if the 'c' key is pressed, break from the loop
             elif key == ord("c"):
+                utils.PrintColoredMessage("[INFO] ROI successfully set","darkgreen");
                 break;
         # close all open windows
         cv2.destroyAllWindows();
@@ -230,7 +246,7 @@ class CroppingROI():
         elif event == cv2.EVENT_LBUTTONUP:
             self.refPt.append((x, y));
         if len(self.refPt) == 2 and self.refPt != None :
-            cv2.rectangle(self.frame, self.refPt[0], self.refPt[1], (0, 0, 255), 1);
+            cv2.rectangle(self.frame, self.refPt[0], self.refPt[1], (0, 0, 255), 2);
             cv2.imshow("image", self.frame);
             
     def roi(self) :

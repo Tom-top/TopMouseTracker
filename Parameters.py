@@ -8,7 +8,7 @@ This module defines default parameters used by TopMouseTracker.
 
 import os;
 import cv2;
-            
+    
 ##############################################################################
 # Parameters for sounds outputs
 ##############################################################################             
@@ -45,14 +45,6 @@ colors = {
     'darkblack':  "\033[0;30m",
     'bold' :      "\033[1m",
     'off':        "\033[0;0m"
-};
-
-##############################################################################
-# Parameters to set working folders, and sets of images to process
-##############################################################################       
-
-foldersToCreate = {
-    'Results' : True
 };
 
 

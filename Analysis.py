@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt;
 import matplotlib.colors as mcolors;
 import matplotlib.patches as patches;
 import peakutils;
+from matplotlib.widgets import MultiCursor;
+from scipy import optimize;
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker._Tracker as tracker;
@@ -65,7 +67,7 @@ class Plot(tracker.TopMouseTracker) :
         self.distanceCumulativeBefore = list(np.cumsum(self.distanceCorrectedBefore));
         
         #######################################
-        self._Length = sum(self._tEnd)
+        self._Length = self._tEnd
             
         self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
         self.areasAfter = self._areas[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
@@ -108,16 +110,18 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-    def TrackingPlot(self,res,cBefore='b',cAfter='r',limit=6) :
+    def TrackingPlot(self,res,plotB=True,plotA=True,cBefore='b',cAfter='r',limit=6) :
         
-        fig = plt.figure();
+        fig = plt.figure(figsize=(12,7));
         ax0 = plt.subplot();
 
-        ax0.set_xlim([0, int(self._ROIWidth)]);
-        ax0.set_ylim([0, int(self._ROILength)]);
+        ax0.set_xlim([0, int(self.ROIWidth)]);
+        ax0.set_ylim([0, int(self.ROILength)]);
         
         self.distTraveledBeforeInitiation = 0;
         self.distTraveledAfterInitiation = 0;
+        
+        self._framerate = int(self._framerate);
         
         self.posBefore = self._positions[0:self._tStartBehav*self._framerate];
         
@@ -132,8 +136,10 @@ class Plot(tracker.TopMouseTracker) :
         self.filteredPosBefore = self.posBefore[0::res];
         self.filteredPosAfter = self.posAfter[0::res];
         
-        self.befPlot = ax0.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=0.1,color=cBefore,label='Before Initiation');
-        self.aftPlot = ax0.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=0.1,color=cAfter,label='After Initiation');
+        if plotB :
+            self.befPlot = ax0.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=0.1,solid_capstyle="butt",color=cBefore,label='Before Initiation');
+        if plotA :
+            self.aftPlot = ax0.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=0.1,solid_capstyle="butt",color=cAfter,label='After Initiation');
         
         self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:self._tStartBehav*self._framerate]);
         
@@ -168,11 +174,31 @@ class Plot(tracker.TopMouseTracker) :
         ax0.text(int(self.ROIWidth)/3, -19, 'Dist before : {0}'.format(self.distTraveledBeforeInitiation)+'m',fontdict=fontBefore);
         ax0.text(int(self.ROIWidth)/3, -11, 'Time after : {0}h {1}m {2}s'.format(str(hA),str(mA),str(sA)),fontdict=fontAfter);
         ax0.text(int(self.ROIWidth)/3, -3, 'Dist after : {0}'.format(self.distTraveledAfterInitiation)+'m',fontdict=fontAfter)
-        ax0.legend(handles = [self.befPlot[0],self.aftPlot[0]],loc=(0,1.05),shadow=True);
+        
+        if plotB and plotA :
+            ax0.legend(handles = [self.befPlot[0],self.aftPlot[0]],loc=(0,1.05),shadow=True);
+        if plotB and not plotA : 
+            ax0.legend(handles = [self.befPlot[0]],loc=(0,1.05),shadow=True);
+        if not plotB and plotA :
+            ax0.legend(handles = [self.aftPlot[0]],loc=(0,1.05),shadow=True);
         
         plt.gca().invert_yaxis();
         
         plt.tight_layout();
+        
+        if self._args["plot"]["save"] :
+            
+            if plotB and plotA :
+            
+                plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_Mouse_{0}".format(self._mouse)));
+                
+            if plotB and not plotA : 
+                
+                plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_Before_Mouse_{0}".format(self._mouse)));
+                
+            if not plotB and plotA :
+                
+                plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_After_Mouse_{0}".format(self._mouse)));
         
     def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10) :
         
@@ -236,17 +262,19 @@ class Plot(tracker.TopMouseTracker) :
         ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         
         All = Before+After;
-#        peaks = [];
-#        
-#        for i,data in enumerate(All) :
-#            
-#            if data[i] >= data[i+1] or data[i] <= data[i+1] :
-                
-                
-            
-            
         
-        peaks = peakutils.indexes(All, thres=0.8, min_dist=1); 
+        peaks = [];
+        
+        for i,data in enumerate(All) :
+
+            if i <= len(All)-2 :
+            
+                if All[i]+1 <= All[i+1] or All[i]-1 >= All[i+1] :
+                    
+                    peaks.append(i);
+                
+        
+        #peaks = peakutils.indexes(All, thres=0.8, min_dist=1); 
         
         #print(peaks)
         #ax3.scatter(peaks,[All[i] for i in peaks], c='black');
@@ -259,8 +287,12 @@ class Plot(tracker.TopMouseTracker) :
         
         ax3 = plt.subplot2grid((5, 4), (3, 3));
         
+        if rasterSpread == None :
+            if All != [] : 
+                rasterSpread = (self._args["plot"]["limit"]+1)/(len(All));
+        
         for peak in peaks :
-            ax3.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1));
+            ax3.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=cAfter,alpha=0.1));
         
         ax3.set_title("Nest-building activity over time", fontsize = 10);
         ax3.set_ylabel("Nest-building activity");
@@ -371,7 +403,503 @@ class Plot(tracker.TopMouseTracker) :
         
         if self._args["plot"]["save"] :
             
-            plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)))
+            plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)));
+            
+    def OptimizeSegmentation(self, x, peakDist) :
+        
+        peakDist = peakDist
+        
+        self.totalTimeAutomatic = 0;
+        
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+        All = Before+After;
+        
+        rasterSpread = (self._args["plot"]["limit"]+1)/(len(All));
+        
+        #----------------------------------------------------------------------
+        #Detection of peaks
+        #peakThresh = 0, peakDist = 1, minDist = 2
+        
+        peaks = [];
+        
+        for i,data in enumerate(All) :
+
+            if i <= len(All)-peakDist-1 :
+            
+                if All[i]+x[0] <= All[i+peakDist] or All[i]-x[0] >= All[i+peakDist] :
+                    
+                    peaks.append(i);
+        
+        #----------------------------------------------------------------------
+        #Merge close peaks
+        
+        automaticStart = [];
+        automaticEnd = [];
+        
+        if x[1] != None :
+        
+            for pos,peak in enumerate(peaks) :
+                
+                if automaticStart == [] :
+                    
+                    automaticStart.append(peaks[pos]);
+                    
+                if pos < len(peaks)-1 :
+                    
+                    if peaks[pos+1]-peaks[pos] >= x[1] : #If next is far 
+                        
+                        if automaticStart[-1] == peaks[pos] : #If start is the first
+                            
+                            automaticEnd.append(peaks[pos]+rasterSpread);
+                            automaticStart.append(peaks[pos+1]);
+                        
+                        else :
+                            
+                            automaticEnd.append(peaks[pos]);
+                            automaticStart.append(peaks[pos+1]);
+                        
+                    else :
+                        
+                        pass;
+                        
+            for s,e in zip(automaticStart,automaticEnd) :
+                
+                self.totalTimeAutomatic += e-s;
+                
+        else :
+            
+            for peak in peaks :
+                
+                self.totalTimeAutomatic += rasterSpread;
+        
+#        print(x)
+#        print([self.totalTimeAutomatic-self.totalTimeManual,0,0])
+#        print("\n")
+                
+        return [self.totalTimeAutomatic,0,0]; #-self.totalTimeManual
+                
+    def DataManual(self) :
+                        
+        #----------------------------------------------------------------------
+        #Manual raster
+        
+        self.res = self._framerate*1
+        
+        self.totalTimeManual = 0;
+
+        path = self._args["main"]["workingDir"]
+        
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+
+        for f in os.listdir(path) :
+                    
+            path2File = os.path.join(path,f);
+            
+            if len(f.split(".")) == 2 :
+            
+                if f.split(".")[-1] == "xlsx" :
+                    
+                    try :
+                    
+                        mouse = f.split("-")[1].split(".")[0];
+        
+                        if mouse == self._args["main"]["mouse"] :
+                            
+                            excelSheet = pd.read_excel(path2File,header = None);
+                            excelMatrix = excelSheet.as_matrix();
+                    
+                            for line in excelMatrix :
+                                
+                                if isinstance(line[0], str) :
+                                    
+                                    temp = [];
+                                    d = line[1:];
+                                    
+                                    for e in d :
+                                        
+                                        if e >= 0 and not np.isnan(e) :
+                                            
+                                            temp.append(e);
+                                    
+                                        if line[0] == "tInjection" :
+                                            
+                                            tInjection = temp;
+                                        
+                                        if line[0] == "tCotton" :
+                                            
+                                            tCotton = temp;
+                                            
+                                        if line[0] == "tInitiate" :
+                                            
+                                            tInitiate = temp;
+                                            
+                                        if line[0] == "tStart" :
+                                            
+                                            tStart = temp;
+                                            
+                                        if line[0] == "tEnd" :
+                                            
+                                            tEnd = temp;
+                                            
+                                        if line[0] == "tStartInteract" :
+                                    
+                                            tStartInteract = temp;
+                                        
+                                        if line[0] == "tEndInteract" :
+                                        
+                                            tEndInteract = temp;
+                                            
+                    except :
+                        
+                        pass;
+                                    
+        #----------------------------------------------------------------------
+        #Detection of peaks
+        
+        for s,e in zip(tStart,tEnd) :
+            
+            if s < len(Before+After) :
+                
+                if e >= len(Before+After) :
+                    
+                    self.totalTimeManual += len(Before+After)-s;
+                    
+                elif e < len(Before+After) :
+        
+                    self.totalTimeManual += e-s;
+        
+        
+        for s,e in zip(tStartInteract,tEndInteract) :
+            
+            if s < len(Before+After) :
+                
+                if e >= len(Before+After) :
+                    
+                    self.totalTimeManual += len(Before+After)-s;
+                    
+                elif e < len(Before+After) :
+        
+                    self.totalTimeManual += e-s;
+        
+            
+    def NestingRaster(self, cBefore='b',cAfter='r', res=1, rasterSpread=10, peakThresh = 1, peakDist = 1, minDist = 10) :
+        
+        fig = plt.figure(figsize=(20,10));
+            
+        self.res = self._framerate*res
+        
+        ax0 = plt.subplot(311);
+        ax1 = plt.subplot(312,sharex=ax0);
+        
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+        
+        All = Before+After;
+        
+#        print(len(All))
+        
+        peaks = [];
+        
+        for i,data in enumerate(All) :
+
+            if i <= len(All)-peakDist-1 :
+            
+                if All[i]+peakThresh <= All[i+peakDist] or All[i]-peakThresh >= All[i+peakDist] :
+                    
+                    peaks.append(i);
+                    
+        if rasterSpread == None :
+            rasterSpread = (self._args["plot"]["limit"]+1)/(len(All));
+            
+        self.totalTimeAutomatic = 0;
+        
+        automaticStart = [];
+        automaticEnd = [];
+        
+        if minDist != None :
+        
+            for pos,peak in enumerate(peaks) :
+                
+                if automaticStart == [] :
+                    
+                    automaticStart.append(peaks[pos]);
+                    
+                if pos < len(peaks)-1 :
+                    
+                    if peaks[pos+1]-peaks[pos] >= minDist : #If next is far 
+                        
+                        if automaticStart[-1] == peaks[pos] : #If start is the first
+                            
+                            automaticEnd.append(peaks[pos]+rasterSpread);
+                            automaticStart.append(peaks[pos+1]);
+                        
+                        else :
+                            
+                            automaticEnd.append(peaks[pos]);
+                            automaticStart.append(peaks[pos+1]);
+                        
+                    else :
+                        
+                        pass;
+                        
+                else :
+                    
+                    if automaticStart[-1] == peaks[pos] :
+                        
+                        automaticEnd.append(peaks[pos]+rasterSpread);
+                    
+                    else :
+                        
+                        automaticEnd.append(peaks[pos]);
+            
+            raster = np.zeros_like(All)
+            #raster = [0 for x in np.arange(automaticStart[0])];
+            #pos = 0;
+            
+            for s,e in zip(automaticStart,automaticEnd) :
+                
+#                if pos+1 < len(automaticStart):
+#            
+#                    [raster.append(1) for x in np.arange((e-s))];
+#                    [raster.append(0) for x in np.arange((automaticStart[pos+1]-e))];
+#                    pos+=1;
+#                    
+#                else :
+#                    
+#                    [raster.append(1) for x in np.arange((e-s))];
+#                    [raster.append(0) for x in np.arange(len(All)-int(automaticEnd[-1]+1))];
+                
+                if e-s < 1 :
+                    
+                    raster[int(s):int(e)+1] = 1;
+                    
+                else :
+                
+                    raster[int(s)+1:int(e)+1] = 1;
+                
+                ax0.add_patch(patches.Rectangle((s, 0), e-s, 1,color=cAfter,alpha=1));
+                self.totalTimeAutomatic += e-s;
+                
+        else :
+            
+            for peak in peaks :
+                
+                ax0.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=cAfter,alpha=1));
+                self.totalTimeAutomatic += rasterSpread;
+        
+#        print(len(automaticStart))
+#        print(len(automaticEnd))
+        
+#        raster = [0 for x in np.arange(automaticStart[0])];
+#        pos = 0;
+#                
+#        for s,e in zip(automaticStart,automaticEnd) :
+#            
+#            if pos+1 < len(automaticStart):
+#            
+#                [raster.append(1) for x in np.arange((e-s))];
+#                [raster.append(0) for x in np.arange((automaticStart[pos+1]-e))];
+#                pos+=1;
+#                
+#            else :
+#                
+#                [raster.append(1) for x in np.arange((e-s))];
+#                [raster.append(0) for x in np.arange(len(All)-int(automaticEnd[-1]+1))];
+        
+#        print(automaticStart)
+#        print(automaticEnd)
+#        print(len(raster))
+        np.save(os.path.join(self._args["main"]["resultDir"],"Data_{0}_Raster.npy".format(self._args["main"]["mouse"])),np.array(raster));
+                
+                
+            
+#        print(automaticStart)
+#        print(automaticEnd)
+#         
+#        print(automaticEnd[-1])
+#        print(len(raster))
+#        print(len(All))
+
+#        print(len(raster))
+            
+#        ax0.plot(raster,drawstyle="steps")
+            
+        ax0.set_title("Nest-building activity over time", fontsize = 10);
+        ax0.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+        ax0.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
+        ax0.set_xlim([0,len(Before+After)]);
+        ax0.set_ylabel("Nest-building activity");
+        ax0.tick_params(left=False,labelleft=False,bottom=False,labelbottom=False);
+        
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        ax1.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+        ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
+        
+        ax1.set_title("Cotton height over time", fontsize = 10);
+        ax1.set_ylabel("Average pixel intensity *8bit (a.u)");
+        ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+        ax1.set_ylim([100,150]);
+        ax1.tick_params(bottom=False,labelbottom=False);
+        ax1.set_xlim([0,len(Before+After)]);
+        
+#        print(len(raster)) 
+#        print(len(Before+After))
+        
+        self.totalTimeManual = 0;
+
+        path = self._args["main"]["workingDir"]
+
+        for f in os.listdir(path) :
+                    
+            path2File = os.path.join(path,f);
+            
+            if len(f.split(".")) == 2 :
+            
+                if f.split(".")[-1] == "xlsx" :
+                    
+                    try :
+                    
+                        mouse = f.split("-")[1].split(".")[0];
+        
+                        if mouse == self._args["main"]["mouse"] :
+                            
+                            excelSheet = pd.read_excel(path2File,header = None);
+                            excelMatrix = excelSheet.as_matrix();
+                    
+                            for line in excelMatrix :
+                                
+                                if isinstance(line[0], str) :
+                                    
+                                    temp = [];
+                                    d = line[1:];
+                                    
+                                    for e in d :
+                                        
+                                        if e >= 0 and not np.isnan(e) :
+                                            
+                                            temp.append(e);
+                                    
+                                    if line[0] == "tInjection" :
+                                        
+                                        tInjection = temp;
+                                    
+                                    if line[0] == "tCotton" :
+                                        
+                                        tCotton = temp;
+                                        
+                                    if line[0] == "tInitiate" :
+                                        
+                                        tInitiate = temp;
+                                        
+                                    if line[0] == "tStart" :
+                                        
+                                        tStart = temp;
+                                        
+                                    if line[0] == "tEnd" :
+                                        
+                                        tEnd = temp;
+                                        
+                                    if line[0] == "tStartInteract" :
+                                
+                                        tStartInteract = temp;
+                                    
+                                    if line[0] == "tEndInteract" :
+                                    
+                                        tEndInteract = temp;
+                                        
+#                                    if line[0] == "tStartDig" :
+#                            
+#                                        tStartDig = temp;
+#                                        
+#                                    if line[0] == "tEndDig" :
+#                                        
+#                                        tEndDig = temp;
+#                                        
+#                                    if line[0] == "tStartGroom" :
+#                            
+#                                        tStartGroom = temp;
+#                                        
+#                                    if line[0] == "tEndGroom" :
+#                                        
+#                                        tEndGroom = temp;
+#                                        
+                    except :
+                            
+                        pass;
+                            
+        ax2 = plt.subplot(313,sharex=ax0)
+        temp =0;
+        
+        for s,e in zip(tStart,tEnd) :
+            
+            if s < len(Before+After) :
+                
+                if e >= len(Before+After) :
+                    
+                    temp+=len(Before+After)-s;
+                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
+                    self.totalTimeManual += len(Before+After)-s;
+                    
+                elif e < len(Before+After) :
+                    
+                    temp+=e-s;
+                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
+                    self.totalTimeManual += e-s;
+        
+        temp =0;
+        
+        for s,e in zip(tStartInteract,tEndInteract) :
+            
+            if s < len(Before+After) :
+                
+                if e >= len(Before+After) :
+                    
+                    temp+=len(Before+After)-s;
+                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
+                    self.totalTimeManual += len(Before+After)-s;
+                    
+                elif e < len(Before+After) :
+                    
+                    temp+=e-s;
+                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
+                    self.totalTimeManual += e-s;
+    
+        ax2.set_xlim(0,len(Before+After));
+        ax2.set_title("Nest-building activity over time", fontsize = 10);
+        ax2.set_ylabel("Nest-building activity");
+        ax2.set_xlabel("time (h)");       
+        ax2.tick_params(left=False,labelleft=False);           
+            
+        multi = MultiCursor(fig.canvas, (ax0, ax1, ax2), color='r', lw=2, horizOn=False, vertOn=True)
+        
+        self.dif = self.totalTimeAutomatic/self.totalTimeManual;
+        self.percentage = round((1-abs(1-self.dif))*100,3)
+        
+        textstr = '\n'.join((
+            "Auto = {0}s".format(round(self.totalTimeAutomatic,2)),
+            "Manual = {0}s".format(round(self.totalTimeManual,2)),
+            "{0}% accuracy".format(self.percentage),
+            r"$\alpha$ = {0}".format(peakThresh),
+            r"$\beta$ = {0}".format(minDist),));
+        
+        props = dict(boxstyle='round', facecolor='white', alpha=1)
+
+        # place a text box in upper left in axes coords
+        ax0.text(0.01, 0.95, textstr, transform=ax0.transAxes, fontsize=12,
+                verticalalignment='top', bbox=props)
+        
+        plt.tight_layout();
+        plt.show()
+        
+        print(self.totalTimeManual,self.totalTimeAutomatic)
+        
+    #    if self._args["plot"]["save"] :
+    #        
+    #        plt.savefig(os.path.join(self._args["main"]["resultDir"],"Raster_Mouse_{0}".format(self._mouse)))
         
     def HeatMapPlot(self,bins=1000,sigma=16) :
         
