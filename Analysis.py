@@ -52,33 +52,33 @@ class Plot(tracker.TopMouseTracker) :
         self.distanceCorrected = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalized];
         self.distanceCumulative = list(np.cumsum(self.distanceCorrected));
         
-        self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._tStartBehav*self._framerate)];
-        self.areasBefore = self._areas[0:int(self._tStartBehav*self._framerate)];
-        self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._tStartBehav*self._framerate)];
-        self.spreadBefore = self._cottonSpread[0:int(self._tStartBehav*self._framerate)];
+        self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._tStartBehav*np.mean(self._framerate))];
+        self.areasBefore = self._areas[0:int(self._tStartBehav*np.mean(self._framerate))];
+        self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._tStartBehav*np.mean(self._framerate))];
+        self.spreadBefore = self._cottonSpread[0:int(self._tStartBehav*np.mean(self._framerate))];
         
-        if len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.areasBefore = self._areas[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.spreadBefore = self._cottonSpread[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
+        if len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.areasBefore = self._areas[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.spreadBefore = self._cottonSpread[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
         self.distanceCorrectedBefore = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedBefore];
         self.distanceCumulativeBefore = list(np.cumsum(self.distanceCorrectedBefore));
         
         #######################################
-        self._Length = self._tEnd
-            
-        self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
-        self.areasAfter = self._areas[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
-        self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
-        self.spreadAfter = self._cottonSpread[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
+        self._Length = sum(self._tEnd)
         
-        if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.areasAfter = self._areas[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
-            self.spreadAfter = self._cottonSpread[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
+        self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+        self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+        self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+        self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+        
+        if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+            self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
         self.distanceCorrectedAfter = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedAfter];
         self.distanceCumulativeAfter = list(np.cumsum(self.distanceCorrectedAfter));
@@ -202,7 +202,7 @@ class Plot(tracker.TopMouseTracker) :
         
     def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10) :
         
-        self.res = self._framerate*res
+        self.res = np.mean(self._framerate)*res
         
         fig = plt.figure(figsize=(20,10));
         fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
@@ -325,15 +325,15 @@ class Plot(tracker.TopMouseTracker) :
         self.distTraveledBeforeInitiation = 0;
         self.distTraveledAfterInitiation = 0;
         
-        self.posBefore = self._positions[0:int(self._tStartBehav*self._framerate)];
+        self.posBefore = self._positions[0:int(self._tStartBehav*np.mean(self._framerate))];
         
-        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.posBefore = self._positions[0:int(self._args["plot"]["limit"]*3600*self._framerate)];
+        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.posBefore = self._positions[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
-        self.posAfter = self._positions[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)];
+        self.posAfter = self._positions[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
         
-        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.posAfter = self._positions[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)];
+        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.posAfter = self._positions[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
         self.filteredPosBefore = self.posBefore[0::self._args["plot"]["res"]];
         self.filteredPosAfter = self.posAfter[0::self._args["plot"]["res"]];
@@ -358,21 +358,21 @@ class Plot(tracker.TopMouseTracker) :
 #                
 #                self.aftPlot = ax3.plot(x,y,'-',markersize=1,alpha=alpha,solid_capstyle="butt",color='red',label='After Initiation');
         
-        self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._tStartBehav*self._framerate)]);
+        self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._tStartBehav*np.mean(self._framerate))]);
         
-        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._args["plot"]["limit"]*3600*self._framerate)]);
+        if len(self.posBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))]);
             
-        self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*self._framerate):int(self._Length*self._framerate)]);
+        self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))]);
             
-        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*self._framerate :
-            self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*self._framerate):int(self._args["plot"]["limit"]*3600*self._framerate)]);
+        if len(self.posBefore)+len(self.posAfter) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
+            self.distTraveledAfterInitiation = sum(self.distanceCorrected[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))]);
                     
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100);
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100);
         
-        hB,mB,sB = utils.HoursMinutesSeconds(len(self.posBefore)/self._framerate);
-        hA,mA,sA = utils.HoursMinutesSeconds(len(self.posAfter)/self._framerate);
+        hB,mB,sB = utils.HoursMinutesSeconds(len(self.posBefore)/np.mean(self._framerate));
+        hA,mA,sA = utils.HoursMinutesSeconds(len(self.posAfter)/np.mean(self._framerate));
         
         fontBefore = { "size" : 10,
                       "color" : cBefore,

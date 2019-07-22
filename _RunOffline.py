@@ -52,7 +52,7 @@ mainParameters = {
                     "resultDir" : _resultDir, #The result directory
                     "segmentationDir" : _segmentationDir, #The segmentation directory
                     "extension" : "avi", #The extension of the movie to be analyzed
-                    "testFramePos" : 100, #The position of the frame used for ROI selection
+                    "testFramePos" : 300, #The position of the frame used for ROI selection
                     "email" : "thomas.topilko@gmail.com", #The email adress to send notifications to
                     "password" : None, #The email password
                     "smtp" : "smtp.gmail.com", #The server smtp
@@ -167,10 +167,16 @@ data = tracker.TopMouseTracker(**trackerParameters);
 data.SetROI();
    
 #%%#######################################################################################################################################################
-#/!\ [OPTIONAL] Adjusting the segmentation parameters for Mouse/Cotton
+#/!\ [OPTIONAL] Adjusting the segmentation parameters for Mouse
 ##########################################################################################################################################################
 
-data.AdjustThresholding();
+data.AdjustThresholdingMouse(mainParameters["capturesRGB"][1], 300);
+
+#%%#######################################################################################################################################################
+#/!\ [OPTIONAL] Adjusting the segmentation parameters for Cotton
+##########################################################################################################################################################
+
+data.AdjustThresholdingCotton(mainParameters["capturesRGB"][2], 300);
 
 #%%#######################################################################################################################################################
 #Launch segmentation on video(s)#
