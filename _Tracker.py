@@ -947,7 +947,12 @@ class TopMouseTracker():
             
             try :
                 
-                return self.hStack;
+                self.newhStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
+#                _W,_H = self.newhStack.shape[0], self.newhStack.shape[1];
+#                ratio = 500./_W;
+#                self.newhStack = cv2.resize(self.newhStack,(int(_H*ratio)),500);
+#                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_RGB2BGR);
+                return self.newhStack;
             
             except :
                 
@@ -961,16 +966,16 @@ class TopMouseTracker():
         self.now = time.localtime(time.time());
     
         msg = MIMEMultipart();
-        msg['Subject'] = 'Mouse {0} analysis completed on {1}!'.format(self._mouse,self._args["workingStation"]);
-        msg['From'] = self._args["email"];
-        msg['To'] = self._args["email"];
+        msg['Subject'] = 'Mouse {0} analysis completed on {1}!'.format(self._mouse,self._args["main"]["workingStation"]);
+        msg['From'] = self._args["main"]["email"];
+        msg['To'] = self._args["main"]["email"];
     
-        s = smtplib.SMTP(self._args["smtp"], self._args["port"]);
+        s = smtplib.SMTP(self._args["main"]["smtp"], self._args["main"]["port"]);
         s.ehlo();
         s.starttls();
         s.ehlo();
-        s.login(self._args["email"], self._args["password"]);
-        s.sendmail(self._args["email"], self._args["email"], msg.as_string());
+        s.login(self._args["main"]["email"], self._args["main"]["password"]);
+        s.sendmail(self._args["main"]["email"], self._args["main"]["email"], msg.as_string());
         s.quit();
          
 def TopTracker(Tracker,**kwargs) :
@@ -997,90 +1002,180 @@ def TopTracker(Tracker,**kwargs) :
     utils.PrintColoredMessage("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h,m,s),"darkgreen");
     
     nFrames = sum([x*y for x,y in zip(Tracker._tEnd,Tracker._framerate)])-(Tracker._tStart*Tracker._framerate[0]);
-
-    for rgbCapture, depthCapture in zip(kwargs["main"]["capturesRGB"],kwargs["main"]["capturesDEPTH"]) :
     
-        try :
+    if kwargs["saving"]["segmentCotton"] :
         
-            while(True):
-    
-                #Charges a new frame and runs the segmentation
-                #----------------------------------------------------------------------
-                Tracker.Main(rgbCapture, depthCapture);
-                
-#                print(Tracker.frameNumber)
-                
-                if not Tracker._Stop :
-                
-                    #If the tracking has to be saved
-                    #----------------------------------------------------------------------
-                    if kwargs["saving"]["saveStream"] :
-                        
-                        Tracker.SaveTracking();
-                    
-                    #If the tracking has to be displayed
-                    #----------------------------------------------------------------------
-                    if kwargs["display"]["showStream"] :
-                        
-                        segmentation = Tracker.ReturnTracking();
-                        
-                        if segmentation != [] :
-                            
-                            cv2.imshow('segmentation',segmentation);
-                            
-                            if cv2.waitKey(1) & 0xFF == ord('q'):
-                                break;
-                    
-                    #If the video is not empty
-                    #----------------------------------------------------------------------
-                    if not Tracker._tEnd[Tracker.videoNumber] == 0 :
-                        
-                        #VERBOSE
-                        #Runs only every 1 % of the video being analyzed
-                        #----------------------------------------------------------------------------------------------------------------------------------
-                        if Tracker.fn % (int(0.01*nFrames)) == 0 :
-                            
-                            print('\n'); 
-                            
-                            utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
-                                ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
-                                +'% frames', "darkgreen");
-                                                      
-                            utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )),"darkgreen");
-                        
-                        #Runs only if the video is finished
-                        #----------------------------------------------------------------------------------------------------------------------------------
-                        if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate[Tracker.videoNumber]) :
-                                                      
-                            if kwargs["main"]["playSound"] :
-                                utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
-                            
-                            Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
-                            Tracker.frameNumber = 0;
-                            break;
-
-                else : #If Tracker._Stop :
-                                              
-                    try :
-    
-                        Tracker.SendMail();
-                              
-                    except :
-                        
-                        utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
-                
-                    if kwargs["main"]["playSound"] :
-                        utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
-                        
-                    Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
-                    Tracker.frameNumber = 0;
-                    
-                    break;
-                            
-        except KeyboardInterrupt :
+        for rgbCapture, depthCapture in zip(kwargs["main"]["capturesRGB"],kwargs["main"]["capturesDEPTH"]) :
+        
+            try :
             
-            Tracker._break = True;
-            break;
+                while(True):
+        
+                    #Charges a new frame and runs the segmentation
+                    #----------------------------------------------------------------------
+                    Tracker.Main(rgbCapture, depthCapture);
+                    
+    #                print(Tracker.frameNumber)
+                    
+                    if not Tracker._Stop :
+                    
+                        #If the tracking has to be saved
+                        #----------------------------------------------------------------------
+                        if kwargs["saving"]["saveStream"] :
+                            
+                            Tracker.SaveTracking();
+                        
+                        #If the tracking has to be displayed
+                        #----------------------------------------------------------------------
+                        if kwargs["display"]["showStream"] :
+                            
+                            segmentation = Tracker.ReturnTracking();
+                            
+                            if segmentation != [] :
+                                
+                                cv2.imshow('segmentation',segmentation);
+                                
+                                if cv2.waitKey(1) & 0xFF == ord('q'):
+                                    break;
+                        
+                        #If the video is not empty
+                        #----------------------------------------------------------------------
+                        if not Tracker._tEnd[Tracker.videoNumber] == 0 :
+                            
+                            #VERBOSE
+                            #Runs only every 1 % of the video being analyzed
+                            #----------------------------------------------------------------------------------------------------------------------------------
+                            if Tracker.fn % (int(0.01*nFrames)) == 0 :
+                                
+                                print('\n'); 
+                                
+                                utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
+                                    ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
+                                    +'% frames', "darkgreen");
+                                                          
+                                utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )),"darkgreen");
+                            
+                            #Runs only if the video is finished
+                            #----------------------------------------------------------------------------------------------------------------------------------
+                            if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate[Tracker.videoNumber]) :
+                                                          
+                                if kwargs["main"]["playSound"] :
+                                    utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
+                                
+                                Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                                Tracker.frameNumber = 0;
+                                break;
+    
+                    else : #If Tracker._Stop :
+                                                  
+                        try :
+        
+                            Tracker.SendMail();
+                                  
+                        except :
+                            
+                            utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
+                    
+                        if kwargs["main"]["playSound"] :
+                            utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
+                            
+                        Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                        Tracker.frameNumber = 0;
+                        
+                        break;
+                                
+            except KeyboardInterrupt :
+                
+                Tracker._break = True;
+                break;
+                
+    else :
+        
+        for rgbCapture in kwargs["main"]["capturesRGB"] :
+        
+            try :
+            
+                while(True):
+        
+                    #Charges a new frame and runs the segmentation
+                    #----------------------------------------------------------------------
+                    Tracker.Main(rgbCapture, None);
+                    
+    #                print(Tracker.frameNumber)
+                    
+                    if not Tracker._Stop :
+                    
+                        #If the tracking has to be saved
+                        #----------------------------------------------------------------------
+                        if kwargs["saving"]["saveStream"] :
+                            
+                            Tracker.SaveTracking();
+                        
+                        #If the tracking has to be displayed
+                        #----------------------------------------------------------------------
+                        if kwargs["display"]["showStream"] :
+                            
+                            segmentation = Tracker.ReturnTracking();
+                            
+                            if segmentation != [] :
+                                
+                                cv2.imshow('segmentation',segmentation);
+                                
+                                if cv2.waitKey(1) & 0xFF == ord('q'):
+                                    
+                                    Tracker._break = True;
+                                    break;
+                        
+                        #If the video is not empty
+                        #----------------------------------------------------------------------
+                        if not Tracker._tEnd[Tracker.videoNumber] == 0 :
+                            
+                            #VERBOSE
+                            #Runs only every 1 % of the video being analyzed
+                            #----------------------------------------------------------------------------------------------------------------------------------
+                            if Tracker.fn % (int(0.01*nFrames)) == 0 :
+                                
+                                print('\n'); 
+                                
+                                utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
+                                    ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
+                                    +'% frames', "darkgreen");
+                                                          
+                                utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )),"darkgreen");
+                            
+                            #Runs only if the video is finished
+                            #----------------------------------------------------------------------------------------------------------------------------------
+                            if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber]*Tracker._framerate[Tracker.videoNumber]) :
+                                                          
+                                if kwargs["main"]["playSound"] :
+                                    utils.PlaySound(2,params.sounds['Purr']); #Plays sound when code finishes
+                                
+                                Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                                Tracker.frameNumber = 0;
+                                break;
+    
+                    else : #If Tracker._Stop :
+                                                  
+                        try :
+        
+                            Tracker.SendMail();
+                                  
+                        except :
+                            
+                            utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
+                    
+                        if kwargs["main"]["playSound"] :
+                            utils.PlaySound(2,kwargs["main"]["sound2Play"]); #Plays sound when code finishes
+                            
+                        Tracker.videoNumber += 1; #Increments videoNumber variable to keep track which video is being processed
+                        Tracker.frameNumber = 0;
+                        
+                        break;
+                                
+            except KeyboardInterrupt :
+                
+                Tracker._break = True;
+                break;
     
     if not Tracker._break :
         
@@ -1095,6 +1190,14 @@ def TopTracker(Tracker,**kwargs) :
         utils.PrintColoredMessage('##################################################################################################################',"darkred");
         utils.PrintColoredMessage("                             [INFO] Tracking for Mouse {1} has been aborted".format(str(Tracker.videoNumber),Tracker._mouse),"darkred");
         utils.PrintColoredMessage('##################################################################################################################',"darkred");
+                                  
+    try :
+
+        Tracker.SendMail();
+              
+    except :
+        
+        utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
               
     if kwargs["display"]["showStream"] :       
         

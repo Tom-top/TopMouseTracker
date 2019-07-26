@@ -140,9 +140,10 @@ def VideoLoader(directory,**kwargs) :
     
             for file in natsorted(os.listdir(os.path.join(directory,folder))) :
                 
-                if file.split('.')[-1] == kwargs["extension"] :
+                if file.split('.')[-1] == kwargs["extensionLoad"] :
                     
-                    if file.split('_')[0] == "Raw" :
+                    if file.split("_")[0] == kwargs["videoName"] :
+#                    if file.split('_')[0] == "Raw" :
                         #cap = cv2.VideoCapture(os.path.join(directory,file));
                         cap = mpy.VideoFileClip(os.path.join(dirPath,file));
                         #cap = skvideo.io.vreader(os.path.join(directory,file));

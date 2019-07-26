@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt;
 import matplotlib as mpl;
 import moviepy.editor as mpy;
 import smtplib;
+import getpass;
 
 _topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master"; #Sets path to the TMT directory
 
@@ -25,17 +26,18 @@ import TopMouseTracker.IO as IO;
 import TopMouseTracker._Tracker as tracker;
 import TopMouseTracker.Analysis as analysis;
 
-Animal = "6"; #Name of the animal to be analyzed
+Animal = "298"; #Name of the animal to be analyzed
+videoName = "Raw";
 
 _mainDir = os.path.expanduser("~"); #Sets path to the main directory
 _desktopDir = os.path.join(_mainDir,"Desktop"); #Sets path to the Desktop directory
 _tmtDir = "/mnt/raid/TopMouseTracker"; #Sets path to the TMT result directory
 
-_dataDir = os.path.join(_tmtDir,"190715"); #Sets path to the data directory
+_dataDir = os.path.join(_tmtDir,"190705"); #Sets path to the data directory
 
-_workingDir = [ os.path.join(_dataDir,"15-7-2019_7-26-38"),\
-               os.path.join(_dataDir,"15-7-2019_10-34-59"),\
-               os.path.join(_dataDir,"15-7-2019_14-15-41") ]; #Sets path to the working directories
+_workingDir = [ os.path.join(_dataDir,"7-5-2019_9-52-34") ]; #Sets path to the working directories
+
+#_workingDir = [ os.path.join(_dataDir,"J2") ];
 
 _resultDir = os.path.join(_dataDir,"{0}".format(Animal)); #Sets path to the result directory
 _segmentationDir = os.path.join(_resultDir,"segmentation"); #Sets path to the segmentation directory (if the file saving mode was enabled)
@@ -52,8 +54,10 @@ mainParameters = {
                     "resultDir" : _resultDir, #The result directory
                     "segmentationDir" : _segmentationDir, #The segmentation directory
                     "extension" : "avi", #The extension of the movie to be analyzed
+                    "extensionLoad" : "avi",
+                    "videoName" : videoName,
                     "testFramePos" : 300, #The position of the frame used for ROI selection
-                    "email" : "thomas.topilko@gmail.com", #The email adress to send notifications to
+                    "email" : "sigrid.belleville@gmail.com", #The email adress to send notifications to
                     "password" : None, #The email password
                     "smtp" : "smtp.gmail.com", #The server smtp
                     "port" : 587, #The server directory
@@ -65,20 +69,20 @@ mainParameters = {
                     "playSound" : False, #Parameters to enable ping sound after code finished running
                     "sound2Play" : None, #The sound to be played
                     };
-                  
+
 segmentationParameters = {
-                    "threshMinMouse" : np.array([100, 70, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8),
-                    "threshMaxMouse" : np.array([179, 255, 50],np.uint8), #Upper parameter for thresholding the mouse (hsv) #"threshMaxMouse" : np.array([255, 60, 90],np.uint8),
-                    "threshMinCotton" : np.array([0, 0, 150],np.uint8), #Lower parameter for thresholding the cotton (hsv)
-                    "threshMaxCotton" : np.array([140, 30, 250],np.uint8), #Upper parameter for thresholding the cotton (hsv)
+                    "threshMinMouse" : np.array([90, 70, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8), np.array([100, 70, 0],np.uint8)
+                    "threshMaxMouse" : np.array([179, 255, 50],np.uint8), #Upper parameter for thresholding the mouse (hsv) #"threshMaxMouse" : np.array([255, 60, 90],np.uint8), np.array([179, 255, 50],np.uint8)
+                    "threshMinCotton" : np.array([0, 0, 150],np.uint8), #Lower parameter for thresholding the cotton (hsv) 
+                    "threshMaxCotton" : np.array([140, 57, 250],np.uint8), #Upper parameter for thresholding the cotton (hsv) "threshMaxCotton" : np.array([140, 42, 250],np.uint8)
                     "kernel" : np.ones((5,5),np.uint8), #Parameter for the kernel size used in filters
-                    "minAreaMask" : 1000.0, #Parameter for minimum size of mouse detection (pixels) #"minAreaMask" : 100.0,
+                    "minAreaMask" : 1000.0, #Parameter for minimum size of mouse detection (pixels) #"minAreaMask" : 100.0, 1000.0
                     "maxAreaMask" : 8000.0, #Parameter for maximum size of mouse detection (pixels) #"maxAreaMask" : 8000.0,
 #                    "minDist" : 0.3, #Parameter for minimum distance that the mouse has to travel to be counted (noise filter)
                     "minCottonSize" : 4000., #Parameter for minimum size of cotton detection (pixels)
                     "nestCottonSize" : 15000., #Parameter for maximum size of cotton detection (pixels)
-                    "cageLength" : 50., #Length of the cage in cm
-                    "cageWidth" : 25., #Width of cage in cm
+                    "cageLength" : 50., #Length of the cage in cm #50 28.5
+                    "cageWidth" : 25., #Width of cage in cm #25 17.
                     };
         
 displayParameters = {
@@ -130,6 +134,7 @@ trackerParameters = {
 if mainParameters["email"] != None :
     
     mainParameters["password"] = input("Type the password for your email {0} : ".format(mainParameters["email"]));
+#    mainParameters["password"] = getpass.getpass("Type the password for your email {0} : ".format(mainParameters["email"]));
     
     try :
         s = smtplib.SMTP(mainParameters["smtp"], mainParameters["port"]);
@@ -153,7 +158,7 @@ else :
 
 mainParameters["capturesRGB"], mainParameters["capturesDEPTH"],\
  mainParameters["testFrameRGB"], mainParameters["testFrameDEPTH"] = IO.VideoLoader(_dataDir,**mainParameters);
-
+ 
 #########################################################################################################################################################
 #Initializes the tracker object#
 #########################################################################################################################################################
@@ -170,13 +175,13 @@ data.SetROI();
 #/!\ [OPTIONAL] Adjusting the segmentation parameters for Mouse
 ##########################################################################################################################################################
 
-data.AdjustThresholdingMouse(mainParameters["capturesRGB"][1], 300);
+data.AdjustThresholdingMouse(mainParameters["capturesRGB"][0], 200);
 
 #%%#######################################################################################################################################################
 #/!\ [OPTIONAL] Adjusting the segmentation parameters for Cotton
 ##########################################################################################################################################################
 
-data.AdjustThresholdingCotton(mainParameters["capturesRGB"][2], 300);
+data.AdjustThresholdingCotton(mainParameters["capturesRGB"][0], 300);
 
 #%%#######################################################################################################################################################
 #Launch segmentation on video(s)#
@@ -191,6 +196,7 @@ tracker.TopTracker(data,**trackerParameters);
 Plot = analysis.Plot(**trackerParameters);
 
 Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=None);
+Plot.HeatMapPlot(bins=500,sigma=4);
 
 #%%#######################################################################################################################################################
 #Nesting Raster plot
