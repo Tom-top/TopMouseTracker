@@ -35,7 +35,7 @@ _tmtDir = "/mnt/raid/TopMouseTracker"; #Sets path to the TMT result directory
 
 _dataDir = os.path.join(_tmtDir,"190705"); #Sets path to the data directory
 
-_workingDir = [ os.path.join(_dataDir,"7-5-2019_9-52-34") ]; #Sets path to the working directories
+_workingDir = [ os.path.join(_dataDir,'7-5-2019_9-52-34') ]; #Sets path to the working directories
 
 #_workingDir = [ os.path.join(_dataDir,"J2") ];
 
@@ -81,7 +81,7 @@ segmentationParameters = {
 #                    "minDist" : 0.3, #Parameter for minimum distance that the mouse has to travel to be counted (noise filter)
                     "minCottonSize" : 4000., #Parameter for minimum size of cotton detection (pixels)
                     "nestCottonSize" : 15000., #Parameter for maximum size of cotton detection (pixels)
-                    "cageLength" : 50., #Length of the cage in cm #50 28.5
+                    "cageLength" : 50, #Length of the cage in cm #50 28.5
                     "cageWidth" : 25., #Width of cage in cm #25 17.
                     };
         
@@ -195,8 +195,7 @@ tracker.TopTracker(data,**trackerParameters);
 
 Plot = analysis.Plot(**trackerParameters);
 
-Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=None);
-Plot.HeatMapPlot(bins=500,sigma=4);
+Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=None, cottonSubplots = False);
 
 #%%#######################################################################################################################################################
 #Nesting Raster plot

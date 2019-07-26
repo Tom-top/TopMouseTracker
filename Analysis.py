@@ -49,7 +49,7 @@ class Plot(tracker.TopMouseTracker) :
                           (self._positions[n+1][1]-self._positions[n][1])**2) for n in range(len(self._positions)) if n+1 < len(self._positions)];
                 
         self.distanceNormalized = [dist/self.distanceRatio for dist in self.distance];
-        self.distanceCorrected = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalized];
+        self.distanceCorrected = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"] else 0 for dist in self.distanceNormalized];
         self.distanceCumulative = list(np.cumsum(self.distanceCorrected));
         
         self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._tStartBehav*np.mean(self._framerate))];
@@ -200,7 +200,7 @@ class Plot(tracker.TopMouseTracker) :
                 
                 plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_After_Mouse_{0}".format(self._mouse)));
         
-    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10) :
+    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10, cottonSubplots=True) :
         
         self.res = np.mean(self._framerate)*res
         
@@ -211,10 +211,10 @@ class Plot(tracker.TopMouseTracker) :
         ax0 = plt.subplot2grid((5, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
         #ax0.plot(np.arange(0,len(self.distanceCorrectedBefore)),self.distanceCorrectedBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.distanceCorrectedBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
+        Before = [sum(self.distanceCorrectedBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
         ax0.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
         #ax0.plot(np.arange(len(self.distanceCorrectedBefore),len(self.distanceCorrectedBefore)+len(self.distanceCorrectedAfter)),self.distanceCorrectedAfter,color='red',alpha=0.5);
-        After = [np.mean(self.distanceCorrectedAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedAfter),self.res)];
+        After = [sum(self.distanceCorrectedAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedAfter),self.res)];
         ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
@@ -253,69 +253,71 @@ class Plot(tracker.TopMouseTracker) :
 #        ax2.set_xlim([0,len(Before+After)])
         
         
-        ax2 = plt.subplot2grid((5, 4), (2, 3));
-        #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
-        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
-        ax2.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
-        #ax3.plot(np.arange(len(self.cottonBefore),len(self.cottonBefore)+len(self.cottonAfter)),self.cottonAfter,color='red',alpha=0.5);
-        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
-        ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
+        if cottonSubplots :
         
-        All = Before+After;
-        
-        peaks = [];
-        
-        for i,data in enumerate(All) :
-
-            if i <= len(All)-2 :
+            ax2 = plt.subplot2grid((5, 4), (2, 3));
+            #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
+            Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+            ax2.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
+            #ax3.plot(np.arange(len(self.cottonBefore),len(self.cottonBefore)+len(self.cottonAfter)),self.cottonAfter,color='red',alpha=0.5);
+            After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)];
+            ax2.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
             
-                if All[i]+1 <= All[i+1] or All[i]-1 >= All[i+1] :
-                    
-                    peaks.append(i);
+            All = Before+After;
+            
+            peaks = [];
+            
+            for i,data in enumerate(All) :
+    
+                if i <= len(All)-2 :
                 
-        
-        #peaks = peakutils.indexes(All, thres=0.8, min_dist=1); 
-        
-        #print(peaks)
-        #ax3.scatter(peaks,[All[i] for i in peaks], c='black');
-        
-        ax2.set_title("Cotton height over time", fontsize = 10);
-        ax2.set_ylabel("Average pixel intensity *8bit (a.u)");
-        ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
-        ax2.tick_params(bottom=False,labelbottom=False);
-        ax2.set_xlim([0,len(Before+After)]);
-        
-        ax3 = plt.subplot2grid((5, 4), (3, 3));
-        
-        if rasterSpread == None :
-            if All != [] : 
-                rasterSpread = (self._args["plot"]["limit"]+1)/(len(All));
-        
-        for peak in peaks :
-            ax3.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=cAfter,alpha=0.1));
-        
-        ax3.set_title("Nest-building activity over time", fontsize = 10);
-        ax3.set_ylabel("Nest-building activity");
-        ax3.set_xlabel("time (h)");
-        ax3.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
-        ax3.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
-        #print(len(All))
-        ax3.set_xlim([0,len(Before+After)])
-        
-        ax4 = plt.subplot2grid((5, 4), (4, 3));
-        
-        Before = [np.mean(self.spreadBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadBefore),self.res)];
-        ax4.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
-        
-        After = [np.mean(self.spreadAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadAfter),self.res)];
-        ax4.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
-        
-        ax4.set_title("Cotton spread over time", fontsize = 10);
-        ax4.set_ylabel("Cotton spread (px)");
-        ax4.set_xlabel("time (h)");
-        ax4.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
-        ax4.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
-        ax4.set_xlim([0,len(Before+After)])
+                    if All[i]+1 <= All[i+1] or All[i]-1 >= All[i+1] :
+                        
+                        peaks.append(i);
+                    
+            
+            #peaks = peakutils.indexes(All, thres=0.8, min_dist=1); 
+            
+            #print(peaks)
+            #ax3.scatter(peaks,[All[i] for i in peaks], c='black');
+            
+            ax2.set_title("Cotton height over time", fontsize = 10);
+            ax2.set_ylabel("Average pixel intensity *8bit (a.u)");
+            ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+            ax2.tick_params(bottom=False,labelbottom=False);
+            ax2.set_xlim([0,len(Before+After)]);
+            
+            ax3 = plt.subplot2grid((5, 4), (3, 3));
+            
+            if rasterSpread == None :
+                if All != [] : 
+                    rasterSpread = (self._args["plot"]["limit"]+1)/(len(All));
+            
+            for peak in peaks :
+                ax3.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=cAfter,alpha=0.1));
+            
+            ax3.set_title("Nest-building activity over time", fontsize = 10);
+            ax3.set_ylabel("Nest-building activity");
+            ax3.set_xlabel("time (h)");
+            ax3.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+            ax3.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
+            #print(len(All))
+            ax3.set_xlim([0,len(Before+After)])
+            
+            ax4 = plt.subplot2grid((5, 4), (4, 3));
+            
+            Before = [np.mean(self.spreadBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadBefore),self.res)];
+            ax4.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
+            
+            After = [np.mean(self.spreadAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadAfter),self.res)];
+            ax4.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
+            
+            ax4.set_title("Cotton spread over time", fontsize = 10);
+            ax4.set_ylabel("Cotton spread (px)");
+            ax4.set_xlabel("time (h)");
+            ax4.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+            ax4.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
+            ax4.set_xlim([0,len(Before+After)])
         
         ax5 = plt.subplot2grid((5, 4), (0, 0), rowspan=5, colspan=3);
         
