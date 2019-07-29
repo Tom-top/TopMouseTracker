@@ -8,6 +8,109 @@ This module defines default parameters used by TopMouseTracker.
 
 import os;
 import cv2;
+import numpy as np;
+
+mainParameters = {  
+                    "extensionLoad" : "avi",
+                    "extension" : "avi", #The extension of the movie to be analyzed
+                    "testFramePos" : 300, #The position of the frame used for ROI selection
+                    "email" : None, #The email adress to send notifications to
+                    "password" : None, #The email password
+                    "smtp" : "smtp.gmail.com", #The server smtp
+                    "port" : 587, #The server directory
+                    "mouse" : None, #The name of the animal
+                    "capturesRGB" : None, #The RGB captures (list)
+                    "capturesDEPTH" : None, #The DEPTH captures (list)
+                    "testFrameRGB" : None, #The RGB test frame (for ROI selection)
+                    "testFrameDEPTH" : None, #The DEPTH test frame (why not ?!)
+                    "playSound" : False, #Parameters to enable ping sound after code finished running
+                    "sound2Play" : None, #The sound to be played
+                    };
+
+segmentationParameters = {
+                    "threshMinMouse" : np.array([90, 70, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8), np.array([100, 70, 0],np.uint8)
+                    "threshMaxMouse" : np.array([179, 255, 50],np.uint8), #Upper parameter for thresholding the mouse (hsv) #"threshMaxMouse" : np.array([255, 60, 90],np.uint8), np.array([179, 255, 50],np.uint8)
+                    "threshMinCotton" : np.array([0, 0, 150],np.uint8), #Lower parameter for thresholding the cotton (hsv) 
+                    "threshMaxCotton" : np.array([140, 57, 250],np.uint8), #Upper parameter for thresholding the cotton (hsv) "threshMaxCotton" : np.array([140, 42, 250],np.uint8)
+                    "kernel" : np.ones((5,5),np.uint8), #Parameter for the kernel size used in filters
+                    "minAreaMask" : 1000.0, #Parameter for minimum size of mouse detection (pixels) #"minAreaMask" : 100.0, 1000.0
+                    "maxAreaMask" : 8000.0, #Parameter for maximum size of mouse detection (pixels) #"maxAreaMask" : 8000.0,
+#                    "minDist" : 0.3, #Parameter for minimum distance that the mouse has to travel to be counted (noise filter)
+                    "minCottonSize" : 4000., #Parameter for minimum size of cotton detection (pixels)
+                    "nestCottonSize" : 15000., #Parameter for maximum size of cotton detection (pixels)
+                    "cageLength" : 50, #Length of the cage in cm #50 28.5
+                    "cageWidth" : 25., #Width of cage in cm #25 17.
+                    };
+        
+displayParameters = {
+                    "showStream" : False, #Display the tracking in LIVE MODE
+                    };
+
+'''   
+FOURCC :
+XVID : cv2.VideoWriter_fourcc(*'XVID') --> Preferable
+MJPG : cv2.VideoWriter_fourcc(*'MJPG') --> Very large videos
+X264 : cv2.VideoWriter_fourcc(*'X264') --> Gives small videos
+None : skvideo.io.FFmpegWriter --> Default writer (small videos)
+"Frame" : Saving video as sequential frames
+'''
+       
+savingParameters = {
+        "saveStream" : True, #Whether or not to save the segmentation
+        "framerate" : None, #The framerate of the video
+        "fourcc" : None, #fourcc to be used for video compression
+        "extension" : "avi", #The extension of the video to be saved
+        "segmentCotton" : False, #Whether or not to segment cotton in the cage
+        "saveCottonMask" : False, #Whether or not to save the cotton mask
+        "resizeTracking" : 1., #Resizing factor for video size
+        };
+
+plotParameters = {
+                "minDist" : 0.5,
+                "maxDist" : 10,
+                "res" : 1,
+                "limit" : 10.,
+                "gridsize" : 200,
+                };
+        
+nestingRasterPlotParameters = {
+                                "cBefore" : "blue",
+                                "cAfter" : "red",
+                                "res" : 1,
+                                "rasterSpread" : None,
+                                "peakThresh" : 0.7,
+                                "peakDist" : 1,
+                                "minDist" : 7,
+                                "displayManual" : False,
+                                "save" : True,
+                                };
+        
+if type(nestingRasterPlotParameters['peakThresh']) == float :
+    
+    nestingRasterPlotParameters['PeakTresh'] = str(nestingRasterPlotParameters['peakThresh'])[0]+'-'+str(nestingRasterPlotParameters['peakThresh'])[2:]
+
+else :
+    
+    nestingRasterPlotParameters['PeakTresh'] = nestingRasterPlotParameters['peakThresh']
+                
+completeTrackingPlotParameters = {
+                                    "cBefore" : 'blue',
+                                    "cAfter" : 'red',
+                                    "alpha" : 0.1,
+                                    "res" : 1,
+                                    "line" : True,
+                                    "rasterSpread" : None,
+                                    "cottonSubplots" : True,
+                                    "save" : True,
+                                    };
+        
+trackerParameters = {
+        "main" : mainParameters,
+        "segmentation" : segmentationParameters,
+        "display" : displayParameters,
+        "saving" : savingParameters,
+        "plot" : plotParameters,
+        };
     
 ##############################################################################
 # Parameters for sounds outputs

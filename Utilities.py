@@ -8,6 +8,7 @@ Created on Mon Jan  7 17:56:59 2019
 
 import os;
 import shutil;
+import smtplib;
 
 import TopMouseTracker.Settings as settings;
 import TopMouseTracker.Parameters as params;
@@ -220,4 +221,37 @@ def ClearDirectory(directory) :
         
         raise RuntimeError("{0} is not a valid directory!".format(directory));
         
+def CheckMail() :
+    
+    if params.mainParameters["email"] != None :
+    
+        params.mainParameters["password"] = input("Type the password for your email {0} : ".format(params.mainParameters["email"]));
+    
+        try :
+            s = smtplib.SMTP(params.mainParameters["smtp"], params.mainParameters["port"]);
+            s.ehlo();
+            s.starttls();
+            s.ehlo();
+            s.login(params.mainParameters["email"], params.mainParameters["password"]);
+            PrintColoredMessage("Emailing mode has been enabled","darkgreen");
+            
+        except :
+            
+            PrintColoredMessage("[WARNING] Wrong Username or Password !","darkred");
+    
+    else :
+        
+        PrintColoredMessage("Emailing mode has been disabled","darkgreen");
+        
+def CheckDirectories() :
+    
+    CheckDirectoryExists(params.mainParameters["tmtDir"]); #Checks if directory exists
+    CheckDirectoryExists(params.mainParameters["resultDir"]); #Checks if directory exists
+    ClearDirectory(params.mainParameters["resultDir"]); #Asks for clearing the directory if not empty
+    
+    if params.savingParameters["fourcc"] == "Frames" :
+        
+        CheckDirectoryExists(params.mainParameters["segmentationDir"]);  #Check if directory exists
+        
+    CheckMail();
         
