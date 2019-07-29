@@ -16,11 +16,14 @@ import matplotlib.patches as patches;
 import peakutils;
 from matplotlib.widgets import MultiCursor;
 from scipy import optimize;
+from scipy.ndimage.filters import gaussian_filter;
+import matplotlib.cm as cm;
+import moviepy.editor as mpy;
+from moviepy.video.io.bindings import mplfig_to_npimage;
+from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip;
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker._Tracker as tracker;
-from scipy.ndimage.filters import gaussian_filter;
-import matplotlib.cm as cm;
 
 class Plot(tracker.TopMouseTracker) :
     
@@ -33,6 +36,7 @@ class Plot(tracker.TopMouseTracker) :
         self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
         self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
         self._cottonSpread = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonSpread.npy'));
+        self._trackingVideo = os.path.join(self._args["main"]["resultDir"], "Tracking_{0}_0.{1}".format(self._args["main"]["mouse"],self._args["main"]["extension"]));
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -200,7 +204,7 @@ class Plot(tracker.TopMouseTracker) :
                 
                 plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_After_Mouse_{0}".format(self._mouse)));
         
-    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10, cottonSubplots=True) :
+    def CompleteTrackingPlot(self,cBefore='b',cAfter='r',alpha=0.1, line=True, res=5, rasterSpread=10, cottonSubplots=True, save = False) :
         
         self.res = np.mean(self._framerate)*res
         
@@ -208,7 +212,7 @@ class Plot(tracker.TopMouseTracker) :
         fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
 
 
-        ax0 = plt.subplot2grid((5, 4), (0, 3));
+        ax0 = plt.subplot2grid((4, 4), (0, 3));
         #ax0 = plt.subplot(3,4,4);
         #ax0.plot(np.arange(0,len(self.distanceCorrectedBefore)),self.distanceCorrectedBefore,color='blue',alpha=0.5);
         Before = [sum(self.distanceCorrectedBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCorrectedBefore),self.res)];
@@ -223,7 +227,7 @@ class Plot(tracker.TopMouseTracker) :
         ax0.set_xlim([0,len(Before+After)])
         
         
-        ax1 = plt.subplot2grid((5, 4), (1, 3));
+        ax1 = plt.subplot2grid((4, 4), (1, 3));
         #ax1 = plt.subplot(3,4,8);
         #ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5);
         Before = [np.mean(self.distanceCumulativeBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCumulativeBefore),self.res)]
@@ -255,7 +259,7 @@ class Plot(tracker.TopMouseTracker) :
         
         if cottonSubplots :
         
-            ax2 = plt.subplot2grid((5, 4), (2, 3));
+            ax2 = plt.subplot2grid((4, 4), (2, 3));
             #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
             Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
             ax2.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
@@ -287,7 +291,7 @@ class Plot(tracker.TopMouseTracker) :
             ax2.tick_params(bottom=False,labelbottom=False);
             ax2.set_xlim([0,len(Before+After)]);
             
-            ax3 = plt.subplot2grid((5, 4), (3, 3));
+            ax3 = plt.subplot2grid((4, 4), (3, 3));
             
             if rasterSpread == None :
                 if All != [] : 
@@ -304,22 +308,22 @@ class Plot(tracker.TopMouseTracker) :
             #print(len(All))
             ax3.set_xlim([0,len(Before+After)])
             
-            ax4 = plt.subplot2grid((5, 4), (4, 3));
-            
-            Before = [np.mean(self.spreadBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadBefore),self.res)];
-            ax4.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
-            
-            After = [np.mean(self.spreadAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadAfter),self.res)];
-            ax4.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
-            
-            ax4.set_title("Cotton spread over time", fontsize = 10);
-            ax4.set_ylabel("Cotton spread (px)");
-            ax4.set_xlabel("time (h)");
-            ax4.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
-            ax4.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
-            ax4.set_xlim([0,len(Before+After)])
+#            ax4 = plt.subplot2grid((5, 4), (4, 3));
+#            
+#            Before = [np.mean(self.spreadBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadBefore),self.res)];
+#            ax4.plot(np.arange(0,len(Before)),Before,color=cBefore,alpha=0.5);
+#            
+#            After = [np.mean(self.spreadAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.spreadAfter),self.res)];
+#            ax4.plot(np.arange(len(Before),len(Before)+len(After)),After,color=cAfter,alpha=0.5);
+#            
+#            ax4.set_title("Cotton spread over time", fontsize = 10);
+#            ax4.set_ylabel("Cotton spread (px)");
+#            ax4.set_xlabel("time (h)");
+#            ax4.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+#            ax4.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
+#            ax4.set_xlim([0,len(Before+After)])
         
-        ax5 = plt.subplot2grid((5, 4), (0, 0), rowspan=5, colspan=3);
+        ax5 = plt.subplot2grid((4, 4), (0, 0), rowspan=4, colspan=3);
         
         ax5.set_xlim([0, int(self.ROIWidth)]);
         ax5.set_ylim([0, int(self.ROILength)]);
@@ -403,7 +407,7 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.tight_layout();
         
-        if self._args["plot"]["save"] :
+        if save :
             
             plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)));
             
@@ -586,14 +590,21 @@ class Plot(tracker.TopMouseTracker) :
                     self.totalTimeManual += e-s;
         
             
-    def NestingRaster(self, cBefore='b',cAfter='r', res=1, rasterSpread=10, peakThresh = 1, peakDist = 1, minDist = 10) :
+    def NestingRaster(self, displayManual=False, cBefore='b',cAfter='r', res=1, rasterSpread=10, peakThresh = 1, peakDist = 1, minDist = 10, save = False) :
         
         fig = plt.figure(figsize=(20,10));
             
-        self.res = self._framerate*res
+        self.res = np.mean(self._framerate)*res
         
-        ax0 = plt.subplot(311);
-        ax1 = plt.subplot(312,sharex=ax0);
+        if displayManual :
+        
+            ax0 = plt.subplot(311);
+            ax1 = plt.subplot(312,sharex=ax0);
+            
+        else :
+            
+            ax0 = plt.subplot(211);
+            ax1 = plt.subplot(212,sharex=ax0);
         
         Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
 
@@ -714,7 +725,7 @@ class Plot(tracker.TopMouseTracker) :
 #        print(automaticStart)
 #        print(automaticEnd)
 #        print(len(raster))
-        np.save(os.path.join(self._args["main"]["resultDir"],"Data_{0}_Raster.npy".format(self._args["main"]["mouse"])),np.array(raster));
+#        np.save(os.path.join(self._args["main"]["resultDir"],"Data_{0}_Raster.npy".format(self._args["main"]["mouse"])),np.array(raster));
                 
                 
             
@@ -744,27 +755,27 @@ class Plot(tracker.TopMouseTracker) :
         ax1.set_title("Cotton height over time", fontsize = 10);
         ax1.set_ylabel("Average pixel intensity *8bit (a.u)");
         ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/res,3600/res));
+        ax1.set_xticklabels(np.arange(0,self._args["plot"]["limit"]/res,1/res));
         ax1.set_ylim([100,150]);
-        ax1.tick_params(bottom=False,labelbottom=False);
         ax1.set_xlim([0,len(Before+After)]);
         
 #        print(len(raster)) 
 #        print(len(Before+After))
         
-        self.totalTimeManual = 0;
-
-        path = self._args["main"]["workingDir"]
-
-        for f in os.listdir(path) :
-                    
-            path2File = os.path.join(path,f);
-            
-            if len(f.split(".")) == 2 :
-            
-                if f.split(".")[-1] == "xlsx" :
-                    
-                    try :
-                    
+        if displayManual :
+        
+            self.totalTimeManual = 0;
+    
+            path = self._args["main"]["workingDir"];
+        
+            for f in os.listdir(path) :
+                        
+                path2File = os.path.join(path,f);
+                
+                if len(f.split(".")) == 2 :
+                
+                    if f.split(".")[-1] == "xlsx" :
+                        
                         mouse = f.split("-")[1].split(".")[0];
         
                         if mouse == self._args["main"]["mouse"] :
@@ -813,91 +824,97 @@ class Plot(tracker.TopMouseTracker) :
                                     
                                         tEndInteract = temp;
                                         
-#                                    if line[0] == "tStartDig" :
-#                            
-#                                        tStartDig = temp;
-#                                        
-#                                    if line[0] == "tEndDig" :
-#                                        
-#                                        tEndDig = temp;
-#                                        
-#                                    if line[0] == "tStartGroom" :
-#                            
-#                                        tStartGroom = temp;
-#                                        
-#                                    if line[0] == "tEndGroom" :
-#                                        
-#                                        tEndGroom = temp;
-#                                        
-                    except :
-                            
-                        pass;
-                            
-        ax2 = plt.subplot(313,sharex=ax0)
-        temp =0;
-        
-        for s,e in zip(tStart,tEnd) :
+    #                                    if line[0] == "tStartDig" :
+    #                            
+    #                                        tStartDig = temp;
+    #                                        
+    #                                    if line[0] == "tEndDig" :
+    #                                        
+    #                                        tEndDig = temp;
+    #                                        
+    #                                    if line[0] == "tStartGroom" :
+    #                            
+    #                                        tStartGroom = temp;
+    #                                        
+    #                                    if line[0] == "tEndGroom" :
+    #                                        
+    #                                        tEndGroom = temp;
+    #                                        
+                                
+            ax2 = plt.subplot(313,sharex=ax0)
+            temp =0;
             
-            if s < len(Before+After) :
+            for s,e in zip(tStart,tEnd) :
                 
-                if e >= len(Before+After) :
+                if s < len(Before+After) :
                     
-                    temp+=len(Before+After)-s;
-                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
-                    self.totalTimeManual += len(Before+After)-s;
-                    
-                elif e < len(Before+After) :
-                    
-                    temp+=e-s;
-                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
-                    self.totalTimeManual += e-s;
-        
-        temp =0;
-        
-        for s,e in zip(tStartInteract,tEndInteract) :
+                    if e >= len(Before+After) :
+                        
+                        temp+=len(Before+After)-s;
+                        ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
+                        self.totalTimeManual += len(Before+After)-s;
+                        
+                    elif e < len(Before+After) :
+                        
+                        temp+=e-s;
+                        ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"));
+                        self.totalTimeManual += e-s;
             
-            if s < len(Before+After) :
+            temp =0;
+            
+            for s,e in zip(tStartInteract,tEndInteract) :
                 
-                if e >= len(Before+After) :
+                if s < len(Before+After) :
                     
-                    temp+=len(Before+After)-s;
-                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
-                    self.totalTimeManual += len(Before+After)-s;
+                    if e >= len(Before+After) :
+                        
+                        temp+=len(Before+After)-s;
+                        ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
+                        self.totalTimeManual += len(Before+After)-s;
+                        
+                    elif e < len(Before+After) :
+                        
+                        temp+=e-s;
+                        ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
+                        self.totalTimeManual += e-s;
+        
+            ax2.set_xlim(0,len(Before+After));
+            ax2.set_title("Nest-building activity over time", fontsize = 10);
+            ax2.set_ylabel("Nest-building activity");
+            ax2.set_xlabel("time (h)");       
+            ax2.tick_params(left=False,labelleft=False); 
+            
+            multi = MultiCursor(fig.canvas, (ax0, ax1, ax2), color='r', lw=2, horizOn=False, vertOn=True);
+            
+            self.dif = self.totalTimeAutomatic/self.totalTimeManual;
+            self.percentage = round((1-abs(1-self.dif))*100,3)
+            
+            textstr = '\n'.join((
+                "Auto = {0}s".format(round(self.totalTimeAutomatic,2)),
+                "Manual = {0}s".format(round(self.totalTimeManual,2)),
+                "{0}% accuracy".format(self.percentage),
+                r"$\alpha$ = {0}".format(peakThresh),
+                r"$\beta$ = {0}".format(minDist),));
                     
-                elif e < len(Before+After) :
-                    
-                    temp+=e-s;
-                    ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"));
-                    self.totalTimeManual += e-s;
+            props = dict(boxstyle='round', facecolor='white', alpha=1)
     
-        ax2.set_xlim(0,len(Before+After));
-        ax2.set_title("Nest-building activity over time", fontsize = 10);
-        ax2.set_ylabel("Nest-building activity");
-        ax2.set_xlabel("time (h)");       
-        ax2.tick_params(left=False,labelleft=False);           
+            # place a text box in upper left in axes coords
+            ax0.text(0.01, 0.95, textstr, transform=ax0.transAxes, fontsize=12,
+                    verticalalignment='top', bbox=props);
+                     
+            ax1.tick_params(bottom=False,labelbottom=False);
             
-        multi = MultiCursor(fig.canvas, (ax0, ax1, ax2), color='r', lw=2, horizOn=False, vertOn=True)
-        
-        self.dif = self.totalTimeAutomatic/self.totalTimeManual;
-        self.percentage = round((1-abs(1-self.dif))*100,3)
-        
-        textstr = '\n'.join((
-            "Auto = {0}s".format(round(self.totalTimeAutomatic,2)),
-            "Manual = {0}s".format(round(self.totalTimeManual,2)),
-            "{0}% accuracy".format(self.percentage),
-            r"$\alpha$ = {0}".format(peakThresh),
-            r"$\beta$ = {0}".format(minDist),));
-        
-        props = dict(boxstyle='round', facecolor='white', alpha=1)
-
-        # place a text box in upper left in axes coords
-        ax0.text(0.01, 0.95, textstr, transform=ax0.transAxes, fontsize=12,
-                verticalalignment='top', bbox=props)
+        else :
+            
+            multi = MultiCursor(fig.canvas, (ax0, ax1), color='r', lw=2, horizOn=False, vertOn=True);
+            ax1.tick_params(bottom=True,labelbottom=True);
         
         plt.tight_layout();
         plt.show()
         
-        print(self.totalTimeManual,self.totalTimeAutomatic)
+        if save :
+            
+            plt.savefig(os.path.join(self._args["main"]["resultDir"],"{0}_{1}_{2}.png".format(self._mouse,peakThresh,minDist)));
         
     #    if self._args["plot"]["save"] :
     #        
@@ -929,5 +946,114 @@ class Plot(tracker.TopMouseTracker) :
         ax0.tick_params(top=False, bottom=False, left=False, right=False);
         
         plt.gca().invert_yaxis();
+        
+    def make_frame_mpl(self,t):
+            
+            i = int(t);
+            
+            if i < self.threshDisplay :
+                
+                try :
+                
+                    self.cottonHeightGraph.set_data(self.livePlotX[0:i],self.livePlotCotton[self.tStartLivePlot:self.tStartLivePlot+i]);
+                    self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1]);
+                    
+                except :
+                    
+                    pass;
+
+                last_frame = mplfig_to_npimage(self.liveFig);
+                return last_frame;
+            
+            else :
+                
+                delta = i - self.threshDisplay;
+                
+                self.liveAx0.set_xlim(self.tStartLivePlot+delta,self.tStartLivePlot+i);
+                
+                try :
+                
+                    self.cottonHeightGraph.set_data((self.livePlotX[delta:i],self.livePlotCotton[self.tStartLivePlot+delta:self.tStartLivePlot+i]));
+                    self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1]);
+                    
+                except :
+                    
+                    pass;
+
+                last_frame = mplfig_to_npimage(self.liveFig);
+                return last_frame;
+        
+        
+    def LiveTrackingPlot(self,res=1,tStartLivePlot=0,tEndLivePlot=5*60,acceleration=1,showHeight=True,showTrace=True) :
+        
+        self._FrameRate = np.mean(self._framerate);
+        
+        self.tStartLivePlot = int((tStartLivePlot)*self._FrameRate);
+        self.tEndLivePlot = int((tEndLivePlot)*self._FrameRate);
+        self.durationLivePlot = abs(self.tEndLivePlot-self.tStartLivePlot);
+        self.threshDisplay = int(10*self._FrameRate);
+        
+        if self.durationLivePlot == 0 :
+            
+            raise RuntimeError('LiveVideo length has to be > 0 !');
+        
+        self.videoClip = mpy.VideoFileClip(self._trackingVideo);
+        self.finalVideoClip = self.videoClip.subclip(t_start=tStartLivePlot, t_end=tEndLivePlot);
+        
+        if self.finalVideoClip.duration == 0 :
+            
+            raise RuntimeError('videoClip is empty !');
+        
+        self.liveFig = plt.figure(figsize=(10,3), facecolor='white');
+        
+        self.gs = self.liveFig.add_gridspec(2, 2);
+        
+        self.liveAx0 = self.liveFig.add_subplot(self.gs[0, :1]);
+        self.liveAx1 = self.liveFig.add_subplot(self.gs[1, :1]);
+        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 1:]);
+#        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 0:]);
+         
+        self.livePlotX = np.arange(self.tStartLivePlot,self.tEndLivePlot);
+
+        self.livePlotCotton = [np.mean(self._cottonAveragePixelIntensities[int(i):int(i+self._FrameRate/res)]) for i in np.arange(0,len(self._cottonAveragePixelIntensities),self._FrameRate/res)];
+        
+        self.livePlotTrajectory = [self._positions[int(i)] for i in np.arange(0,len(self._positions),self._FrameRate/res)];
+        
+#        z = np.load(rasterFile);
+        
+        self.liveAx0.set_title("Cotton height over time");
+        self.liveAx0.set_ylim(min(self.livePlotCotton),max(self.livePlotCotton));
+        self.liveAx0.set_xlim(self.tStartLivePlot+1,self.tStartLivePlot+self.threshDisplay);
+        
+#        ax1.set_title("Raster over time");
+#        ax1.set_ylim(-0.5,1.5);
+#        ax1.set_xlim(tStart+1,tStart+thresh);
+        
+        self.liveAx2.set_title("Position over time");
+        self.liveAx2.set_xlim([0, int(self.ROIWidth)]);
+        self.liveAx2.set_ylim([0, int(self.ROILength)]);
+        self.liveAx2.set_aspect("equal");
+        plt.gca().invert_yaxis();
+
+        self.cottonHeightGraph, = self.liveAx0.plot(self.livePlotX[0:1],self.livePlotCotton[0:1],lw=2,c="blue",alpha=0.5);
+        self.trajectoryGraph, = self.liveAx2.plot(self.livePlotTrajectory[0][0],self.livePlotTrajectory[1][0],'-o',color="blue",alpha=0.1,ms=1.);
+        
+        plt.tight_layout();
+        
+        self._acceleration = acceleration;
+        
+        self.animation = mpy.VideoClip(self.make_frame_mpl, duration=(self.durationLivePlot*res)/self._FrameRate);
+        
+        self.finalClip = clips_array([[clip.margin(2, color=[255,255,255]) for clip in
+                        [(self.finalVideoClip.resize(0.5).speedx(self._acceleration)), self.animation.speedx(self._acceleration*res)]]],
+                        bg_color=[255,255,255]); #.speedx(self._FrameRate)
+        
+        self.finalClip.write_videofile(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_Mouse_{0}.mp4'.format(self._args["main"]["mouse"])), fps=10)
+        
+
+                
+            
+        
+        
         
         

@@ -26,7 +26,7 @@ import TopMouseTracker.IO as IO;
 import TopMouseTracker._Tracker as tracker;
 import TopMouseTracker.Analysis as analysis;
 
-Animal = "298"; #Name of the animal to be analyzed
+Animal = "304"; #Name of the animal to be analyzed
 videoName = "Raw";
 
 _mainDir = os.path.expanduser("~"); #Sets path to the main directory
@@ -118,7 +118,6 @@ plotParameters = {
                 "res" : 1,
                 "limit" : 10.,
                 "gridsize" : 200,
-                "save" : True,
                 };
         
 trackerParameters = {
@@ -195,7 +194,7 @@ tracker.TopTracker(data,**trackerParameters);
 
 Plot = analysis.Plot(**trackerParameters);
 
-Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=None, cottonSubplots = False);
+Plot.CompleteTrackingPlot(cBefore='blue',cAfter='red',alpha=0.1, line=True, res=1, rasterSpread=None, cottonSubplots = True, save = True);
 
 #%%#######################################################################################################################################################
 #Nesting Raster plot
@@ -213,5 +212,10 @@ else :
 
 minDist = 7;
 
-Plot.NestingRaster(cBefore='blue',cAfter='red',res=1, rasterSpread=None, peakThresh = peakTresh, peakDist =1, minDist=minDist);
-#plt.savefig(os.path.join(_resultDir,"{0}_{1}_{2}.png".format(Animal,PeakTresh,minDist)))
+Plot.NestingRaster(displayManual=False, cBefore='blue',cAfter='red',res=1, rasterSpread=None, peakThresh = peakTresh, peakDist =1, minDist=minDist, save = True);
+
+#%%#######################################################################################################################################################
+#/!\ [OPTIONAL] Make a live tracking plot
+##########################################################################################################################################################  
+
+Plot.LiveTrackingPlot(res=1,tStartLivePlot=0,tEndLivePlot=10*60,acceleration=10);
