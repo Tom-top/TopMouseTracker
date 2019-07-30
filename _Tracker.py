@@ -111,6 +111,7 @@ class TopMouseTracker():
         self._Start = None; #Time at which the segmentation starts
         self._End = None; #Time at which the segmentation ends
         self._Stop = False; #Trigger to stop segmentation when video is empty
+        self._mouseDetectedExcel = False;
         self._mouse = self._args["main"]["mouse"]; #Loads the name of the mouse
         self._cageWidth = self._args["segmentation"]["cageWidth"];
         self._cageLength = self._args["segmentation"]["cageLength"];
@@ -269,6 +270,8 @@ class TopMouseTracker():
                 if not np.isnan(line[0]) : 
                     
                     if str(int(line[0])) == self._args["main"]["mouse"] :
+                        
+                        self._mouseDetectedExcel = True;
                           
                         self._tStart = int(line[1]); #Moment at which the cotton is added (s)
                         self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]);
@@ -299,7 +302,11 @@ class TopMouseTracker():
                         self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
                           
                     self._tEnd = [int(line[3]),int(line[4]),int(line[5])]; #Length of each video of the experiment (max 4 videos)
-                    
+        
+        if not self._mouseDetectedExcel :
+            
+            raise RuntimeError("Data for mouse {0} was not detected in Mice_Video_Info file!".format(self._mouse));
+        
         self._Length = sum(self._tEnd);
         self._nVideos = len([x for x in self._tEnd if x > 0]);
         
