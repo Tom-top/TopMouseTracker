@@ -10,11 +10,11 @@ __title__ = 'TopMouseTracker';
 
 __version__ = '1.0.0';
 
-__author__ = 'Thomas_TOPILKO';
+__author__ = 'Thomas_Piotr_TOPILKO';
 
 __license__ = 'N.A';
 
-__copyright__ = '2018_Thomas_TOPILKO';
+__copyright__ = '2018_Thomas_Piotr_TOPILKO';
 
 __all__ = ["Settings", "Parameters", "IO", "Tracker", "Analysis"];
 

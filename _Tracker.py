@@ -184,7 +184,7 @@ class TopMouseTracker():
         
         if self._args["saving"]["saveStream"] :
             
-            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,0,self._args["saving"]["extension"]);
+            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,0,self._args["saving"]["savingExtension"]);
 
             self.testCanvas = np.zeros((self._W_RGB_CROPPED,self._H_RGB_CROPPED));
             
@@ -253,64 +253,67 @@ class TopMouseTracker():
             
     def SetMetaDataParameters(self) :
         
-        for file in os.listdir(self._args["main"]["tmtDir"]) :
-            
-            path2File = os.path.join(self._args["main"]["tmtDir"],file);
-
-            if fnmatch.fnmatch(file, 'Mice_Video_Info.xlsx'): 
-
-                videoInfoWorkbook = pd.read_excel(path2File,header=None); #Load video info excel sheet
+        '''Method that loads metaData for segmentation
         
-        videoInfo = videoInfoWorkbook.as_matrix(); #Transforms it into a matrix
+        -----------------------------------------------------------------------
+        |  n  | tStart | tStartBehav |  tEnd  | tEndbis | ...
+        -----------------------------------------------------------------------
+  Ex :  | 01  | 10*60  |    20*60    | 1*3600 |  20*60  | ...
+        -----------------------------------------------------------------------
+        
+        - (Animal name) In this example the animal that will be analyzed is : 01
+        - (tStart) The segmentation will start at : 10*60(s) = 10(mins) from the begining of the video
+        - (tStartBehav) Time at which the animal started a specific task (if there is no specific task : N.A) : 20*60(s) = 20(mins) from the begining of the video
+        - (tEnd) Time at which the segmentation ends : 1*3600(s) = 1(h) from the begining of the video
+        - (tEndBis) Time at which the next video ends (if multiple videos in tandem) ...
+        
+        '''
+        
+        videoInfoWorkbook = pd.read_excel(self._args["main"]["videoInfoFile"]); #Load video info excel sheet 
+        nColumns = len(videoInfoWorkbook.columns); #Gets the number of columns that the spreadsheet contains
+        
+        try :
+            
+            nameColumn = videoInfoWorkbook["n"]; #Gets name data from column "n"
+        
+        except : 
+            
+            nameColumn = videoInfoWorkbook[videoInfoWorkbook.columns[0]]; #If no column "n" gets name data from the first column
 
-        for line in videoInfo :
-
-            try :
-                
-                if not np.isnan(line[0]) : 
+        for pos,n in enumerate(nameColumn) :
                     
-                    if str(int(line[0])) == self._args["main"]["mouse"] :
-                        
-                        self._mouseDetectedExcel = True;
-                          
-                        self._tStart = int(line[1]); #Moment at which the cotton is added (s)
-                        self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]);
-                          
-                        if line[2] == 'N.A' :
-                              
-                            self._tStartBehav = 100000;
-                              
-                        else :
-                              
-                            self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
-                              
-                        self._tEnd = [int(line[3]),int(line[4]),int(line[5])]; #Length of each video of the experiment (max 4 videos)
-                                      
-            except :
-                
-                if str(line[0]) == self._args["main"]["mouse"] :
-                          
-                    self._tStart = int(line[1]); #Moment at which the cotton is added (s)
-                    self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]);
+            if str(n) == self._args["main"]["mouse"] : 
+                  
+                self._tStart = int(videoInfoWorkbook["tStart"][pos]); #Moment at which the cotton is added (s)
+                self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]); #The first frame from which the segmentation should start
+                  
+                if videoInfoWorkbook["tStartBehav"][pos] == 'N.A' :
                       
-                    if line[2] == 'N.A' :
-                          
-                        self._tStartBehav = 100000;
-                          
-                    else :
-                          
-                        self._tStartBehav = int(line[2]); #Moment at which the mouse start nest-building (s)
-                          
-                    self._tEnd = [int(line[3]),int(line[4]),int(line[5])]; #Length of each video of the experiment (max 4 videos)
+                    self._tStartBehav = 999999; #if tStartBehav is N.A : set it to infinite, i.e : never starting
+                      
+                else :
+                      
+                    self._tStartBehav = int(videoInfoWorkbook["tStartBehav"][pos]); #Moment at which the animal starts the specific task
+                      
+                self._tEnd = [int(videoInfoWorkbook[videoInfoWorkbook.columns[x]][pos]) for x in np.arange(3,nColumns,1)]; #Length of each video of the experiment
+                
+                self._mouseDetectedExcel = True; #The entry for self._mouse was successfully detected
+                
+                utils.PrintColoredMessage("\n[INFO] Entry in Video_Info file detected for mouse {0}".format(self._mouse),"darkgreen");
         
-        if not self._mouseDetectedExcel :
+        if not self._mouseDetectedExcel : #The entry for self._mouse was not successfully detected
             
-            raise RuntimeError("Data for mouse {0} was not detected in Mice_Video_Info file!".format(self._mouse));
+            raise RuntimeError("Data for mouse {0} was not detected in Video_Info file!".format(self._mouse));
         
-        self._Length = sum(self._tEnd);
-        self._nVideos = len([x for x in self._tEnd if x > 0]);
+        self._Length = sum(self._tEnd); #Computes the Length of the segmentation (s)
+        self._nVideos = len([x for x in self._tEnd if x > 0]); #Computes the number of videos to segment
         
     def SetROI(self) :
+        
+        '''Method that displays a test frame from the video for the user to select the ROI in which
+        the segmentation will be run
+        
+        '''
         
         print("\n");
         utils.PrintColoredMessage("[INFO] Press R to reset ROI, and C to crop the selected ROI","bold");
@@ -322,16 +325,16 @@ class TopMouseTracker():
         self.lowRightX = int(self._refPt[1][0]); #Defines the Low Right ROI corner X coordinates
         self.lowRightY = int(self._refPt[1][1]); #Defines the Low Right ROI corner Y coordinates
         
-        self.ROIWidth = abs(self.lowRightX-self.upLeftX);
-        self.ROILength = abs(self.lowRightY-self.upLeftY);
+        self.ROIWidth = abs(self.lowRightX-self.upLeftX); #Computes the ROI width in (px)
+        self.ROILength = abs(self.lowRightY-self.upLeftY); #Computes the ROI length in (px)
         
         self.distanceRatio = (abs(self.upLeftX-self.lowRightX)/self._args["segmentation"]["cageLength"]+\
-                              abs(self.upLeftY-self.lowRightY)/self._args["segmentation"]["cageWidth"])/2; #Defines the resizing factor for the cage
+                              abs(self.upLeftY-self.lowRightY)/self._args["segmentation"]["cageWidth"])/2; #Defines the resizing factor for distance calculus
                               
-        self._testFrameRGBCropped = self._testFrameRGB[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
-        self._H_RGB_CROPPED, self._W_RGB_CROPPED = self._testFrameRGBCropped.shape[0], self._testFrameRGBCropped.shape[1];
+        self._testFrameRGBCropped = self._testFrameRGB[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX]; #Creates a croped test frame according to ROI
+        self._H_RGB_CROPPED, self._W_RGB_CROPPED = self._testFrameRGBCropped.shape[0], self._testFrameRGBCropped.shape[1]; #Computes the height/width of the cropped frame
         
-        if self._args["saving"]["saveCottonMask"] :
+        if self._args["saving"]["saveCottonMask"] : #If the Cotton mask has to be saved
             
             self.depthMaskString = "Mask_Cotton_{0}.avi".format(self._mouse);
             
@@ -351,23 +354,71 @@ class TopMouseTracker():
     
     def Nothing(self,x) :
         
+        '''Empty method
+        
+        '''
+        
         pass;
     
-    def AdjustThresholdingMouse(self,capture,framePos) :
+    def AdjustThresholding(self,capture,framePos,which='animal') :
+        
+        '''Method to check the segmentation parameters for the animal/object
+        
+        Args : capture (cap) : capture of the video to be analyzed
+               framePos (int) : number of the frame to be analyzed
+               which (str) : 'animal' if the mouse segmentation parameters have to be tested
+                             'object' if the cotton segmentation parameters have to be tested
+                             
+        The trackbars represent respectively :
+            
+            The Hue values Low/High
+            The Saturation values Low/High
+            The Value values Low/High
+            
+        If the elements in the image become black : those elements will become 0 after binarization, i.e : neglected
+        If the elements in the image remain colored : those elements will become 1 after binarization, i.e : segmented
+        
+        '''
         
         cv2.namedWindow('Adjust Thresholding');
         
-        cv2.createTrackbar('H_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][0],255,self.Nothing);
-        cv2.createTrackbar('H_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][0],255,self.Nothing);
+        if which == 'animal' :
         
-        cv2.createTrackbar('S_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][1],255,self.Nothing);
-        cv2.createTrackbar('S_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][1],255,self.Nothing);
-        
-        cv2.createTrackbar('V_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][2],255,self.Nothing);
-        cv2.createTrackbar('V_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][2],255,self.Nothing);
+            cv2.createTrackbar('H_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][0],255,self.Nothing);
+            cv2.createTrackbar('H_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][0],255,self.Nothing);
+            
+            cv2.createTrackbar('S_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][1],255,self.Nothing);
+            cv2.createTrackbar('S_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][1],255,self.Nothing);
+            
+            cv2.createTrackbar('V_Low','Adjust Thresholding',self._args["segmentation"]["threshMinMouse"][2],255,self.Nothing);
+            cv2.createTrackbar('V_High','Adjust Thresholding',self._args["segmentation"]["threshMaxMouse"][2],255,self.Nothing);
+            
+        elif which == 'object' : 
+            
+            cv2.createTrackbar('H_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][0],255,self.Nothing);
+            cv2.createTrackbar('H_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][0],255,self.Nothing);
+            
+            cv2.createTrackbar('S_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][1],255,self.Nothing);
+            cv2.createTrackbar('S_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][1],255,self.Nothing);
+            
+            cv2.createTrackbar('V_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][2],255,self.Nothing);
+            cv2.createTrackbar('V_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][2],255,self.Nothing);
+            
+        else :
+            
+            cv2.createTrackbar('H_Low','Adjust Thresholding',0,255,self.Nothing);
+            cv2.createTrackbar('H_High','Adjust Thresholding',255,255,self.Nothing);
+            
+            cv2.createTrackbar('S_Low','Adjust Thresholding',0,255,self.Nothing);
+            cv2.createTrackbar('S_High','Adjust Thresholding',255,255,self.Nothing);
+            
+            cv2.createTrackbar('V_Low','Adjust Thresholding',0,255,self.Nothing);
+            cv2.createTrackbar('V_High','Adjust Thresholding',255,255,self.Nothing);
+            
         
         self.testFrame = capture.get_frame(framePos);
         self.testCroppedFrame = self.testFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
+        self.testCroppedFrameRGB = cv2.cvtColor(self.testCroppedFrame, cv2.COLOR_BGR2RGB);
         self.testHsvFrame = cv2.cvtColor(self.testCroppedFrame, cv2.COLOR_BGR2HSV);
         self.testBlur = cv2.blur(self.testHsvFrame,(5,5));
         
@@ -384,53 +435,7 @@ class TopMouseTracker():
             v_h = cv2.getTrackbarPos('V_High','Adjust Thresholding');
             
             self.testMaskMouse = cv2.inRange(self.testBlur, (h_l,s_l,v_l),(h_h,s_h,v_h));
-            self.overlay = cv2.bitwise_and(self.testHsvFrame, self.testHsvFrame, mask=self.testMaskMouse);
-            
-            cv2.imshow('Adjust Thresholding',self.overlay);
-            
-            key = cv2.waitKey(10) & 0xFF;
-        
-            if key == ord("q"):
-                break;
-        
-        cv2.destroyAllWindows();
-        
-        for i in range (1,5):
-            cv2.waitKey(1);
-            
-    
-    def AdjustThresholdingCotton(self,capture,framePos) :
-        
-        cv2.namedWindow('Adjust Thresholding');
-        
-        cv2.createTrackbar('H_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][0],255,self.Nothing);
-        cv2.createTrackbar('H_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][0],255,self.Nothing);
-        
-        cv2.createTrackbar('S_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][1],255,self.Nothing);
-        cv2.createTrackbar('S_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][1],255,self.Nothing);
-        
-        cv2.createTrackbar('V_Low','Adjust Thresholding',self._args["segmentation"]["threshMinCotton"][2],255,self.Nothing);
-        cv2.createTrackbar('V_High','Adjust Thresholding',self._args["segmentation"]["threshMaxCotton"][2],255,self.Nothing);
-        
-        self.testFrame = capture.get_frame(framePos);
-        self.testCroppedFrame = self.testFrame[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
-        self.testHsvFrame = cv2.cvtColor(self.testCroppedFrame, cv2.COLOR_BGR2HSV);
-        self.testBlur = cv2.blur(self.testHsvFrame,(5,5));
-        
-        while True:
-        
-            # get current positions of four trackbars
-            h_l = cv2.getTrackbarPos('H_Low','Adjust Thresholding');
-            h_h = cv2.getTrackbarPos('H_High','Adjust Thresholding');
-            
-            s_l = cv2.getTrackbarPos('S_Low','Adjust Thresholding');
-            s_h = cv2.getTrackbarPos('S_High','Adjust Thresholding');
-            
-            v_l = cv2.getTrackbarPos('V_Low','Adjust Thresholding');
-            v_h = cv2.getTrackbarPos('V_High','Adjust Thresholding');
-            
-            self.testMaskMouse = cv2.inRange(self.testBlur, (h_l,s_l,v_l),(h_h,s_h,v_h));
-            self.overlay = cv2.bitwise_and(self.testHsvFrame, self.testHsvFrame, mask=self.testMaskMouse);
+            self.overlay = cv2.bitwise_and(self.testCroppedFrameRGB, self.testCroppedFrameRGB, mask=self.testMaskMouse);
             
             cv2.imshow('Adjust Thresholding',self.overlay);
             
@@ -452,7 +457,8 @@ class TopMouseTracker():
         
         self.RGBFrame = rgbCapture.get_frame(self.frameNumber/self._framerate[self.videoNumber]); #Reads the following frame from the video capture
         
-        if self._args["saving"]["segmentCotton"] :
+        if self._args["saving"]["segmentCotton"] : #If the cotton segmentation mode was selected
+            
             self.DEPTHFrame = depthCapture.get_frame(self.frameNumber/self._framerate[self.videoNumber]); #Reads the following frame from the video capture
             
         if self.videoNumber == self._nVideos :
@@ -492,12 +498,12 @@ class TopMouseTracker():
         
         if self._args["saving"]["segmentCotton"] :
         
-            self.RegisterDepth();
+            self.RegisterDepth(); #Performs depth registration
             self.RunSegmentationCotton(); #Runs the cotton segmentation on the ROI
         
-        if self._args["display"]["showStream"] or self._args["saving"]["saveStream"] :
+        if self._args["segmentation"]["showStream"] or self._args["saving"]["saveStream"] :
 
-            self.CreateDisplay();
+            self.CreateDisplay(); #Creates image for display/saving purposes
             
         if self._args["saving"]["saveStream"] :
                 
@@ -937,7 +943,7 @@ class TopMouseTracker():
         
         self._errors += 1;
         
-        if self._args["display"]["showStream"] :
+        if self._args["segmentation"]["showStream"] :
             
             if self._errors == 1 :
                 
@@ -950,15 +956,11 @@ class TopMouseTracker():
                 
     def ReturnTracking(self) :
         
-        if self._args["display"]["showStream"] :
+        if self._args["segmentation"]["showStream"] :
             
             try :
                 
                 self.newhStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
-#                _W,_H = self.newhStack.shape[0], self.newhStack.shape[1];
-#                ratio = 500./_W;
-#                self.newhStack = cv2.resize(self.newhStack,(int(_H*ratio)),500);
-#                self.hStack = cv2.cvtColor(self.hStack, cv2.COLOR_RGB2BGR);
                 return self.newhStack;
             
             except :
@@ -1034,7 +1036,7 @@ def TopTracker(Tracker,**kwargs) :
                         
                         #If the tracking has to be displayed
                         #----------------------------------------------------------------------
-                        if kwargs["display"]["showStream"] :
+                        if kwargs["segmentation"]["showStream"] :
                             
                             segmentation = Tracker.ReturnTracking();
                             
@@ -1120,7 +1122,7 @@ def TopTracker(Tracker,**kwargs) :
                         
                         #If the tracking has to be displayed
                         #----------------------------------------------------------------------
-                        if kwargs["display"]["showStream"] :
+                        if kwargs["segmentation"]["showStream"] :
                             
                             segmentation = Tracker.ReturnTracking();
                             
@@ -1206,7 +1208,7 @@ def TopTracker(Tracker,**kwargs) :
         
         utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]),"darkred");
               
-    if kwargs["display"]["showStream"] :       
+    if kwargs["segmentation"]["showStream"] :       
         
         cv2.destroyAllWindows();
     

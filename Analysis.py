@@ -13,9 +13,7 @@ from math import sqrt;
 import matplotlib.pyplot as plt;
 import matplotlib.colors as mcolors;
 import matplotlib.patches as patches;
-import peakutils;
 from matplotlib.widgets import MultiCursor;
-from scipy import optimize;
 from scipy.ndimage.filters import gaussian_filter;
 import matplotlib.cm as cm;
 import moviepy.editor as mpy;
@@ -24,6 +22,29 @@ from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceCl
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker._Tracker as tracker;
+
+class GroupData() :
+    
+    def __init__(self,group,**kwargs) : 
+        
+        self._positions = [];
+        self._refPt = [];
+        self._cottonAveragePixelIntensities = [];
+        self.upLeftX = [];
+        self.upLeftY = [];
+        self.lowRightX = [];
+        self.lowRightY = [];
+        self.distanceRatio = [];
+        
+        for directory in group :
+            
+            path2Dir = os.path.join(group,directory);
+            
+            self._positions.append( np.load(os.path.join(path2Dir, 'Data_'+self._args["main"]["mouse"]+'_Points.npy') )  );
+            
+            
+            
+            
 
 class Plot(tracker.TopMouseTracker) :
     
@@ -36,7 +57,7 @@ class Plot(tracker.TopMouseTracker) :
         self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
         self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
         self._cottonSpread = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonSpread.npy'));
-        self._trackingVideo = os.path.join(self._args["main"]["resultDir"], "Tracking_{0}_0.{1}".format(self._args["main"]["mouse"],self._args["main"]["extension"]));
+        self._trackingVideo = os.path.join(self._args["main"]["resultDir"], "Tracking_{0}_0.{1}".format(self._args["main"]["mouse"],self._args["saving"]["savingExtension"]));
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -224,12 +245,12 @@ class Plot(tracker.TopMouseTracker) :
         ax0.plot(np.arange(len(Before),len(Before)+len(After)),After,color=args["cAfter"],alpha=0.5);
         ax0.set_title("Speed over time (cm/s)", fontsize = 10);
         ax0.set_ylabel("Speed (cm/s)");
-        ax0.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"],3600/args["res"]));
+        ax0.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"]+1,3600/args["res"]));
         ax0.tick_params(bottom=False,labelbottom=False);
         ax0.set_xlim([0,len(Before+After)])
         
         
-        ax1 = plt.subplot2grid((4, 4), (1, 3));
+        ax1 = plt.subplot2grid((4, 4), (1, 3),sharex=ax0);
         #ax1 = plt.subplot(3,4,8);
         #ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5);
         Before = [np.mean(self.distanceCumulativeBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.distanceCumulativeBefore),self.res)]
@@ -239,7 +260,7 @@ class Plot(tracker.TopMouseTracker) :
         ax1.plot(np.arange(len(Before),len(Before)+len(After)),After,color=args["cAfter"],alpha=0.5);
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         ax1.set_ylabel("Cumulative distance (cm)");
-        ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"],3600/args["res"]));
+        ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"]+1,3600/args["res"]));
         ax1.tick_params(bottom=False,labelbottom=False);
         ax1.set_xlim([0,len(Before+After)])
         
@@ -261,7 +282,7 @@ class Plot(tracker.TopMouseTracker) :
         
         if args["cottonSubplots"] :
         
-            ax2 = plt.subplot2grid((4, 4), (2, 3));
+            ax2 = plt.subplot2grid((4, 4), (2, 3),sharex=ax0);
             #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5);
             Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
             ax2.plot(np.arange(0,len(Before)),Before,color=args["cBefore"],alpha=0.5);
@@ -289,11 +310,12 @@ class Plot(tracker.TopMouseTracker) :
             
             ax2.set_title("Cotton height over time", fontsize = 10);
             ax2.set_ylabel("Average pixel intensity *8bit (a.u)");
-            ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"],3600/args["res"]));
+            ax2.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"]+1,3600/args["res"]));
             ax2.tick_params(bottom=False,labelbottom=False);
             ax2.set_xlim([0,len(Before+After)]);
+            ax2.set_ylim([100,150]);
             
-            ax3 = plt.subplot2grid((4, 4), (3, 3));
+            ax3 = plt.subplot2grid((4, 4), (3, 3),sharex=ax0);
             
             if args["rasterSpread"] == None :
                 if All != [] : 
@@ -305,7 +327,7 @@ class Plot(tracker.TopMouseTracker) :
             ax3.set_title("Nest-building activity over time", fontsize = 10);
             ax3.set_ylabel("Nest-building activity");
             ax3.set_xlabel("time (h)");
-            ax3.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"],3600/args["res"]));
+            ax3.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"]+1,3600/args["res"]));
             ax3.set_xticklabels(np.arange(0,self._args["plot"]["limit"]+1,1));
             #print(len(All))
             ax3.set_xlim([0,len(Before+After)])
@@ -379,8 +401,8 @@ class Plot(tracker.TopMouseTracker) :
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100);
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100);
         
-        hB,mB,sB = utils.HoursMinutesSeconds(len(self.posBefore)/np.mean(self._framerate));
-        hA,mA,sA = utils.HoursMinutesSeconds(len(self.posAfter)/np.mean(self._framerate));
+        hB,mB,sB = utils.HoursMinutesSeconds(round(len(self.posBefore)/np.mean(self._framerate)));
+        hA,mA,sA = utils.HoursMinutesSeconds(round(len(self.posAfter)/np.mean(self._framerate)));
         
         fontBefore = { "size" : 10,
                       "color" : args["cBefore"],
@@ -407,7 +429,9 @@ class Plot(tracker.TopMouseTracker) :
         
         plt.gca().invert_yaxis();
         
+        multi = MultiCursor(fig.canvas, (ax0, ax1, ax2, ax3), color='r', lw=2, horizOn=False, vertOn=True);
         plt.tight_layout();
+        plt.show();
         
         if args["save"] :
             

@@ -136,13 +136,13 @@ def VideoLoader(directory,**kwargs) :
         
         dirPath = os.path.join(directory,folder);
         
-        if os.path.isdir(dirPath) and dirPath in kwargs["workingDir"] :
+        if os.path.isdir(dirPath) and dirPath in kwargs["main"]["workingDir"] :
     
             for file in natsorted(os.listdir(os.path.join(directory,folder))) :
                 
-                if file.split('.')[-1] == kwargs["extensionLoad"] :
+                if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
                     
-                    if file.split("_")[0] == kwargs["videoName"] :
+                    if file.split("_")[0] == kwargs["main"]["videoName"] :
 #                    if file.split('_')[0] == "Raw" :
                         #cap = cv2.VideoCapture(os.path.join(directory,file));
                         cap = mpy.VideoFileClip(os.path.join(dirPath,file));
@@ -151,7 +151,7 @@ def VideoLoader(directory,**kwargs) :
                         
                         if not RGBTrigger :
                         
-                            frame = cap.get_frame(kwargs["testFramePos"]);
+                            frame = cap.get_frame(kwargs["main"]["testFramePos"]);
                             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
                             
                             RGBTestFrame = frame;
@@ -159,7 +159,7 @@ def VideoLoader(directory,**kwargs) :
         
                         utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                               
-                        if kwargs["playSound"] :
+                        if kwargs["main"]["playSound"] :
                               
                             try :  
                                 utils.PlaySound(1,params.sounds['Purr']);
@@ -175,14 +175,14 @@ def VideoLoader(directory,**kwargs) :
     
                         if not DEPTHTrigger :
                             
-                            frame = cap.get_frame(kwargs["testFramePos"]);
+                            frame = cap.get_frame(kwargs["main"]["testFramePos"]);
                             
                             DEPTHTestFrame = frame;
                             DEPTHTrigger = True;
                         
                         utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
                               
-                        if kwargs["playSound"] :
+                        if kwargs["main"]["playSound"] :
                         
                             try :  
                                 utils.PlaySound(1,params.sounds['Purr']);
