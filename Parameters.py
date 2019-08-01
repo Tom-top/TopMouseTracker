@@ -25,7 +25,7 @@ segmentationParameters = {
                     "kernel" : np.ones((5,5),np.uint8), #Parameter for the kernel size used in filters
                     "minAreaMask" : 1000.0, #Parameter for minimum size of mouse detection (pixels) #"minAreaMask" : 100.0,
                     "maxAreaMask" : 8000.0, #Parameter for maximum size of mouse detection (pixels)
-                    "minCottonSize" : 4000., #Parameter for minimum size of cotton detection (pixels)
+                    "minCottonSize" : 200., #Parameter for minimum size of cotton detection (pixels)
                     "nestCottonSize" : 15000., #Parameter for maximum size of cotton detection (pixels)
                     "showStream" : False, #Display the tracking in LIVE MODE
                     };

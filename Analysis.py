@@ -54,10 +54,10 @@ class Plot(tracker.TopMouseTracker) :
   
         self._positions = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Points.npy'));
         self._refPt = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_refPt.npy'));
-        self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
+#        self._areas = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Areas.npy'));
         self._cottonAveragePixelIntensities = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonPixelIntensities.npy'));
-        self._cottonSpread = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonSpread.npy'));
-        self._trackingVideo = os.path.join(self._args["main"]["resultDir"], "Tracking_{0}_0.{1}".format(self._args["main"]["mouse"],self._args["saving"]["savingExtension"]));
+#        self._cottonSpread = np.load(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_CottonSpread.npy'));
+        self._trackingVideo = os.path.join(self._args["main"]["resultDir"], "Tracking_{0}.{1}".format(self._args["main"]["mouse"],self._args["saving"]["savingExtension"]));
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -78,15 +78,15 @@ class Plot(tracker.TopMouseTracker) :
         self.distanceCumulative = list(np.cumsum(self.distanceCorrected));
         
         self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._tStartBehav*np.mean(self._framerate))];
-        self.areasBefore = self._areas[0:int(self._tStartBehav*np.mean(self._framerate))];
+#        self.areasBefore = self._areas[0:int(self._tStartBehav*np.mean(self._framerate))];
         self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._tStartBehav*np.mean(self._framerate))];
-        self.spreadBefore = self._cottonSpread[0:int(self._tStartBehav*np.mean(self._framerate))];
+#        self.spreadBefore = self._cottonSpread[0:int(self._tStartBehav*np.mean(self._framerate))];
         
         if len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
             self.distanceNormalizedBefore = self.distanceNormalized[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
-            self.areasBefore = self._areas[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+#            self.areasBefore = self._areas[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
             self.cottonBefore = self._cottonAveragePixelIntensities[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
-            self.spreadBefore = self._cottonSpread[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+#            self.spreadBefore = self._cottonSpread[0:int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
         self.distanceCorrectedBefore = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedBefore];
         self.distanceCumulativeBefore = list(np.cumsum(self.distanceCorrectedBefore));
@@ -95,15 +95,15 @@ class Plot(tracker.TopMouseTracker) :
         self._Length = sum(self._tEnd)
         
         self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
-        self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+#        self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
         self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
-        self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
+#        self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._Length*np.mean(self._framerate))];
         
         if len(self.distanceNormalized)+len(self.distanceNormalizedBefore) >= self._args["plot"]["limit"]*3600*np.mean(self._framerate) :
             self.distanceNormalizedAfter = self.distanceNormalized[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
-            self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+#            self.areasAfter = self._areas[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
             self.cottonAfter = self._cottonAveragePixelIntensities[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
-            self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
+#            self.spreadAfter = self._cottonSpread[int(self._tStartBehav*np.mean(self._framerate)):int(self._args["plot"]["limit"]*3600*np.mean(self._framerate))];
         
         self.distanceCorrectedAfter = [dist if dist > self._args["plot"]["minDist"] and dist < self._args["plot"]["maxDist"]else 0 for dist in self.distanceNormalizedAfter];
         self.distanceCumulativeAfter = list(np.cumsum(self.distanceCorrectedAfter));
@@ -129,8 +129,8 @@ class Plot(tracker.TopMouseTracker) :
         ax1.set_title("Cumulative distance over time", fontsize = 10);
         
         ax2 = plt.subplot(313);
-        ax2.plot(np.arange(0,len(self.areasBefore)),self.areasBefore,color='blue',alpha=0.5);
-        ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
+#        ax2.plot(np.arange(0,len(self.areasBefore)),self.areasBefore,color='blue',alpha=0.5);
+#        ax2.plot(np.arange(len(self.areasBefore),len(self.areasBefore)+len(self.areasAfter)),self.areasAfter,color='red',alpha=0.5);
         ax2.set_title("Mask area over time", fontsize = 10);
         
         plt.tight_layout();
@@ -983,7 +983,7 @@ class Plot(tracker.TopMouseTracker) :
                 
                 try :
                 
-                    self.cottonHeightGraph.set_data(self.livePlotX[0:i],self.livePlotCotton[self.tStartLivePlot:self.tStartLivePlot+i]);
+#                    self.cottonHeightGraph.set_data(self.livePlotX[0:i],self.livePlotCotton[self.tStartLivePlot:self.tStartLivePlot+i]);
                     self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1]);
                     
                 except :
@@ -997,11 +997,11 @@ class Plot(tracker.TopMouseTracker) :
                 
                 delta = i - self.threshDisplay;
                 
-                self.liveAx0.set_xlim(self.tStartLivePlot+delta,self.tStartLivePlot+i);
+#                self.liveAx0.set_xlim(self.tStartLivePlot+delta,self.tStartLivePlot+i);
                 
                 try :
                 
-                    self.cottonHeightGraph.set_data((self.livePlotX[delta:i],self.livePlotCotton[self.tStartLivePlot+delta:self.tStartLivePlot+i]));
+#                    self.cottonHeightGraph.set_data((self.livePlotX[delta:i],self.livePlotCotton[self.tStartLivePlot+delta:self.tStartLivePlot+i]));
                     self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1]);
                     
                 except :
@@ -1032,14 +1032,14 @@ class Plot(tracker.TopMouseTracker) :
             
             raise RuntimeError('videoClip is empty !');
         
-        self.liveFig = plt.figure(figsize=(10,3), facecolor='white');
+        self.liveFig = plt.figure(figsize=(5,3), facecolor='white');
         
         self.gs = self.liveFig.add_gridspec(2, 2);
         
-        self.liveAx0 = self.liveFig.add_subplot(self.gs[0, :1]);
-        self.liveAx1 = self.liveFig.add_subplot(self.gs[1, :1]);
-        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 1:]);
-#        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 0:]);
+#        self.liveAx0 = self.liveFig.add_subplot(self.gs[0, :1]);
+#        self.liveAx1 = self.liveFig.add_subplot(self.gs[1, :1]);
+#        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 1:]);
+        self.liveAx2 = self.liveFig.add_subplot(self.gs[0:, 0:]);
          
         self.livePlotX = np.arange(self.tStartLivePlot,self.tEndLivePlot);
 
@@ -1049,9 +1049,9 @@ class Plot(tracker.TopMouseTracker) :
         
 #        z = np.load(rasterFile);
         
-        self.liveAx0.set_title("Cotton height over time");
-        self.liveAx0.set_ylim(min(self.livePlotCotton),max(self.livePlotCotton));
-        self.liveAx0.set_xlim(self.tStartLivePlot+1,self.tStartLivePlot+self.threshDisplay);
+#        self.liveAx0.set_title("Cotton height over time");
+#        self.liveAx0.set_ylim(min(self.livePlotCotton),max(self.livePlotCotton));
+#        self.liveAx0.set_xlim(self.tStartLivePlot+1,self.tStartLivePlot+self.threshDisplay);
         
 #        ax1.set_title("Raster over time");
 #        ax1.set_ylim(-0.5,1.5);
@@ -1063,7 +1063,7 @@ class Plot(tracker.TopMouseTracker) :
         self.liveAx2.set_aspect("equal");
         plt.gca().invert_yaxis();
 
-        self.cottonHeightGraph, = self.liveAx0.plot(self.livePlotX[0:1],self.livePlotCotton[0:1],lw=2,c="blue",alpha=0.5);
+#        self.cottonHeightGraph, = self.liveAx0.plot(self.livePlotX[0:1],self.livePlotCotton[0:1],lw=2,c="blue",alpha=0.5);
         self.trajectoryGraph, = self.liveAx2.plot(self.livePlotTrajectory[0][0],self.livePlotTrajectory[1][0],'-o',color="blue",alpha=0.1,ms=1.);
         
         plt.tight_layout();
@@ -1076,12 +1076,6 @@ class Plot(tracker.TopMouseTracker) :
                         [(self.finalVideoClip.resize(0.5).speedx(self._acceleration)), self.animation.speedx(self._acceleration*res)]]],
                         bg_color=[255,255,255]); #.speedx(self._FrameRate)
         
-        self.finalClip.write_videofile(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_Mouse_{0}.mp4'.format(self._args["main"]["mouse"])), fps=10)
-        
-
-                
-            
-        
-        
-        
+        self.finalClip.write_videofile(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_{0}.mp4'.format(self._args["main"]["mouse"])), fps=10);
+#        self.finalClip.write_gif(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_{0}.gif'.format(self._args["main"]["mouse"])));
         

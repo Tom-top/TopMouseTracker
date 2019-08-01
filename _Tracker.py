@@ -184,7 +184,7 @@ class TopMouseTracker():
         
         if self._args["saving"]["saveStream"] :
             
-            self.videoString = "Tracking_{0}_{1}.{2}".format(self._mouse,0,self._args["saving"]["savingExtension"]);
+            self.videoString = "Tracking_{0}.{1}".format(self._mouse,self._args["saving"]["savingExtension"]);
 
             self.testCanvas = np.zeros((self._W_RGB_CROPPED,self._H_RGB_CROPPED));
             
@@ -579,14 +579,16 @@ class TopMouseTracker():
         self.openingCotton = cv2.morphologyEx(self.maskCotton,cv2.MORPH_OPEN,self._args["segmentation"]["kernel"], iterations = 3); #Applies opening operation to the mask for dot removal
         self.closingCotton = cv2.morphologyEx(self.openingCotton,cv2.MORPH_CLOSE,self._args["segmentation"]["kernel"], iterations = 3); #Applies closing operation to the mask for large object filling
         self.cntsCotton = cv2.findContours(self.closingCotton.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
-    
+        self.cntsCottonFiltered = [cnt for cnt in self.cntsCotton if cv2.contourArea(cnt) >= self._args["segmentation"]["minCottonSize"]]; 
+        self.finalmaskCotton = np.array(cv2.drawContours(np.zeros(self.closingCotton.shape), self.cntsCottonFiltered, -1, (255,255,255), cv2.FILLED),dtype="uint8");
+                
 #        self.cntNest = None; #Variable that determines whether a nest is detected or not
 #        self.cntLarge = [];
 #        self.largeObjects = 0; #Variable that holds the number of detected large cotton objects
 #        self.smallObjects = 0; #Variable that holds the number of detected small cotton objects
         
         self.croppedRegisteredDepth = self.registeredDepth[self.upLeftY:self.lowRightY,self.upLeftX:self.lowRightX];
-        self.bitwiseDepthCottonMask = cv2.bitwise_and(self.closingCotton, self.croppedRegisteredDepth[:,:,0]);
+        self.bitwiseDepthCottonMask = cv2.bitwise_and(self.finalmaskCotton, self.croppedRegisteredDepth[:,:,0]);
         self.averagePixelIntensity = self.bitwiseDepthCottonMask[np.nonzero(self.bitwiseDepthCottonMask)];
         
         try :
@@ -834,7 +836,7 @@ class TopMouseTracker():
 #                cv2.drawContours(self.maskDisplay, self.largeContours, -1, (0,255,0), self.contourThickness);
         if self._args["saving"]["segmentCotton"] :
             
-            cv2.drawContours(self.maskDisplay, self.cntsCotton, -1, (0,255,0), self.contourThickness);
+            cv2.drawContours(self.maskDisplay, self.cntsCottonFiltered, -1, (0,255,0), self.contourThickness);
             
             #If no nest is detected
             
@@ -1078,8 +1080,10 @@ def TopTracker(Tracker,**kwargs) :
                     else : #If Tracker._Stop :
                                                   
                         try :
+                            
+                            if kwargs["main"]["email"] != None :
         
-                            Tracker.SendMail();
+                                Tracker.SendMail();
                                   
                         except :
                             
@@ -1166,8 +1170,10 @@ def TopTracker(Tracker,**kwargs) :
                     else : #If Tracker._Stop :
                                                   
                         try :
+                            
+                            if kwargs["main"]["email"] != None :
         
-                            Tracker.SendMail();
+                                Tracker.SendMail();
                                   
                         except :
                             
@@ -1302,8 +1308,10 @@ def SaveTracking(Tracker,**kwargs) :
     
     np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_refPt.npy'),Tracker._refPt);
     np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Points.npy'),Tracker._positions);
-    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
-    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
-    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
-    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonSpread.npy'),Tracker._cottonSpread);
+#    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas);
+#    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances);
+    
+    if params.savingParameters["segmentCotton"] :
+        np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
+#    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonSpread.npy'),Tracker._cottonSpread);
                 

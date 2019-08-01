@@ -142,7 +142,7 @@ def VideoLoader(directory,**kwargs) :
                 
                 if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
                     
-                    if file.split("_")[0] == kwargs["main"]["videoName"] :
+                    if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
 #                    if file.split('_')[0] == "Raw" :
                         #cap = cv2.VideoCapture(os.path.join(directory,file));
                         cap = mpy.VideoFileClip(os.path.join(dirPath,file));
@@ -166,7 +166,7 @@ def VideoLoader(directory,**kwargs) :
                             except :
                                 pass;
                         
-                    elif file.split('_')[0] == "Depth" :
+                    elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
                         
                         #cap = cv2.VideoCapture(os.path.join(directory,file));
                         cap = mpy.VideoFileClip(os.path.join(dirPath,file));

@@ -45,7 +45,7 @@ To install all the pre-requiered libraries for TMT there are two main options :
 You can install TMT by cloning it with Git :
 
 ```
-cd folder/to/clone-into/
+cd folder/to/clone-into
 git clone https://github.com/Tom-top/TopMouseTracker
 ```
 
@@ -58,15 +58,40 @@ If there is no problem, you are all set, ready to track some stuff !
 
 ## Running the tests
 
+First change the _topMouseTrackerDir_ parameters and set it to where you cloned TMT :
 
+```
+_topMouseTrackerDir = folder/to/clone-into/TopMouseTracker
+```
 
+* You can then run the whole first section which will set all the TMT parameters used to run the test on the small data set   located at : folder/to/clone-into/TopMouseTracker/Test
 
+* Next, you can run the section section of the script which will load the test movies into memory and will initialize the Tracker class.
+
+* Running the third section will allow you to set the region of interest (ROI) within the first/whatever frame of the video you are about to analyze. To do so : left-click with the mouse in the top-left corner of the ROI you want to trace and drag the mouse cursor until you reach the bottom-right corner of the desired ROI and release. This should set a ROI in the form of a red rectangle that represents the ROI within which the tracker will run. If you are ok with the ROI you just set, press "C", otherwise press "R" and restart over.
+
+* /!\ OPTIONAL The fourth section of the script will allow you to fine tune the thresholding parameters for the segmentation.
+
+* The fifth section of the code finally lauches the tracker.
+
+* For the analysis, the sixth section will allow you to generate tracking plots such as this one :
+
+<a href="url"><img src="https://github.com/Tom-top/TopMouseTracker/blob/master/Images/TopMouseTracker_Tracking_Plot.png" align="center" height="523" width="781" ></a>
+
+Giving you the track of the tracked object in time with some summary plots on the right.
+
+* The seventh section generates the summary plots for nest-building segmentation only.
+
+* The eight section finally allows you to synchronize the tracking of the animal with the tracking plot in live for display purposes mostly. An example :
+
+![](/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master/TopMouseTracker/Images/TopMouseTracker_Live_Tracking.gif)
 
 ## Authors
 
-* **Thomas TOPILKO** - *Initial work* -
+* **Thomas TOPILKO**
 
 ## License
 
 N.A
+
 

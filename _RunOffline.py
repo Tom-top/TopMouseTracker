@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt;
 
 # Checking if the TMT is the current working directory#
 
-_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master"; #Sets path to the TMT directory
+_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master/TopMouseTracker/Test"; #Sets path to the TMT directory
 
 if os.getcwd() !=  _topMouseTrackerDir : #If the current working directory is not the TMT directory changes it
     os.chdir(_topMouseTrackerDir)
@@ -30,15 +30,16 @@ import TopMouseTracker.Analysis as analysis;
 
 # Global parameters#
 
-params.mainParameters["mouse"] = "306"; #The number of the mouse to be analyzed
-params.mainParameters["videoName"] = "Raw"; #The prefix of the video to be analyzed
+params.mainParameters["mouse"] = "test"; #The number of the mouse to be analyzed
+params.mainParameters["rgbVideoName"] = "Raw"; #The prefix of the RGB video to be analyzed
+params.mainParameters["depthVideoName"] = "Depth"; #The prefix of the depth video to be analyzed
 params.mainParameters["extensionLoad"] = "avi"; #The extension of the video to be analyzed
-params.mainParameters["email"] = "thomas.topilko@gmail.com"; #The email of the user in case email notification is wanted
+params.mainParameters["email"] = None; #The email of the user in case email notification is wanted
 
 params.segmentationParameters["cageLength"] = 50; #The length of the segmentation field in cm
 params.segmentationParameters["cageWidth"] = 25.; #The width of the segmentation field in cm
 params.segmentationParameters["threshMinCotton"] = np.array([0, 0, 150],np.uint8); #The lower parameter for the thresholding of the cotton (hsv)
-params.segmentationParameters["threshMaxCotton"] = np.array([140, 50, 250],np.uint8); #The upper parameter for the thresholding of the cotton (hsv)
+params.segmentationParameters["threshMaxCotton"] = np.array([140, 62, 250],np.uint8); #The upper parameter for the thresholding of the cotton (hsv)
 params.segmentationParameters["showStream"] = False;  #Parameters to display/or not the segmentation in LIVE
 
 params.savingParameters["segmentCotton"] = True; #Parameters to segment/or not the cotton
@@ -49,10 +50,10 @@ params.plotParameters["minDist"] = 0.5; #Parameters to filter out the jitter of 
 # Path parameters#
 
 params.mainParameters["workingStation"] = "Black Sabbath"; #Name of the machine on which the code is being run
-params.mainParameters["tmtDir"] = "/network/lustre/iss01/renier/Thomas/thomas.topilko/Experiments/Nesting_Project/Behavior/Caspase3/190314-01_(Caspase3)/Behavior"; #Path to the TMT folder "/mnt/raid/TopMouseTracker"
-params.mainParameters["videoInfoFile"] = os.path.join(params.mainParameters["tmtDir"],"Video_Info.xlsx"); #Path to the video info file
-params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],"190629-01"); #Path to the Data folder
-params.mainParameters["workingDir"] = [ os.path.join(params.mainParameters["dataDir"],"29-6-2019_9-24-39") ]; #Path(s) to the video(s) folder(s)
+params.mainParameters["tmtDir"] = _topMouseTrackerDir; #Path to the TMT folder "/mnt/raid/TopMouseTracker"
+params.mainParameters["videoInfoFile"] = os.path.join(_topMouseTrackerDir,"Video_Info.xlsx"); #Path to the video info file
+params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],"190801"); #Path to the Data folder
+params.mainParameters["workingDir"] = [ os.path.join(params.mainParameters["dataDir"],"01-08-2019_9-0-0") ]; #Path(s) to the video(s) folder(s)
 params.mainParameters["resultDir"] = os.path.join(params.mainParameters["dataDir"],"{0}".format(params.mainParameters["mouse"])); #Path to the Result folder
 params.mainParameters["segmentationDir"] = os.path.join(params.mainParameters["resultDir"],"segmentation"); #Path to the segmentation folder in case sequential frame segmentation was activated
 
@@ -91,7 +92,7 @@ Tracker.SetROI();
 #/!\ [OPTIONAL] Adjusting the segmentation parameters for Animal/Object
 ##########################################################################################################################################################
 
-Tracker.AdjustThresholding(params.mainParameters["capturesRGB"][0], 2000, which='object'); #Parameters : capture, video frame to display
+Tracker.AdjustThresholding(params.mainParameters["capturesRGB"][0], 10, which='object'); #Parameters : capture, video frame to display
 
 #%%#######################################################################################################################################################
 #Launch segmentation on video(s)#
@@ -122,4 +123,4 @@ Plot.NestingRaster(**params.nestingRasterPlotParameters);
 #/!\ [OPTIONAL] Make a live tracking plot
 ##########################################################################################################################################################  
 
-Plot.LiveTrackingPlot(res=1,tStartLivePlot=0,tEndLivePlot=10*60,acceleration=10);
+Plot.LiveTrackingPlot(res=Plot._framerate[0],tStartLivePlot=0,tEndLivePlot=1*60,acceleration=10);
