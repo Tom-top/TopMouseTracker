@@ -84,7 +84,7 @@ Giving you the track of the tracked object in time with some summary plots on th
 
 * The eight section finally allows you to synchronize the tracking of the animal with the tracking plot in live for display purposes mostly. An example :
 
-![](/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master/TopMouseTracker/Images/TopMouseTracker_Live_Tracking.gif)
+![](https://github.com/Tom-top/TopMouseTracker/blob/master/Images/TopMouseTracker_Live_Tracking.gif)
 
 ## Authors
 
