@@ -76,7 +76,7 @@ _topMouseTrackerDir = folder/to/clone-into/TopMouseTracker
 
 * For the analysis, the sixth section will allow you to generate tracking plots such as this one :
 
-<a href="url"><img src="https://github.com/Tom-top/TopMouseTracker/blob/master/Images/TopMouseTracker_Tracking_Plot.png" align="center" height="523" width="781" ></a>
+<a href="url"><img src="https://github.com/Tom-top/TopMouseTracker/blob/master/Images/TopMouseTracker_Tracking_Plot.png" align="center" ></a>
 
 Giving you the track of the tracked object in time with some summary plots on the right.
 
