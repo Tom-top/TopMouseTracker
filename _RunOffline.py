@@ -33,7 +33,7 @@ import TopMouseTracker.Analysis as analysis;
 params.mainParameters["mouse"] = "test"; #The number of the mouse to be analyzed
 params.mainParameters["rgbVideoName"] = "Raw"; #The prefix of the RGB video to be analyzed
 params.mainParameters["depthVideoName"] = "Depth"; #The prefix of the depth video to be analyzed
-params.mainParameters["extensionLoad"] = "avi"; #The extension of the video to be analyzed
+params.mainParameters["extensionLoad"] = "mp4"; #The extension of the video to be analyzed
 params.mainParameters["email"] = None; #The email of the user in case email notification is wanted
 
 params.segmentationParameters["cageLength"] = 50; #The length of the segmentation field in cm
@@ -49,7 +49,7 @@ params.plotParameters["minDist"] = 0.5; #Parameters to filter out the jitter of 
 
 # Path parameters#
 
-params.mainParameters["workingStation"] = "Black Sabbath"; #Name of the machine on which the code is being run
+params.mainParameters["workingStation"] = "Your station/computer name"; #Name of the machine on which the code is being run
 params.mainParameters["tmtDir"] = _topMouseTrackerDir; #Path to the TMT folder "/mnt/raid/TopMouseTracker"
 params.mainParameters["videoInfoFile"] = os.path.join(_topMouseTrackerDir,"Video_Info.xlsx"); #Path to the video info file
 params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],"190801"); #Path to the Data folder

@@ -10,8 +10,6 @@ import cv2;
 import time;
 import os;
 import xlwt;
-import threading;
-import multiprocessing;
 from math import pi,tan;
 
 import TopMouseTracker.Utilities as utils;
@@ -21,160 +19,111 @@ class Kinect() :
     def __init__(self,**kwargs) : 
         
         self._args = kwargs;
-        self.gridRes = self._args["gridRes"];
+        
         self.kinectHeight = 60; #cm
         self.kinectHorizontalAngle = 70.6; #degree
         self.kinectVerticalAngle = 60; #degree
         self.topBoxSize = 50; #cm
-        self.fps = [];
         
-    def GetFrame(self,camera,which,resize) :
+    def GetRGBFrame(self, resize) :
         
-        if which == "rgb" :
-            
-            frame = camera.get_last_color_frame();
-            W,H = camera.color_frame_desc.Width,camera.color_frame_desc.Height;
-            frame = frame.reshape(H,W,-1).astype(np.uint8);
-            frame = cv2.resize(frame, (int(W/resize),int(H/resize)));
-            return frame;
-            
-        elif which == "depth" :
-            
-            frame = camera.get_last_depth_frame();
-            W,H = camera.depth_frame_desc.Width,camera.depth_frame_desc.Height;
-            frame8bit = frame.reshape(H,W,-1).astype(np.uint8);
-            frame8bit = cv2.resize(frame8bit, (int(W/resize),int(H/resize)));
-            frame16bit = frame.reshape(H,W,-1).astype(np.uint16);
-            frame16bit = cv2.resize(frame16bit, (int(W/resize),int(H/resize)));
-            return frame8bit,frame16bit;
+        self.RGBFrame = self._args["kinectRGB"].get_last_color_frame();
+        self.wRGB,self.hRGB = self._args["kinectRGB"].color_frame_desc.Width,self._args["kinectRGB"].color_frame_desc.Height;
+        self.RGBFrame = self.RGBFrame.reshape(self.hRGB,self.wRGB,-1).astype(np.uint8);
+        self.RGBFrame = cv2.resize(self.RGBFrame, (int(self.wRGB/resize),int(self.hRGB/resize)));
+        self.RGBFrame = cv2.cvtColor(self.RGBFrame, cv2.COLOR_BGR2RGB);
+        self.RGBFrame = cv2.cvtColor(self.RGBFrame, cv2.COLOR_RGB2BGR);
+        self.RGBFrame = cv2.flip(self.RGBFrame,0);
+    
+    def GetDepthFrame(self, resize) :
+        
+        self.DepthFrame = self._args["kinectDEPTH"].get_last_depth_frame();
+        self.wDepth,self.hDepth = self._args["kinectDEPTH"].depth_frame_desc.Width,self._args["kinectDEPTH"].depth_frame_desc.Height;
+        self.DepthFrame = self.DepthFrame.reshape(self.hDepth,self.wDepth,-1).astype(np.uint8);
+        self.DepthFrame = cv2.resize(self.DepthFrame, (int(self.wDepth/resize),int(self.hDepth/resize)));
+        self.DepthFrame = cv2.cvtColor(self.DepthFrame, cv2.COLOR_GRAY2BGR); 
+        self.DepthFrame = cv2.flip(self.DepthFrame,0);
+        self.DepthFrame = cv2.resize(self.DepthFrame, (self.wRGB,self.hRGB));
 
-    def LoadRGBDEPTH(self,resizeRGB,resizeDEPTH) :
+    def LoadRGBDepth(self, resizeRGB, resizeDepth) :
         
-        RGBFrame = self.GetFrame(self._args["kinectRGB"],"rgb",resizeRGB);
-        RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_BGR2RGB); 
-        RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_RGB2BGR);
-        RGBFrame = cv2.flip(RGBFrame,0);
-        
-        DEPTHFrame8bit,DEPTHFrame16bit = self.GetFrame(self._args["kinectDEPTH"],"depth",resizeDEPTH);
-        
-        DEPTHFrame8bit = cv2.cvtColor(DEPTHFrame8bit, cv2.COLOR_GRAY2BGR); 
-        DEPTHFrame8bit = cv2.flip(DEPTHFrame8bit,0);
-        
-        #DEPTHFrame16bit = cv2.cvtColor(DEPTHFrame16bit, cv2.COLOR_GRAY2BGR); 
-        #DEPTHFrame16bit = cv2.flip(DEPTHFrame16bit,0);
-        
-        return RGBFrame,DEPTHFrame8bit#,DEPTHFrame16bit;
+        self.GetRGBFrame(resizeRGB);
+        self.GetDepthFrame(resizeDepth);
     
-    def CreateDisplay(self) :
+    def CreateDisplay(self, resizeRGB, resizeDepth) :
         
-        RGBFrame,DEPTHFrame8bit = self.LoadRGBDEPTH(3,1);
-        
-        H,W,_ = RGBFrame.shape;
-        DEPTHFrame8bit = cv2.resize(DEPTHFrame8bit, (W,H));
-        hStack = np.hstack((RGBFrame, DEPTHFrame8bit));
-        
-        return hStack;
+        self.LoadRGBDepth(resizeRGB, resizeDepth);
+        self.hStack = np.hstack((self.RGBFrame, self.DepthFrame));
     
-    def TestKinect(self,grid=True) : 
+    def TestKinect(self, grid=False) : 
         
         while True :
             
-            RGBFrame,DEPTHFrame8bit = self.LoadRGBDEPTH(2,1);
-            
-            clone = DEPTHFrame8bit.copy()
+            self.CreateDisplay(3,1);
+            self.DepthFrameClone = self.DepthFrame.copy();
             
             if grid : 
-
-                box_size = 50;
-                height,width,depth = DEPTHFrame8bit.shape;
                 
-                horizontal_length = 2*( tan( (self.kinectHorizontalAngle*(pi/180)) /2 )*self.kinectHeight );
-                vertical_length = 2*( tan( (self.kinectVerticalAngle*(pi/180)) /2 )*self.kinectHeight );
+                self.horizontalLength = 2*( tan( (self.kinectHorizontalAngle*(pi/180)) /2 )*self.kinectHeight );
+                self.verticalLength = 2*( tan( (self.kinectVerticalAngle*(pi/180)) /2 )*self.kinectHeight );
+                self.distanceRatio = int( (self.wRGB/self.horizontalLength) + (self.hRGB/self.verticalLength) /2 )
                 
-                ratio1 = width/horizontal_length;
-                ratio2 = height/vertical_length;
+                self.horizontalPosition = int(( self.wRGB-(self._args["boxSize"]*self.distanceRatio) )/2);
+                self.verticalPosition = int(( self.hRGB-(self._args["boxSize"]*self.distanceRatio) )/2);
                 
-                average_ratio = int((ratio1+ratio2)/2);
-                
-                shift = 0;
-                
-                horizontal_position = ( width-(box_size*average_ratio) )/2+shift;
-                vertical_position = ( height-(box_size*average_ratio) )/2;
-                
-                cv2.rectangle(DEPTHFrame8bit, (int(horizontal_position), int(vertical_position)),\
-                              (int(horizontal_position+box_size*average_ratio), int(vertical_position+box_size*average_ratio)), (255,0,0), 1);
-                              
-                gridres = self.gridRes;      
+                cv2.rectangle(self.DepthFrame, (self.horizontalPosition, self.verticalPosition),\
+                              (int(self.horizontalPosition+self._args["boxSize"]*self.distanceRatio),\
+                               int(self.verticalPosition+self._args["boxSize"]*self.distanceRatio)), (255,0,0), 1);     
                         
-                for x in np.arange(int(horizontal_position)+gridres,int(horizontal_position)+(box_size*average_ratio),gridres) :
+                for x in np.arange(self.horizontalPosition+self._args["gridRes"],\
+                                   self.horizontalPosition+(self._args["boxSize"]*self.distanceRatio),self._args["gridRes"]) :
                     
-                    for y in np.arange(int(vertical_position)+gridres,int(vertical_position)+(box_size*average_ratio),gridres) : 
+                    for y in np.arange(self.verticalPosition+self._args["gridRes"],\
+                                       self.verticalPosition+(self._args["boxSize"]*self.distanceRatio),self._args["gridRes"]) : 
                         
                         local_pixel_values = [];
                         
-                        for x_pixel in np.arange(-gridres/2,gridres/2) :
-                            for y_pixel in np.arange(-gridres/2,gridres/2) :
-                                pixel_value = clone[int(y+y_pixel)][int(x+x_pixel)][0];
+                        for x_pixel in np.arange(-self._args["gridRes"]/2,self._args["gridRes"]/2) :
+                            
+                            for y_pixel in np.arange(-self._args["gridRes"]/2,self._args["gridRes"]/2) :
+                                
+                                pixel_value = self.DepthFrameClone[int(y+y_pixel)][int(x+x_pixel)][0];
                                 local_pixel_values.append(pixel_value);
                                 
                         avg_local_value = sum(local_pixel_values)/len(local_pixel_values);
                         
                         if avg_local_value > self._args["depthMaxThresh"] : 
-                            cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (255,0,0), 1);
+                            cv2.circle(self.DepthFrame,(x,y), self._args["gridRes"]-12, (255,0,0), 1);
                         elif avg_local_value < self._args["depthMinThresh"] : 
-                            cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,0,255), 1);
+                            cv2.circle(self.DepthFrame,(x,y), self._args["gridRes"]-12, (0,0,255), 1);
                         else : 
-                            cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,255,0), 1);
+                            cv2.circle(self.DepthFrame,(x,y), self._args["gridRes"]-12, (0,255,0), 1);
                         
-                        cv2.putText(DEPTHFrame8bit, str(int(avg_local_value)), (x-10,y+2),cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255));
+                        cv2.putText(self.DepthFrame, str(int(avg_local_value)), (x-10,y+2),cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255));
             
-            cv2.imshow("RGBframe",RGBFrame); 
-            cv2.imshow("DEPTHframe",DEPTHFrame8bit); 
+            else :
+                
+                pass;
+            
+            cv2.imshow("RGBframe", self.RGBFrame); 
+            cv2.imshow("DEPTHframe",self.DepthFrame); 
    
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                
                 break;
                 
         cv2.destroyAllWindows();
         
-    def threadedSaveFrames(self,Writer1,Writer2) :
-        
-        self.lock.acquire();
-        self.tNow = time.time();
-        self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
-        self.frameCnt += 1;
-        self.framesEverySecond += 1;
-        
-        if self.tNow - self.tEverySecond > 1 :
-            self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
-            self.tEverySecond = self.tNow;
-            self.framesEverySecond = 0;
-        
-        Writer1.write(self.FrameRGB);
-        Writer2.write(self.FrameDEPTH8Bit);
-            
-        self.lock.release();
-        
-    def saveFrames(self,Writer1,Writer2) :
+    def saveFrames(self) :
         
         self.tNow = time.time();
-        self.FrameRGB,self.FrameDEPTH8Bit = self.LoadRGBDEPTH(1,1);
+        self.LoadRGBDepth();
         self.frameCnt += 1;
-        self.framesEverySecond += 1;
         
-        if self.tNow - self.tEverySecond > 1 :
-            self.frameRates.append(self.framesEverySecond/(self.tNow-self.tEverySecond));
-            self.tEverySecond = self.tNow;
-            self.framesEverySecond = 0;
+        self.RGBWriter.write(self.RGBFrame);
+        self.DepthWriter.write(self.DepthFrame);
         
-        Writer1.write(self.FrameRGB);
-        Writer2.write(self.FrameDEPTH8Bit);
-        
-    def PlayAndSave(self,display=True,parallel=False,samplingTime=60) :
-        
-        self.display = display;
-        self.samplingTime = samplingTime;
-        self.lock = threading.Lock();
-        self.threads = [];
+    def PlayAndSave(self, display=True, samplingTime=60) :
         
         #Set timers
         #----------------------------------------------------------------------
@@ -182,14 +131,11 @@ class Kinect() :
         self.time = time.localtime(time.time());
         self.tStart = time.time();
         self.tNow = time.time();
-        self.tEverySecond = time.time();
         
         #Set counters
         #----------------------------------------------------------------------
         
         self.frameCnt = 0;
-        self.framesEverySecond = 0;
-        self.frameRates = [];
         
         #Set directories
         #----------------------------------------------------------------------
@@ -201,95 +147,75 @@ class Kinect() :
         self.dataDir = os.path.join(self._args["savingDir"],self.dataDirName);
         utils.CheckDirectoryExists(self.dataDir);
         
-        #Checking frame sizes
-        #----------------------------------------------------------------------
+        if samplingTime != 1 :
         
-        testFrameRGB = self.GetFrame(self._args["kinectRGB"],"rgb",1);
-        
-        try :
-            hRGB,wRGB,_ = testFrameRGB.shape;
-        except : 
-            hRGB,wRGB = testFrameRGB.shape;
-        
-        testFrameDEPTH,_ = self.GetFrame(self._args["kinectDEPTH"],"depth",1);
-        
-        try :
-            hDEPTH,wDEPTH,_ = testFrameDEPTH.shape;
-        except :
-            hDEPTH,wDEPTH = testFrameDEPTH.shape;
-        
-        self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
-                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        self.time.tm_min,self.time.tm_sec;
-    
-        self.DEPTH8BitString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
-                        self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
-                        self.time.tm_min,self.time.tm_sec;
-                        
-        self.TestRGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                            'TestRGB.avi'),self._args["fourcc"],20,(wRGB,hRGB));
-                                                
-        self.TestDEPTHWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
-                                'TestDEPTH.avi'),self._args["fourcc"],20,(wDEPTH,hDEPTH));
-                        
-        #Launch framerate sampling
-        #----------------------------------------------------------------------
-        
-        print("\n");
-        print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime));
-        
-        try :
+            #Checking frame sizes
+            #----------------------------------------------------------------------
             
-            while self.tNow-self.tStart < self.samplingTime : 
+            self.LoadRGBDepth(1,1);
             
-                if parallel : 
-                    
-                    thread = threading.Thread(target = self.threadedSaveFrames, args = (self.TestRGBWriter,self.TestDEPTHWriter));
-                    thread.daemon = True;
-                    self.threads.append(thread);
-                    thread.start();
+            self.RGBString = self._args["rawVideoFileName"],self.time.tm_mday,\
+                            self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
+                            self.time.tm_min,self.time.tm_sec;
+        
+            self.DepthString = self._args["depthVideoFileName8Bit"],self.time.tm_mday,\
+                            self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
+                            self.time.tm_min,self.time.tm_sec;
+                            
+            self.TestRGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                                'TestRGB.avi'),self._args["fourcc"],20,(self.wRGB,self.hRGB));
+                                                    
+            self.TestDepthWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+                                    'TestDEPTH.avi'),self._args["fourcc"],20,(self.wDepth,self.hDepth));
+                            
+            #Launch framerate sampling
+            #----------------------------------------------------------------------
             
-                else :
-                    
-                    self.saveFrames(self.TestRGBWriter,self.TestDEPTHWriter);
-                    
-                if self.display :
-                    
-                    self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
-                    cv2.imshow('RGB',self.downSampledRGB);
-                    
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break;
+            print("\n");
+            print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime));
+            
+            try :
                 
-        except KeyboardInterrupt:
+                while self.tNow-self.tStart < samplingTime : 
+                
+                    self.saveFrames(self.TestRGBWriter,self.TestDepthWriter);
+                        
+                    if display :
+                        
+                        self.downSampledRGB = cv2.resize(self.RGBFrame, (0,0), fx=0.3, fy=0.3);
+                        cv2.imshow('RGB',self.downSampledRGB);
+                        
+                        if cv2.waitKey(1) & 0xFF == ord('q'):
+                            break;
+                    
+            except KeyboardInterrupt:
+                
+                pass;
+        
+            #Resets timers and counters
+            #----------------------------------------------------------------------
             
-            pass;
+            self.TestRGBWriter.release();
+            self.TestDEPTHWriter.release();
+            
+            cv2.destroyAllWindows();
     
-        #Resets timers and counters
-        #----------------------------------------------------------------------
+            self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
         
-        self.TestRGBWriter.release();
-        self.TestDEPTHWriter.release();
+            os.remove(os.path.join(self.dataDir,'TestRGB.avi'));
+            os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'));
         
-        cv2.destroyAllWindows();
-        
-        if parallel :
+        else :
             
-            [t.join() for t in self.threads];
-
-        self.threads = [];
-        self.sampledFrameRate = self.frameCnt/(self.tNow-self.tStart);
-        
-        os.remove(os.path.join(self.dataDir,'TestRGB.avi'));
-        os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'));
+            self.LoadRGBDepth(1,1);
         
         self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
                                 '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.RGBString)),\
-                                self._args["fourcc"],self.sampledFrameRate,(wRGB,hRGB));
+                                self._args["fourcc"],self.sampledFrameRate,(self.wRGB,self.hRGB));
                                                 
-        self.DEPTH8BitWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
+        self.DepthWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
                                 '{0}_{1}-{2}-{3}_{4}-{5}-{6}.avi'.format(*self.DEPTH8BitString)),\
-                                self._args["fourcc"],self.sampledFrameRate,(wDEPTH,hDEPTH));
+                                self._args["fourcc"],self.sampledFrameRate,(self.wDepth,self.hDepth));
         
         self.tStart = time.time();
         self.frameCnt = 0;  
@@ -302,20 +228,12 @@ class Kinect() :
         try :
             
             while True :
-                
-                if parallel : 
                     
-                    thread = threading.Thread(target = self.threadedSaveFrames, args = (self.RGBWriter,self.DEPTH8BitWriter));
-                    self.threads.append(thread);
-                    thread.start();
-                    
-                else :
-                    
-                    self.saveFrames(self.RGBWriter,self.DEPTH8BitWriter);
+                self.saveFrames(self.RGBWriter,self.DepthWriter);
                 
                 if self.display :
                     
-                    self.downSampledRGB = cv2.resize(self.FrameRGB, (0,0), fx=0.3, fy=0.3);
+                    self.downSampledRGB = cv2.resize(self.RGBFrame, (0,0), fx=0.3, fy=0.3);
                     cv2.imshow('RGB',self.downSampledRGB);
                         
                     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -327,10 +245,6 @@ class Kinect() :
             
         #Stops stream saving and saves metadata
         #----------------------------------------------------------------------
-        
-        if parallel :
-            
-            [t.join() for t in self.threads];
         
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
@@ -361,7 +275,9 @@ class Kinect() :
                         self.time.tm_min,self.time.tm_sec));
         
         sheet.write(2, 0, "Elapsed_Time");
-        sheet.write(2, 1, self.tEnd-self.tStart);
+        sheet.write(2, 1, str(utils.HoursMinutesSeconds(self.tEnd-self.tStart)[0])+':'+\
+                            str(utils.HoursMinutesSeconds(self.tEnd-self.tStart)[1])+':'+\
+                            str(utils.HoursMinutesSeconds(self.tEnd-self.tStart)[2]));
         
         sheet.write(3, 0, "Sampled_Framerate");
         sheet.write(3, 1, self.sampledFrameRate);

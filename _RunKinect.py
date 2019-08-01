@@ -11,14 +11,11 @@ Created on Tue Feb  5 13:29:39 2019
 
 import os;
 import cv2;
-import threading;
-import Queue;
 import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 import TopMouseTracker.Utilities as utils;
 import TopMouseTracker._KinectVideoWriter as kinect;
-import TopMouseTracker.Threading as kinectThread;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");
@@ -31,6 +28,7 @@ kinectParameters = {"savingDir" : _savingDir,
                     "kinectRGB" : None,
                     "kinectDEPTH" : None,
                     "gridRes" : 20,
+                    "boxSize" : 50.,
                     "depthMinThresh" : 130,
                     "depthMaxThresh" : 140,
                     "rawVideoFileName" : None,
@@ -78,4 +76,4 @@ Kinect.TestKinect(grid=True); #If grid == True : Displays the calibration grid o
 
 samplingTime = 5*60; #5 minutes
 
-Kinect.PlayAndSave(display=True,parallel=False,samplingTime=samplingTime);
+Kinect.PlayAndSave(display=True, samplingTime=samplingTime);
