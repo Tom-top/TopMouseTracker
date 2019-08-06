@@ -12,10 +12,11 @@ import os;
 import numpy as np;
 import cv2;
 import matplotlib.pyplot as plt;
+from matplotlib import cm;
 
 # Checking if the TMT is the current working directory#
 
-_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master/TopMouseTracker/Test"; #Sets path to the TMT directory
+_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master"; #Sets path to the TMT directory
 
 if os.getcwd() !=  _topMouseTrackerDir : #If the current working directory is not the TMT directory changes it
     os.chdir(_topMouseTrackerDir)
@@ -30,16 +31,18 @@ import TopMouseTracker.Analysis as analysis;
 
 # Global parameters#
 
-params.mainParameters["mouse"] = "test"; #The number of the mouse to be analyzed
+params.mainParameters["mouse"] = "309"; #The number of the mouse to be analyzed
 params.mainParameters["rgbVideoName"] = "Raw"; #The prefix of the RGB video to be analyzed
 params.mainParameters["depthVideoName"] = "Depth"; #The prefix of the depth video to be analyzed
-params.mainParameters["extensionLoad"] = "mp4"; #The extension of the video to be analyzed
-params.mainParameters["email"] = None; #The email of the user in case email notification is wanted
+params.mainParameters["extensionLoad"] = "avi"; #The extension of the video to be analyzed
+params.mainParameters["email"] = "thomas.topilko@gmail.com"; #The email of the user in case email notification is wanted
 
 params.segmentationParameters["cageLength"] = 50; #The length of the segmentation field in cm
 params.segmentationParameters["cageWidth"] = 25.; #The width of the segmentation field in cm
 params.segmentationParameters["threshMinCotton"] = np.array([0, 0, 150],np.uint8); #The lower parameter for the thresholding of the cotton (hsv)
-params.segmentationParameters["threshMaxCotton"] = np.array([140, 62, 250],np.uint8); #The upper parameter for the thresholding of the cotton (hsv)
+params.segmentationParameters["threshMaxCotton"] = np.array([140, 35, 250],np.uint8); #The upper parameter for the thresholding of the cotton (hsv)
+params.segmentationParameters["registrationX"] = 306;  #Parameters for the X shift registration
+params.segmentationParameters["registrationY"] = 85;  #Parameters for the Y shift registration
 params.segmentationParameters["showStream"] = False;  #Parameters to display/or not the segmentation in LIVE
 
 params.savingParameters["segmentCotton"] = True; #Parameters to segment/or not the cotton
@@ -49,11 +52,11 @@ params.plotParameters["minDist"] = 0.5; #Parameters to filter out the jitter of 
 
 # Path parameters#
 
-params.mainParameters["workingStation"] = "Your station/computer name"; #Name of the machine on which the code is being run
-params.mainParameters["tmtDir"] = _topMouseTrackerDir; #Path to the TMT folder "/mnt/raid/TopMouseTracker"
-params.mainParameters["videoInfoFile"] = os.path.join(_topMouseTrackerDir,"Video_Info.xlsx"); #Path to the video info file
-params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],"190801"); #Path to the Data folder
-params.mainParameters["workingDir"] = [ os.path.join(params.mainParameters["dataDir"],"01-08-2019_9-0-0") ]; #Path(s) to the video(s) folder(s)
+params.mainParameters["workingStation"] = "Black Sabbath"; #Name of the machine on which the code is being run
+params.mainParameters["tmtDir"] = "/mnt/raid/TopMouseTracker"; #Path to the TMT folder "/mnt/raid/TopMouseTracker"
+params.mainParameters["videoInfoFile"] = os.path.join(params.mainParameters["tmtDir"],"Video_Info.xlsx"); #Path to the video info file
+params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],"190630"); #Path to the Data folder
+params.mainParameters["workingDir"] = [ os.path.join(params.mainParameters["dataDir"],"30-4-2019_9-28-4") ]; #Path(s) to the video(s) folder(s)
 params.mainParameters["resultDir"] = os.path.join(params.mainParameters["dataDir"],"{0}".format(params.mainParameters["mouse"])); #Path to the Result folder
 params.mainParameters["segmentationDir"] = os.path.join(params.mainParameters["resultDir"],"segmentation"); #Path to the segmentation folder in case sequential frame segmentation was activated
 
@@ -92,7 +95,16 @@ Tracker.SetROI();
 #/!\ [OPTIONAL] Adjusting the segmentation parameters for Animal/Object
 ##########################################################################################################################################################
 
-Tracker.AdjustThresholding(params.mainParameters["capturesRGB"][0], 10, which='object'); #Parameters : capture, video frame to display
+Tracker.AdjustThresholding(params.mainParameters["capturesRGB"][0], 20000, which='object'); #Parameters : capture, video frame to display
+
+#%%#######################################################################################################################################################
+#/!\ [OPTIONAL] Adjusting the registration parameters
+#######################################q###################################################################################################################
+
+Tracker.AdjustRegistration(params.mainParameters["capturesRGB"][0], params.mainParameters["capturesDEPTH"][0], 3000);
+
+#Tracker._args["segmentation"]["registrationX"] = 306;  #Parameters for the X shift registration
+#Tracker._args["segmentation"]["registrationY"] = 85;  #Parameters for the Y shift registration
 
 #%%#######################################################################################################################################################
 #Launch segmentation on video(s)#
@@ -104,12 +116,16 @@ tracker.TopTracker(Tracker,**params.trackerParameters);
 #Complete Tracking plot
 ##########################################################################################################################################################  
 
-Plot = analysis.Plot(**params.trackerParameters);
-
-params.plotParameters["limit"] = 6.;
+params.plotParameters["limit"] = 1.;
 
 params.completeTrackingPlotParameters["cottonSubplots"] = True;
-params.completeTrackingPlotParameters["alpha"] = 0.2;
+params.completeTrackingPlotParameters["alpha"] = 0.5;
+
+cmap = cm.plasma;
+params.completeTrackingPlotParameters["cBefore"] = cmap(0.); #cmap(0.3)
+params.completeTrackingPlotParameters["cAfter"] = cmap(1.); #cmap(0.7)
+
+Plot = analysis.Plot(**params.trackerParameters);
 
 Plot.CompleteTrackingPlot(**params.completeTrackingPlotParameters);
 
@@ -123,4 +139,4 @@ Plot.NestingRaster(**params.nestingRasterPlotParameters);
 #/!\ [OPTIONAL] Make a live tracking plot
 ##########################################################################################################################################################  
 
-Plot.LiveTrackingPlot(res=Plot._framerate[0],tStartLivePlot=0,tEndLivePlot=1*60,acceleration=10);
+Plot.LiveTrackingPlot(res=Plot._framerate[0],tStartLivePlot=19*60,tEndLivePlot=20*60,acceleration=10);

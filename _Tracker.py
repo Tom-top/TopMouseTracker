@@ -126,13 +126,13 @@ class TopMouseTracker():
         
         #Registration variables
         #---------------------------------------------------------------------- 
-        self._resizingFactorRegistration = 2.95; #Parameters for resizing of the depth image for registration
+        self._resizingFactorRegistration = 2.8965; #Parameters for resizing of the depth image for registration
         
         if self._args["saving"]["segmentCotton"] :
             self._testFrameDEPTHResized = cv2.resize(self._testFrameDEPTH,(0,0),fx = self._resizingFactorRegistration,fy = self._resizingFactorRegistration);
             self._H_DEPTH_RESIZED,self._W_DEPTH_RESIZED = self._testFrameDEPTHResized.shape[0],self._testFrameDEPTHResized.shape[1]; 
             
-            self.SetRegistrationParameters(); #Computes all the placement parameters for registration
+            self.SetRegistrationParameters(self._args["segmentation"]["registrationX"],self._args["segmentation"]["registrationY"]); #Computes all the placement parameters for registration
 
         #Global tracking variables
         #----------------------------------------------------------------------
@@ -217,11 +217,11 @@ class TopMouseTracker():
                 utils.PrintColoredMessage("\n[INFO] Video saving mode selected","darkgreen");
                 utils.PrintColoredMessage("[INFO] VideoWriter : {0} ; {1} \n".format( (self.testCanvas.shape[0],self.testCanvas.shape[1]) , self._args["saving"]["fourcc"]),"darkgreen");
     
-    def SetRegistrationParameters(self) : 
+    def SetRegistrationParameters(self,x,y) : 
         
         self.start_X = 0;
         self.end_X = self.start_X+self._H_DEPTH_RESIZED;
-        self.start_Y = 292;
+        self.start_Y = x;
         self.end_Y = self.start_Y+self._W_DEPTH_RESIZED;
         
         if self.end_X >= self._H_RGB :
@@ -238,7 +238,7 @@ class TopMouseTracker():
             
             self.end_Y_foreground = self._W_RGB;
         
-        self.start_X_foreground = 97;
+        self.start_X_foreground = y;
         self.start_Y_foreground = 0;
         
         if self.start_X_foreground != 0 :
@@ -250,6 +250,42 @@ class TopMouseTracker():
             
             self.end_Y = self.end_Y-self.start_Y_foreground;
             self.end_Y_foreground = self.end_Y_foreground+self.start_Y_foreground;
+            
+    def TestRegistrationParameters(self,x,y,h,w) : 
+        
+        start_X = 0;
+        end_X = start_X+h;
+        start_Y = x;
+        end_Y = start_Y+w;
+        
+        if end_X >= self._H_RGB :
+            
+            end_X_foreground = self._H_RGB-start_X;
+        else :
+            
+            end_X_foreground = self._H_RGB;
+            
+        if end_Y >= self._W_RGB :
+            
+            end_Y_foreground = self._W_RGB-start_Y;
+        else : 
+            
+            end_Y_foreground = self._W_RGB;
+        
+        start_X_foreground = y;
+        start_Y_foreground = 0;
+        
+        if start_X_foreground != 0 :
+            
+            end_X = end_X-start_X_foreground;
+            end_X_foreground = end_X_foreground+start_X_foreground;
+            
+        if start_Y_foreground != 0 :
+            
+            end_Y = end_Y-start_Y_foreground;
+            end_Y_foreground = end_Y_foreground+start_Y_foreground;
+            
+        return start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground;
             
     def SetMetaDataParameters(self) :
         
@@ -359,7 +395,63 @@ class TopMouseTracker():
         '''
         
         pass;
-    
+        
+    def AdjustRegistration(self, capRGB, capDepth, framePos) :
+        
+        cv2.namedWindow('Adjust Registration');
+        
+        cv2.createTrackbar('x','Adjust Registration',self._args["segmentation"]["registrationX"],500,self.Nothing);
+        cv2.createTrackbar('y','Adjust Registration',self._args["segmentation"]["registrationY"],500,self.Nothing);
+        cv2.createTrackbar('resize','Adjust Registration',int(2.8965*10000),30000,self.Nothing);
+        
+#        cv2.createTrackbar('alpha','Adjust Registration',100,255,self.Nothing);
+#        cv2.createTrackbar('beta','Adjust Registration',150,255,self.Nothing);
+        
+        self.testRGBFrame = capRGB.get_frame(framePos);
+        
+        self.testDepthFrame = capDepth.get_frame(framePos);
+        
+        self.testHsvFrame = cv2.cvtColor(self.testRGBFrame, cv2.COLOR_BGR2HSV); 
+        self.testBlur = cv2.blur(self.testHsvFrame,(5,5)); 
+        self.testMaskCotton = cv2.inRange(self.testBlur, self._args["segmentation"]["threshMinCotton"], self._args["segmentation"]["threshMaxCotton"]);
+        self.testCntsCotton = cv2.findContours(self.testMaskCotton.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]; #Finds the contours of the image to identify the meaningful object
+        
+        while True:
+        
+            # get current positions of four trackbars
+            x = cv2.getTrackbarPos('x','Adjust Registration');
+            y = cv2.getTrackbarPos('y','Adjust Registration');
+            resizingFactorRegistration = cv2.getTrackbarPos('resize','Adjust Registration');
+            resizingFactorRegistration = resizingFactorRegistration/10000;
+            
+#            alpha = cv2.getTrackbarPos('alpha','Adjust Registration');
+#            beta = cv2.getTrackbarPos('beta','Adjust Registration');
+            
+            resizedDepthFrame = cv2.resize(self.testDepthFrame,(0,0), fx=resizingFactorRegistration, fy=resizingFactorRegistration);
+            _H_DEPTH_RESIZED,_W_DEPTH_RESIZED = resizedDepthFrame.shape[0],resizedDepthFrame.shape[1]; 
+            
+            start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground = self.TestRegistrationParameters(x,y,_H_DEPTH_RESIZED,_W_DEPTH_RESIZED);
+            self.RegisterDepth(self.testDepthFrame, resizingFactorRegistration, start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground);
+            
+            cv2.drawContours(self.registeredDepth, self.testCntsCotton, -1, (255,255,255), 1);
+#            self.registeredDepthNorm = cv2.normalize(self.registeredDepth, dst=None, alpha=alpha, beta=beta); #norm_type=cv2.NORM_MINMAX
+            self.registeredDepth = self.registeredDepth[:,:,0];
+            self.registeredDepthNorm = cv2.equalizeHist(self.registeredDepth);
+            self.registeredDepthDisplay = cv2.applyColorMap(self.registeredDepthNorm, cv2.COLORMAP_JET);
+            
+            cv2.imshow('Adjust Registration',self.registeredDepthDisplay);
+            
+            key = cv2.waitKey(10) & 0xFF;
+        
+            if key == ord("q"):
+                break;
+        
+        cv2.destroyAllWindows();
+        
+        for i in range (1,5):
+            cv2.waitKey(1);
+
+
     def AdjustThresholding(self,capture,framePos,which='animal') :
         
         '''Method to check the segmentation parameters for the animal/object
@@ -498,7 +590,8 @@ class TopMouseTracker():
         
         if self._args["saving"]["segmentCotton"] :
         
-            self.RegisterDepth(); #Performs depth registration
+            self.RegisterDepth(self.DEPTHFrame, self._resizingFactorRegistration, self.start_X, self.end_X, self.start_Y, self.end_Y, self.start_X_foreground,\
+                               self.end_X_foreground, self.start_Y_foreground, self.end_Y_foreground); #Performs depth registration
             self.RunSegmentationCotton(); #Runs the cotton segmentation on the ROI
         
         if self._args["segmentation"]["showStream"] or self._args["saving"]["saveStream"] :
@@ -695,20 +788,20 @@ class TopMouseTracker():
 #            self._detectedNest.append(True);
         
                 
-    def RegisterDepth(self) :
+    def RegisterDepth(self, depthFrame, resizingFactorRegistration, start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground) :
         
-        self.depthFrame = cv2.resize(self.DEPTHFrame,(0,0), fx=self._resizingFactorRegistration, fy=self._resizingFactorRegistration);
+        self.depthFrame = cv2.resize(depthFrame,(0,0), fx=resizingFactorRegistration, fy=resizingFactorRegistration);
             
         self.registeredDepth = np.zeros([self._H_RGB,self._W_RGB,3],dtype=np.uint8);
         
-        self.blend = cv2.addWeighted(self.depthFrame[self.start_X_foreground:self.end_X_foreground,self.start_Y_foreground:self.end_Y_foreground,:],
+        self.blend = cv2.addWeighted(self.depthFrame[start_X_foreground:end_X_foreground,start_Y_foreground:end_Y_foreground,:],
                         1,
-                        self.registeredDepth[self.start_X:self.end_X,self.start_Y:self.end_Y,:],
+                        self.registeredDepth[start_X:end_X,start_Y:end_Y,:],
                         0,
                         0,
                         self.registeredDepth);
                                 
-        self.registeredDepth[self.start_X:self.end_X,self.start_Y:self.end_Y,:] = self.blend; 
+        self.registeredDepth[start_X:end_X,start_Y:end_Y,:] = self.blend; 
             
     def CreateDisplay(self) :
             
