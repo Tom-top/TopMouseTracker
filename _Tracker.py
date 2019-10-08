@@ -317,8 +317,13 @@ class TopMouseTracker():
             nameColumn = videoInfoWorkbook[videoInfoWorkbook.columns[0]]; #If no column "n" gets name data from the first column
 
         for pos,n in enumerate(nameColumn) :
-                    
-            if str(n) == self._args["main"]["mouse"] : 
+            
+            try :
+                name = str(int(n));
+            except :
+                name = str(n);
+                
+            if name == self._args["main"]["mouse"] : 
                   
                 self._tStart = int(videoInfoWorkbook["tStart"][pos]); #Moment at which the cotton is added (s)
                 self.frameNumber = int(self._tStart*self._framerate[self.videoNumber]); #The first frame from which the segmentation should start
@@ -527,7 +532,7 @@ class TopMouseTracker():
             v_h = cv2.getTrackbarPos('V_High','Adjust Thresholding');
             
             self.testMaskMouse = cv2.inRange(self.testBlur, (h_l,s_l,v_l),(h_h,s_h,v_h));
-            self.overlay = cv2.bitwise_and(self.testCroppedFrameRGB, self.testCroppedFrameRGB, mask=self.testMaskMouse);
+            self.overlay = cv2.bitwise_and(self.testHsvFrame, self.testHsvFrame, mask=self.testMaskMouse);
             
             cv2.imshow('Adjust Thresholding',self.overlay);
             

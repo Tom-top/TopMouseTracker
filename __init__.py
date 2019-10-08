@@ -18,5 +18,5 @@ __copyright__ = '2018_Thomas_Piotr_TOPILKO';
 
 __all__ = ["Settings", "Parameters", "IO", "Tracker", "Analysis"];
 
-import TopMouseTracker_Use.Settings;
-import TopMouseTracker_Use.Parameters;
+import TopMouseTracker.Settings;
+import TopMouseTracker.Parameters;

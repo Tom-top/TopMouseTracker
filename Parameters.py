@@ -18,8 +18,8 @@ mainParameters = {
                     };
 
 segmentationParameters = {
-                    "threshMinMouse" : np.array([90, 70, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8)
-                    "threshMaxMouse" : np.array([179, 255, 50],np.uint8), #Upper parameter for thresholding the mouse (hsv) #"threshMaxMouse" : np.array([255, 60, 90],np.uint8)
+                    "threshMinMouse" : np.array([0, 0, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8)
+                    "threshMaxMouse" : np.array([255, 255, 60],np.uint8), #Upper parameter for thresholding the mouse (hsv) #"threshMaxMouse" : np.array([255, 60, 90],np.uint8)
                     "threshMinCotton" : np.array([0, 0, 150],np.uint8), #Lower parameter for thresholding the cotton (hsv) 
                     "threshMaxCotton" : np.array([140, 57, 250],np.uint8), #Upper parameter for thresholding the cotton (hsv) "threshMaxCotton" : np.array([140, 42, 250],np.uint8)
                     "kernel" : np.ones((5,5),np.uint8), #Parameter for the kernel size used in filters
