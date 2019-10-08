@@ -16,7 +16,7 @@ from matplotlib import cm;
 
 # Checking if the TMT is the current working directory#
 
-_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker-master"; #Sets path to the TMT directory
+_topMouseTrackerDir = "/home/thomas.topilko/Documents/GitHub/TopMouseTracker"; #Sets path to the TMT directory
 
 if os.getcwd() !=  _topMouseTrackerDir : #If the current working directory is not the TMT directory changes it
     os.chdir(_topMouseTrackerDir)
@@ -31,7 +31,7 @@ import TopMouseTracker.Analysis as analysis;
 
 # Global parameters#
 
-params.mainParameters["mouse"] = "309"; #The number of the mouse to be analyzed
+params.mainParameters["mouse"] = "389"; #The number of the mouse to be analyzed
 params.mainParameters["rgbVideoName"] = "Raw"; #The prefix of the RGB video to be analyzed
 params.mainParameters["depthVideoName"] = "Depth"; #The prefix of the depth video to be analyzed
 params.mainParameters["extensionLoad"] = "avi"; #The extension of the video to be analyzed
