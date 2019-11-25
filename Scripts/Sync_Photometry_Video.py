@@ -29,12 +29,12 @@ print("Reading Photometry data");
 samplingRateDoric = 12000.; #Sampling rate of the Doric system
 displayResolution = 1.; #Resolution for the display : 1 = 1s/point
 
-startVideo = 1*3600+50*60; #When to start the video
-endVideo = 2*3600+10*60; #When to end the video
+startVideo = 0; #When to start the video
+endVideo = 3*3600+19*60+35; #When to end the video
 
 if "photometry_data.npy" in os.listdir( os.path.dirname(photometryFile) ) :
     
-    photometryData = np.transpose( np.load( os.path.basedir(photometryFile), "photometry_data.npy" ) );
+    photometryData = np.transpose( np.load( os.path.join(os.path.dirname(photometryFile), "photometry_data.npy" )) );
     
 else :
 
@@ -84,7 +84,9 @@ rawCotton = np.array([ np.mean( [  float(i) for i in cottonData[ int(n) : int(n+
 Cotton = rawCotton[:len(rawX)]; #Match the array length
 Cotton = Cotton[startVideo:endVideo]; #Crop in time
 
-#Peak detection
+###############################################################################
+#Peak Detection
+###############################################################################
 peakAmplitudeThreshold = 0.7;
 peakToPeakDistance = 1;
 peakMergingDistance = 7.;
@@ -228,7 +230,7 @@ def LivePhotometryTrack(vidClip, x, y0, y1, y2, y3, thresh, globalAcceleration=1
     
     liveAx3.set_title("Isosbestic trace (405nm) (mV)");
     liveAx3.set_xlim([0, thresh]);
-    liveAx3.set_ylim([0.06, 0.08]);
+    liveAx3.set_ylim([0.063, 0.073]);
 
     isosbesticGraph, = liveAx3.plot(x[0],y3[0],'-',color="green",alpha=0.8,ms=1.);
     
@@ -249,6 +251,95 @@ def LivePhotometryTrack(vidClip, x, y0, y1, y2, y3, thresh, globalAcceleration=1
     
 LivePhotometryTrack(videoClip, X, Cotton, detectedPeaksMerged, Calcium, Isosbestic,\
                     displayThreshold, globalAcceleration=5, plotAcceleration=1./displayResolution);
+                 
+                    
+boutDist = 50;
 
+def BehaviorPhotometryPlot(peaks, boutDist) :
+    
+    initialPeaks = [];
+    posInitialPeaks = [];
+    detectedPeak = False;
+    distToNextPeak = 0;
+    cumulativeBoutToNextPeak = 0;
+    
+    for pos, peak in enumerate(peaks) :
+        
+        if detectedPeak :
+            
+            distToNextPeak += 1;
+        
+        if peak :
+            
+            cumulativeBoutToNextPeak += 1;
+            detectedPeak = True;
+            
+            if not True in initialPeaks :
+                    
+                initialPeaks.append(True);
+                posInitialPeaks.append(pos);
+                
+            if distToNextPeak > boutDist :
+                
+                initialPeaks.append(True);
+                posInitialPeaks.append(pos);
+                distToNextPeak = 0;
+                
+#                print(cumulativeBoutToNextPeak)
+                
+                if cumulativeBoutToNextPeak < 15 :
+                    
+                    print(cumulativeBoutToNextPeak)
+                    
+                    initialPeaks = initialPeaks[:-1];
+                    initialPeaks.append(False);
+                    posInitialPeaks = posInitialPeaks[:-1];
+                
+                cumulativeBoutToNextPeak = 0;
+                
+            else :
+                
+                initialPeaks.append(False);
+                distToNextPeak = 0;
+                
+        else :
+            
+            initialPeaks.append(False);
+                
+    return posInitialPeaks, initialPeaks;
 
+posInitialPeaks, initialPeaks = BehaviorPhotometryPlot(detectedPeaksMerged, boutDist);
 
+fig = plt.figure();
+ax0 = plt.subplot(111);
+ax0.plot(detectedPeaksMerged)
+ax0.plot(initialPeaks)
+
+def ExtractCalciumDataWhenBehaving(posPeaks, calciumData, boutDist) :
+    
+    data = [];
+    
+    for p in posPeaks :   
+        
+        data.append(calciumData[p-boutDist : p+boutDist+1]);
+        
+    return data;
+              
+calciumDataAroundPeaks = ExtractCalciumDataWhenBehaving(posInitialPeaks, Calcium, boutDist);
+
+Mean = np.mean(calciumDataAroundPeaks, axis=0);
+Std = np.std(calciumDataAroundPeaks, axis=0);
+
+fig = plt.figure();
+ax0 = plt.subplot(211);
+ax0.plot(np.arange(-boutDist, boutDist+1, 1), Mean, color="blue", alpha=0.5);
+ax1 = plt.subplot(212);
+#ax1.set_xlim(-boutDist, boutDist+1, 1));
+ax1.imshow(calciumDataAroundPeaks, cmap='viridis', interpolation='nearest');
+#ax0.plot(np.arange(-boutDist, boutDist+1, 1), Mean+Std, color="blue", alpha=0.5);
+#ax0.plot(np.arange(-boutDist, boutDist+1, 1), Mean-Std, color="blue", alpha=0.5);
+#ax0.fill_between(np.arange(-boutDist, boutDist+1, 1), Mean, Mean+Std, color="blue", alpha=0.1);
+#ax0.fill_between(np.arange(-boutDist, boutDist+1, 1), Mean, Mean-Std, color="blue", alpha=0.1);
+        
+    
+    
