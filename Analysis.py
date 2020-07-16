@@ -109,6 +109,28 @@ class Plot(tracker.TopMouseTracker) :
             self.distanceCumulativeAfter = [x+self.distanceCumulativeBefore[-1] for x in self.distanceCumulativeAfter];
         except :
             self.distanceCumulativeAfter = [x for x in self.distanceCumulativeAfter];
+            
+    def GeneratePeakFile(self,**kwargs) :
+        
+        args = kwargs;
+        
+        self.res = np.mean(self._framerate)*args["res"]
+        
+        Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)];
+        After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)]; 
+        All = Before+After;
+        
+        peaks = [];
+        
+        for i,data in enumerate(All) :
+
+            if i <= len(All)-args["peakDist"]-1 :
+            
+                if All[i]+args["peakThresh"] <= All[i+args["peakDist"]] or All[i]-args["peakThresh"] >= All[i+args["peakDist"]] :
+                    
+                    peaks.append(i);
+            
+        np.save(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Peaks.npy'), peaks)
         
     def CheckTracking(self) :
          
@@ -322,7 +344,7 @@ class Plot(tracker.TopMouseTracker) :
             
             for peak in peaks :
                 ax3.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=args["cAfter"],alpha=0.1));
-            
+
 #            ax3.set_title("Nest-building activity over time", fontsize = 10);
             ax3.set_title("Behavioral bouts over time", fontsize = 10);
 #            ax3.set_ylabel("Nest-building activity");
@@ -732,6 +754,8 @@ class Plot(tracker.TopMouseTracker) :
                 
                 ax0.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=args["cAfter"],alpha=1));
                 self.totalTimeAutomatic += rasterSpread;
+                
+        print(self.totalTimeAutomatic)
         
 #        print(len(automaticStart))
 #        print(len(automaticEnd))

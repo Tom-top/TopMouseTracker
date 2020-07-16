@@ -438,7 +438,7 @@ class TopMouseTracker():
             start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground = self.TestRegistrationParameters(x,y,_H_DEPTH_RESIZED,_W_DEPTH_RESIZED);
             self.RegisterDepth(self.testDepthFrame, resizingFactorRegistration, start_X, end_X, start_Y, end_Y, start_X_foreground, end_X_foreground, start_Y_foreground, end_Y_foreground);
             
-            cv2.drawContours(self.registeredDepth, self.testCntsCotton, -1, (255,255,255), 1);
+            cv2.drawContours(self.registeredDepth, self.testCntsCotton, -1, (255,255,255), 2);
 #            self.registeredDepthNorm = cv2.normalize(self.registeredDepth, dst=None, alpha=alpha, beta=beta); #norm_type=cv2.NORM_MINMAX
             self.registeredDepth = self.registeredDepth[:,:,0];
             self.registeredDepthNorm = cv2.equalizeHist(self.registeredDepth);
