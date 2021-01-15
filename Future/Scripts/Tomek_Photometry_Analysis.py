@@ -27,15 +27,15 @@ if not os.getcwd() == TMTDir :
     
 import Scripts.Tomek_Photometry_Functions as fc;
 
-experiment = 200615;
-mouse = "850";
+experiment = 200917;
+mouse = "2";
 
 workDir = "/raid/Tomek/Photometry/{0}/{1}".format(experiment, mouse);
 
-photometryFileCSV = os.path.join(workDir, "{0}_{1}_0.csv".format(experiment, mouse));
-videoFile = os.path.join(workDir, "12-2-2020_15-38-35/Raw_Video_Mice_813_12-2-2020_15-38-35.avi");
-cottonFile = os.path.join(workDir, "{0}/Data_{0}_CottonPixelIntensities.npy".format(mouse));
-#manualFile = os.path.join(workDir, "{0}_{1}_manual.xlsx".format(experiment, mouse));
+photometryFileCSV = os.path.join(workDir, "{0}_{1}.csv".format(experiment, mouse));
+#videoFile = os.path.join(workDir, "12-2-2020_15-38-35/Raw_Video_Mice_813_12-2-2020_15-38-35.avi");
+#cottonFile = os.path.join(workDir, "{0}/Data_{0}_CottonPixelIntensities.npy".format(mouse));
+manualFile = os.path.join(workDir, "{0}_{1}_manual.xlsx".format(experiment, mouse));
 
 #%%
 ###############################################################################
@@ -53,10 +53,10 @@ print("Reading Photometry data");
 
 DF = 50.; #Decimation factor for data downsampling
 SRD = 12000./DF; #Sampling rate of the Doric system
-rollAvg = 30; #Rolling Average Parameter (s)
+rollAvg = 100; #Rolling Average Parameter (s)
 startVideo = 0*3600+0*60+0; #When to start the video
-endVideo = 2*3600+50*60+38; #When to end the video
-videoLength = 2*3600+50*60+38; #The length of the video ;; FOR TIME COMPRESSION
+endVideo = 0*3600+21*60+13; #When to end the video
+videoLength = 0*3600+21*60+13; #The length of the video ;; FOR TIME COMPRESSION
 
 f = photometryFileCSV; #photometryFileCSV
 photometryFileNPY = fc.ConvertPhotometryData(f); #Convert CSV file to NPY if needed photometryFileCSV
@@ -67,15 +67,16 @@ args = {"lw" : 1., #linewidth in plot
         "fsl" : 12., #fontsize for labels
         "fst" : 16., #fontsize for titles
         "save" : False, #saving intermediate plots
-        "function" : "low_pass", #low_pass moving_avg None
+        "function" : "moving_avg", #low_pass moving_avg None ---- To filter the dF signal
         "freq" : 2, #frequency for low pass filter
         "order" : 10, #order of the low pass filter
-        "roll_size" : SRD*rollAvg, #rolling average parameter
+        "roll_size" : 200, #rolling average parameter
+        "which" : [False, False, False, False, False, True] #Raw, Corrected, Standardized, Fit, Aligned, dF
         };
 
-rawX, rawIsosbestic, rawCalcium, dF2 = fc.LoadPhotometryData(photometryFileNPY, SRD,\
-                                                            startVideo, endVideo, videoLength, rollAvg, optPlots=False,\
-                                                            recompute=True, resample=240, plotargs=args); #Loads the NPY data
+rawX, rawIsosbestic, rawCalcium, dF = fc.LoadPhotometryData(photometryFileNPY, SRD,\
+                                                            startVideo, endVideo, videoLength, rollAvg, optPlots=True,\
+                                                            recompute=True, plotargs=args); #Loads the NPY data
                                                        
 #%%
 ###############################################################################
@@ -95,7 +96,7 @@ fps = videoClipCropped.fps;
 
 #%%
 ###############################################################################
-#Reading the Cotton data
+#Reading the Cotton data from automatic segmentation
 ###############################################################################
 
 print("\n");
@@ -115,34 +116,63 @@ peaksMerged, peaksPosMerged  = fc.MergeClosePeaks(peaks, posPeaks, PMD);
 """Major peak detection"""
 DBE = 2; #Distance Between Events 2
 BL = 0; #Behavioral Bout Length
-boutThresh = 10; #Behavioral Bout Length Threshold for display
 GD = 40.; #Graph distance (distance before+after the event started)
 
 mPeaks, mPosPeaks, mLengthPeaks, seeds, posSeeds = fc.DetectMajorBouts(peaksMerged, DBE, BL, GD);
 
 #fc.PeakPlot(posPeaks, peaksPosMerged, mPosPeaks, posSeeds, multiPlot=True, timeFrame=[], save=False);
 
+#%%
 ###############################################################################
-#Reading the Cotton data
+#Reading the Cotton data from manual segmentation
 ###############################################################################
 
+"""Peak Detection"""
+PMD = 7.; #Peak Merging Distance
+
+peaks, posPeaks = fc.extract_manual_bouts(manualFile, endVideo, "Nesting")
 #peaksMerged = fc.extractManualBehavior(Cotton, manualFile);
-#mPeaks, mPosPeaks, mLengthPeaks, seeds, posSeeds = fc.DetectMajorBouts(peaksMerged, DBE, BL, GD);
+peaksMerged, peaksPosMerged  = fc.MergeClosePeaks(peaks, posPeaks, PMD);
+
+"""Major peak detection"""
+DBE = 2; #Distance Between Events 2
+BL = 0; #Behavioral Bout Length
+GD = 40.; #Graph distance (distance before+after the event started)
+
+mPeaks, mPosPeaks, mLengthPeaks, seeds, posSeeds = fc.DetectMajorBouts(peaksMerged, DBE, BL, GD);
+
+fc.PeakPlot(posPeaks, peaksPosMerged, mPosPeaks, posSeeds, multiPlot=True, timeFrame=[], save=False);
+
+#%%
+###############################################################################
+#Reading the Cotton data from manual segmentation
+###############################################################################
 
 """Extracting Calcium data from the major peak detection zone"""
 
-dataAroundPeaks = fc.ExtractCalciumDataWhenBehaving(mPosPeaks, dF, GD, SRD);
-dataAroundPeaks = [x for x in dataAroundPeaks if x != []];
+#fc.savePeriEventData(dataAroundPeaks, mLengthPeaks, mPosPeaks, workDir, mouse);
 
-fc.savePeriEventData(dataAroundPeaks, mLengthPeaks, mPosPeaks, workDir, mouse);
+boutThresh = 1; #Behavioral Bout Length Threshold for display
+GD = 40.; #Graph distance (distance before+after the event started)
 
-dataAroundPeaks, mLengthPeaks, mPosPeaks = fc.filterShortBouts(dataAroundPeaks, mLengthPeaks, mPosPeaks, boutThresh);
-dataAroundPeaks, mLengthPeaks, mPosPeaks = fc.reorderByBoutSize(dataAroundPeaks, mLengthPeaks, mPosPeaks);
-GDb, GDf = 5, 40;
+dataAroundPeaks = fc.ExtractCalciumDataWhenBehaving(mPosPeaks, dF, GD, SRD, resample=1)
+dataAroundPeaksFiltered, mLengthPeaksFiltered, mPosPeaksFiltered = fc.filterShortBouts(dataAroundPeaks, mLengthPeaks, mPosPeaks, boutThresh);
+dataAroundPeaksOrdered, mLengthPeaksOrdered, mPosPeaksOrdered = fc.reorderByBoutSize(dataAroundPeaksFiltered, mLengthPeaksFiltered, mPosPeaksFiltered);
+GDb, GDf = GD, GD;
 
-#cmap = gnuplot, twilight, inferno
+#cmap = gnuplot, twilight, inferno, viridis
 
-fc.PeriEventPlot(dataAroundPeaks, mLengthPeaks, SRD, SRD, GD, GDf, GDb, SRD, save=False,\
+#fig=plt.figure(figsize=(10,7))
+#ax0 = plt.subplot(111)
+#ax0.plot(dF)
+#Min = min(dF)
+#Max = max(dF)
+#for i, j in zip(np.array(mPosPeaks)*SRD, np.array(mLengthPeaks)*SRD) :
+#    patch = patches.Rectangle((i,Min), j, Max, alpha=0.5, color="red")
+#    ax0.add_patch(patch)
+#    ax0.plot([i,i], [Min, Max], color="red")
+
+fc.PeriEventPlot(dataAroundPeaksOrdered, mLengthPeaksOrdered, SRD, SRD, GD, GDf, GDb, SRD, save=False,\
                  showStd=True, fileNameLabel="_All", cmap="inferno", lowpass=(2,2));
 
 #%%

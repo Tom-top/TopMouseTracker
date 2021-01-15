@@ -348,8 +348,8 @@ class TopMouseTracker():
         
         self._Length = sum(self._tEnd); #Computes the Length of the segmentation (s)
         self._nVideos = len([x for x in self._tEnd if x > 0]); #Computes the number of videos to segment
-        
-    def SetROI(self) :
+
+    def SetROI(self, refPt = None) :
         
         '''Method that displays a test frame from the video for the user to select the ROI in which
         the segmentation will be run
@@ -359,7 +359,10 @@ class TopMouseTracker():
         print("\n");
         utils.PrintColoredMessage("[INFO] Press R to reset ROI, and C to crop the selected ROI","bold");
         
-        self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"].copy()).roi(); #Defining the ROI for segmentation
+        if refPt == None :
+            self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"].copy()).roi(); #Defining the ROI for segmentation
+        else :
+            self._refPt = refPt
         
         self.upLeftX = int(self._refPt[0][0]); #Defines the Up Left ROI corner X coordinates
         self.upLeftY = int(self._refPt[0][1]); #Defines the Up Left ROI corner Y coordinates
@@ -1061,6 +1064,9 @@ class TopMouseTracker():
             try :
                 
                 self.newhStack = cv2.cvtColor(self.hStack, cv2.COLOR_BGR2RGB);
+                self.newhStack = cv2.resize(self.newhStack, (0,0),\
+                                 fx = 1./self._args["segmentation"]["resize_stream"],\
+                                 fy = 1./self._args["segmentation"]["resize_stream"]);
                 return self.newhStack;
             
             except :

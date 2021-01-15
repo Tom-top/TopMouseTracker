@@ -14,10 +14,24 @@ import cv2;
 from natsort import natsorted;
 import skvideo.io;
 import moviepy.editor as mpy;
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Settings as settings;
 import TopMouseTracker.Utilities as utils;
+
+def concatenate_video_clips(folder_path) :
+
+    video_files = natsorted([os.path.join(folder_path, i) for i in os.listdir(folder_path) if os.path.splitext(i)[1] == ".mpg" and os.path.splitext(i)[0][0] != "."])
+    print(np.array(video_files))
+    video_clips = [VideoFileClip(i) for i in video_files]
+    video_clip = concatenate_videoclips(video_clips)
+    print("\n")
+    print(video_clip.duration)
+    
+    test_frame = video_clip.get_frame(0)
+    
+    return test_frame, [video_clip], video_clips
 
 def VideoConverter(directory,**kwargs) :
     
@@ -107,7 +121,7 @@ def GetDepthFrame(stream,RF):
     return _frameDEPTH;
 
 
-def VideoLoader(directory,**kwargs) :
+def VideoLoader(directory, in_folder=False, **kwargs) :
     
     '''Function that loads all the video from a directory and returns 
     a testFram for ROI selection, and the captures
@@ -132,68 +146,125 @@ def VideoLoader(directory,**kwargs) :
     
     print("\n");
     
-    for folder in natsorted(os.listdir(directory)) :
-        
-        dirPath = os.path.join(directory,folder);
-        
-        if os.path.isdir(dirPath) and dirPath in kwargs["main"]["workingDir"] :
+    if not in_folder :
     
-            for file in natsorted(os.listdir(os.path.join(directory,folder))) :
-                
-                if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
+        for folder in natsorted(os.listdir(directory)) :
+            
+            dirPath = os.path.join(directory,folder);
+            
+            if os.path.isdir(dirPath) and dirPath in kwargs["main"]["workingDir"] :
+        
+                for file in natsorted(os.listdir(os.path.join(directory,folder))) :
                     
-                    if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
-#                    if file.split('_')[0] == "Raw" :
-                        #cap = cv2.VideoCapture(os.path.join(directory,file));
-                        cap = mpy.VideoFileClip(os.path.join(dirPath,file));
-                        #cap = skvideo.io.vreader(os.path.join(directory,file));
-                        RGBCaptures.append(cap);
+                    if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
                         
-                        if not RGBTrigger :
-                        
-                            frame = cap.get_frame(kwargs["main"]["testFramePos"]);
-                            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                        if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
+    #                    if file.split('_')[0] == "Raw" :
+                            #cap = cv2.VideoCapture(os.path.join(directory,file));
+                            cap = mpy.VideoFileClip(os.path.join(dirPath,file));
+                            #cap = skvideo.io.vreader(os.path.join(directory,file));
+                            RGBCaptures.append(cap);
                             
-                            RGBTestFrame = frame;
-                            RGBTrigger = True;
+                            if not RGBTrigger :
+                            
+                                frame = cap.get_frame(kwargs["main"]["testFramePos"]);
+                                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                                
+                                RGBTestFrame = frame;
+                                RGBTrigger = True;
+            
+                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                                  
+                            if kwargs["main"]["playSound"] :
+                                  
+                                try :  
+                                    utils.PlaySound(1,params.sounds['Purr']);
+                                except :
+                                    pass;
+                            
+                        elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
+                            
+                            #cap = cv2.VideoCapture(os.path.join(directory,file));
+                            cap = mpy.VideoFileClip(os.path.join(dirPath,file));
+                            #cap = skvideo.io.vreader(os.path.join(directory,file));
+                            DEPTHCaptures.append(cap);
         
-                        utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
-                              
-                        if kwargs["main"]["playSound"] :
-                              
-                            try :  
-                                utils.PlaySound(1,params.sounds['Purr']);
-                            except :
-                                pass;
+                            if not DEPTHTrigger :
+                                
+                                frame = cap.get_frame(kwargs["main"]["testFramePos"]);
+                                
+                                DEPTHTestFrame = frame;
+                                DEPTHTrigger = True;
+                            
+                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                                  
+                            if kwargs["main"]["playSound"] :
+                            
+                                try :  
+                                    utils.PlaySound(1,params.sounds['Purr']);
+                                except :
+                                    pass;
+                                    
+    elif in_folder :
+        
+        for file in natsorted(os.listdir(directory)) :
+            
+            if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
+                
+                if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
+
+                    cap = mpy.VideoFileClip(os.path.join(directory,file))
+                    RGBCaptures.append(cap)
+                    
+                    if not RGBTrigger :
+                    
+                        frame = cap.get_frame(kwargs["main"]["testFramePos"]);
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
                         
-                    elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
-                        
-                        #cap = cv2.VideoCapture(os.path.join(directory,file));
-                        cap = mpy.VideoFileClip(os.path.join(dirPath,file));
-                        #cap = skvideo.io.vreader(os.path.join(directory,file));
-                        DEPTHCaptures.append(cap);
+                        RGBTestFrame = frame
+                        RGBTrigger = True
     
-                        if not DEPTHTrigger :
+                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                          
+                    if kwargs["main"]["playSound"] :
+                          
+                        try :  
                             
-                            frame = cap.get_frame(kwargs["main"]["testFramePos"]);
+                            utils.PlaySound(1,params.sounds['Purr'])
                             
-                            DEPTHTestFrame = frame;
-                            DEPTHTrigger = True;
+                        except :
+                            
+                            pass
+                
+                elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
+                    
+                    cap = mpy.VideoFileClip(os.path.join(directory,file))
+                    DEPTHCaptures.append(cap)
+
+                    if not DEPTHTrigger :
                         
-                        utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
-                              
-                        if kwargs["main"]["playSound"] :
+                        frame = cap.get_frame(kwargs["main"]["testFramePos"])
                         
-                            try :  
-                                utils.PlaySound(1,params.sounds['Purr']);
-                            except :
-                                pass;
+                        DEPTHTestFrame = frame
+                        DEPTHTrigger = True
+                    
+                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
+                          
+                    if kwargs["main"]["playSound"] :
+                    
+                        try :  
+                            
+                            utils.PlaySound(1,params.sounds['Purr'])
+                            
+                        except :
+                            
+                            pass
     
     if not RGBTrigger and not DEPTHTrigger:
         
-        utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found","darkred");
+        utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found","darkred")
             
-    return RGBCaptures,DEPTHCaptures,RGBTestFrame,DEPTHTestFrame;
+    return RGBCaptures,DEPTHCaptures,RGBTestFrame,DEPTHTestFrame
 
 
 class CroppingROI():

@@ -20,12 +20,16 @@ import matplotlib;
 
 def hoursMinutesSeconds(time) :
     
-    delta = time%3600;
-    h = (time - delta) / 3600;
-    m = (delta - (delta%60)) / 60;
-    s = (delta%60);
+    delta = time%3600
+    h = (time - delta) / 3600
+    m = (delta - (delta%60)) / 60
+    s = (delta%60)
     
-    return h, m, s;
+    return h, m, s
+
+def seconds(h,m,s) :
+    
+    return h*3600+m*60+s
 
 def ConvertPhotometryData(csvFile) :
     
@@ -111,6 +115,20 @@ def movingAverage(arr, n=1) :
     
     return newArr;
 
+def trailing_moving_average(arr, window=1) :
+    
+    cumsum = np.cumsum(arr)
+    result = (cumsum[window:] - cumsum[:-window]) / float(window)
+    return result
+
+def centered_moving_average(arr, window=1) :
+    
+    cumsum = np.cumsum(arr)
+    result = (cumsum[window:] - cumsum[:-window]) / float(window)
+    result = np.insert(result, 0, result[:int(window/2)])
+    result = np.insert(result, len(result), result[len(result)-int(window/2):])
+    return result
+
 def lowpassFilter(data, SRD, freq, order) :
     
     sampling_rate = SRD;
@@ -171,97 +189,126 @@ def plotIntermediatePhotometryPlots(data, **kwargs) :
     
     plt.ion();
     
-    fig = plt.figure(figsize=(10,5), dpi=200.);
-    
-    ax0 = plt.subplot(211);
-    b, = ax0.plot(sink[0],sink[1],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
-    g, = ax0.plot(sink[0],sink[3],alpha=0.8,c="orange",lw=kwargs["lw"]);
-    ax0.legend(handles=[b, g], labels=["isosbestic", "moving average"], loc=2, fontsize=kwargs["fsl"]);
-    ax1 = plt.subplot(212);
-    b, = ax1.plot(sink[0],sink[2],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
-    g, = ax1.plot(sink[0],sink[5],alpha=0.8,c="orange",lw=kwargs["lw"]);
-    ax1.legend(handles=[b, g], labels=["calcium", "moving average"], loc=2, fontsize=kwargs["fsl"]);
-    ax0.set_title("Raw Isosbestic and Calcium signals", fontsize=kwargs["fst"]);
-    ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
-    ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    
-    if kwargs["save"] :
+    for n, bol in enumerate(kwargs["which"]) :
         
-        plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Raw.svg"), dpi=200.);
+        if n == 0 and bol :
+            
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax0 = plt.subplot(211);
+            b, = ax0.plot(sink[0],sink[1],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
+            g, = ax0.plot(sink[0],sink[3],alpha=0.8,c="orange",lw=kwargs["lw"]);
+            ax0.legend(handles=[b, g], labels=["isosbestic", "moving average"], loc=2, fontsize=kwargs["fsl"]);
+            ax1 = plt.subplot(212);
+            b, = ax1.plot(sink[0],sink[2],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
+            g, = ax1.plot(sink[0],sink[5],alpha=0.8,c="orange",lw=kwargs["lw"]);
+            ax1.legend(handles=[b, g], labels=["calcium", "moving average"], loc=2, fontsize=kwargs["fsl"]);
+            ax0.set_title("Raw Isosbestic and Calcium signals", fontsize=kwargs["fst"]);
+            ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            
+            if kwargs["save"] :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Raw.svg"), dpi=200.);
+                
+        elif n == 1 and bol :
+    
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax0 = plt.subplot(211);
+            isos, = ax0.plot(sink[0],sink[4],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
+            ax1 = plt.subplot(212);
+            calc, = ax1.plot(sink[0],sink[6],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
+            ax0.legend(handles=[isos,calc], labels=["405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
+            ax0.set_title("Baseline Correction", fontsize=kwargs["fst"]);
+            ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            
+            if kwargs["save"] :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Corrected.svg"), dpi=200.);
+                
+        elif n == 2 and bol :
+    
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax0 = plt.subplot(211);
+            isos, = ax0.plot(sink[0],sink[7],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
+            ax1 = plt.subplot(212);
+            calc, = ax1.plot(sink[0],sink[8],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
+            ax0.legend(handles=[isos,calc], labels=["405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
+            ax0.set_title("Standardization", fontsize=kwargs["fst"]);
+            ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            
+            if kwargs["save"] :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Standardized.svg"), dpi=200.);
+                
+        elif n == 3 and bol :
+    
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax = plt.subplot(111);
+            ax.scatter(movingAverage(standardizedIsosbestic, n=resample),movingAverage(standardizedCalcium, n=resample),alpha=0.5,s=1.);
+            ax.plot([min(movingAverage(standardizedIsosbestic, n=resample)),max(movingAverage(standardizedCalcium, n=resample))],\
+                     line, '--', c="red");
+            ax.set_xlabel("410 signal", fontsize=6.);
+            ax.set_ylabel("465 signal", fontsize=6.);
+            ax.set_title("Linear regression fit", fontsize=8.);
+            ax.tick_params(axis='both', which='major', labelsize=6);
+            
+            if save :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Fit.svg"), dpi=200.);
+    
+        elif n == 4 and bol :    
+    
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax = plt.subplot(111);
+            calc, = ax.plot(sink[0],sink[8],alpha=1.,lw=kwargs["lw"],c=blueLaser);
+            isos, = ax.plot(sink[0],sink[9],alpha=1.,lw=kwargs["lw"],c=purpleLaser);
+            ax.plot([sink[0][0], sink[0][-1]], [0,0], "--", color="red");
+            ax.legend(handles=[isos,calc], labels=["fitted 405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
+            ax.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax.set_title("Alignement of signals", fontsize=kwargs["fst"]);
+            ax.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            
+            if kwargs["save"] :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Aligned.svg"), dpi=200.);
+                
+        elif n == 5 and bol :
+            
+#            plt.style.use("dark_background")
+            fig = plt.figure(figsize=(15, 7), dpi=200.);
+            ax = plt.subplot(211);
+            df, = ax.plot(sink[0],sink[10],alpha=1.,lw=kwargs["lw"],c="green");
+            ax.plot([sink[0][0], sink[0][-1]], [0,0], "--", color="red")
+            ax.legend(handles=[df], labels=["dF/F"], loc=2, fontsize=kwargs["fsl"]);
+            ax.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax.set_title("dF/F", fontsize=kwargs["fst"]);
+            ax.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+#            ax0 = plt.subplot(313, sharex=ax);
+#            b, = ax0.plot(sink[0],sink[1],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
+#            g, = ax0.plot(sink[0],sink[3],alpha=0.8,c="orange",lw=kwargs["lw"]);
+#            ax0.legend(handles=[b, g], labels=["isosbestic", "moving average"], loc=2, fontsize=kwargs["fsl"]);
+#            ax0.set_title("Raw Isosbestic and Calcium signals", fontsize=kwargs["fst"]);
+#            ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            ax1 = plt.subplot(212, sharex=ax)
+            b, = ax1.plot(sink[0],sink[2],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
+            g, = ax1.plot(sink[0],sink[5],alpha=0.8,c="orange",lw=kwargs["lw"]);
+            ax1.legend(handles=[b, g], labels=["calcium", "moving average"], loc=2, fontsize=kwargs["fsl"]);
+            ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
+            ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
+            multi = MultiCursor(fig.canvas, (ax, ax1), color='r', lw=1, horizOn=True, vertOn=True)
+            plt.tight_layout()
+            plt.show()
+            
+            if kwargs["save"] :
+                
+                plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_dF.svg"), dpi=200.);
 
-    fig = plt.figure(figsize=(10,5), dpi=200.);
-    ax0 = plt.subplot(211);
-    isos, = ax0.plot(sink[0],sink[4],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
-    ax1 = plt.subplot(212);
-    calc, = ax1.plot(sink[0],sink[6],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
-    ax0.legend(handles=[isos,calc], labels=["405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
-    ax0.set_title("Baseline Correction", fontsize=kwargs["fst"]);
-    ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
-    ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    
-    if kwargs["save"] :
-        
-        plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Corrected.svg"), dpi=200.);
-
-    fig = plt.figure(figsize=(10,5), dpi=200.);
-    ax0 = plt.subplot(211);
-    isos, = ax0.plot(sink[0],sink[7],alpha=0.8,c=purpleLaser,lw=kwargs["lw"]);
-    ax1 = plt.subplot(212);
-    calc, = ax1.plot(sink[0],sink[8],alpha=0.8,c=blueLaser,lw=kwargs["lw"]);
-    ax0.legend(handles=[isos,calc], labels=["405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
-    ax0.set_title("Standardization", fontsize=kwargs["fst"]);
-    ax1.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
-    ax0.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    ax1.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    
-    if kwargs["save"] :
-        
-        plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Standardized.svg"), dpi=200.);
-
-#        fig = plt.figure(figsize=(10,5), dpi=200.);
-#        ax = plt.subplot(111);
-#        ax.scatter(movingAverage(standardizedIsosbestic, n=resample),movingAverage(standardizedCalcium, n=resample),alpha=0.5,s=1.);
-#        ax.plot([min(movingAverage(standardizedIsosbestic, n=resample)),max(movingAverage(standardizedCalcium, n=resample))],\
-#                 line, '--', c="red");
-#        ax.set_xlabel("410 signal", fontsize=6.);
-#        ax.set_ylabel("465 signal", fontsize=6.);
-#        ax.set_title("Linear regression fit", fontsize=8.);
-#        ax.tick_params(axis='both', which='major', labelsize=6);
-#        
-#        if save :
-#            
-#            plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Fit.svg"), dpi=200.);
-    
-    fig = plt.figure(figsize=(10,5), dpi=200.);
-    ax = plt.subplot(111);
-    calc, = ax.plot(sink[0],sink[8],alpha=1.,lw=kwargs["lw"],c=blueLaser);
-    isos, = ax.plot(sink[0],sink[9],alpha=1.,lw=kwargs["lw"],c=purpleLaser);
-    ax.plot([sink[0][0], sink[0][-1]], [0,0], "--", color="red");
-    ax.legend(handles=[isos,calc], labels=["fitted 405 signal", "465 signal"], loc=2, fontsize=kwargs["fsl"]);
-    ax.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
-    ax.set_title("Alignement of signals", fontsize=kwargs["fst"]);
-    ax.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    
-    if kwargs["save"] :
-        
-        plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_Aligned.svg"), dpi=200.);
-    
-    fig = plt.figure(figsize=(10,5), dpi=200.);
-    ax = plt.subplot(111);
-    df, = ax.plot(sink[0],sink[10],alpha=1.,lw=kwargs["lw"],c="green");
-    ax.plot([sink[0][0], sink[0][-1]], [0,0], "--", color="red")
-    ax.legend(handles=[df], labels=["dF/F"], loc=2, fontsize=kwargs["fsl"]);
-    ax.set_xlabel("Time (s)", fontsize=kwargs["fsl"]);
-    ax.set_title("dF/F", fontsize=kwargs["fst"]);
-    ax.tick_params(axis='both', which='major', labelsize=kwargs["fsl"]);
-    
-    if kwargs["save"] :
-        
-        plt.savefig(os.path.join(os.path.expanduser("~")+"/Desktop", "Isosbestic_Calcium_dF.svg"), dpi=200.);
-
-def LoadPhotometryData(npy, SRD, start, end, videoLength, rollAvg, optPlots=False, recompute=True, resample=1, plotargs=None) :
+def LoadPhotometryData(npy, SRD, start, end, videoLength, rollAvg, optPlots=False, recompute=True, plotargs=None) :
     
     SRD = int(SRD); #sampling rate of the Doric system
     plotargs["SRD"] = SRD;
@@ -304,13 +351,15 @@ def LoadPhotometryData(npy, SRD, start, end, videoLength, rollAvg, optPlots=Fals
     print("\n");
     print("Computing moving average for Isosbestic signal !");
                    
-    funcIsosbestic = movingAverage(finalRawIsosbestic, n=SRD*rollAvg); #moving average for isosbestic data
+#    funcIsosbestic = movingAverage(finalRawIsosbestic, n=SRD*rollAvg); #moving average for isosbestic data
+    funcIsosbestic = centered_moving_average(finalRawIsosbestic, window=SRD*rollAvg); #moving average for isosbestic data
     correctedIsosbestic = ( finalRawIsosbestic - funcIsosbestic ) / funcIsosbestic; #baseline correction for isosbestic
     
     print("\n");
     print("Computing moving average for Calcium signal !"); 
 
-    funcCalcium = movingAverage(finalRawCalcium, n=SRD*rollAvg); #moving average for calcium data
+#    funcCalcium = movingAverage(finalRawCalcium, n=SRD*rollAvg); #moving average for calcium data
+    funcCalcium = centered_moving_average(finalRawCalcium, window=SRD*rollAvg); #moving average for calcium data
     correctedCalcium = ( finalRawCalcium - funcCalcium ) / funcCalcium; #baseline correction for calcium
         
     #######################################################################
@@ -492,18 +541,18 @@ def DetectMajorBouts(events, DBE, BL, GD) :
                     
                 distanceToNextEvent = 0;
                 
-                if cumulativeEvents >= BL :
-                    
-                    if posPotentialEvent - GD > 0 and posPotentialEvent + GD < len(events) :
-                    
-                        if not newMajorBoutDetected :
-                            
-                            newMajorBoutDetected = True; 
-                            majorEventsPositions.append(posPotentialEvent);
-                            
-                        else :
-                            
-                            pass;
+            if cumulativeEvents >= BL :
+                
+                if posPotentialEvent - GD > 0 and posPotentialEvent + GD < len(events) :
+                
+                    if not newMajorBoutDetected :
+                        
+                        newMajorBoutDetected = True; 
+                        majorEventsPositions.append(posPotentialEvent);
+                        
+                    else :
+                        
+                        pass;
                     
                 else :
                     
@@ -556,7 +605,8 @@ def PeriEventPlot(data, length, resGraph, resHeatmap, GD, GDf, GDb, SRD, save=Fa
     
     for d in data :
         
-        smoothedGraph = lowpassFilter(d, SRD, lowpass[0], lowpass[1]);
+        smoothedGraph = d
+#        smoothedGraph = lowpassFilter(d, SRD, lowpass[0], lowpass[1]);
         
         resampledGraph = np.array([np.mean(smoothedGraph[int(i) : int(i)+int(resGraphFactor)]) for i in np.arange(0, len(smoothedGraph), int(resGraphFactor))]);
         resampledHeatmap = np.array([np.mean(smoothedGraph[int(i) : int(i)+int(resHeatmapFactor)]) for i in np.arange(0, len(smoothedGraph), int(resHeatmapFactor))]);
@@ -639,7 +689,7 @@ def PeriEventPlot(data, length, resGraph, resHeatmap, GD, GDf, GDb, SRD, save=Fa
     for l in length :
         
         leftPlot = (resGraph*GD)-(resGraph*GDb);
-        ax1.text(leftPlot-leftPlot*0.01, n, l, ha="center", va="center");
+        ax1.text(leftPlot-leftPlot*0.05, n, l, ha="center", va="center");
         n+=1
     
     ax1.set_xticks( np.arange((resGraph*GD)-(resGraph*GDb), (resGraph*GD)+(resGraph*GDf)+5*resHeatmap, 5*resHeatmap )  );
@@ -654,7 +704,8 @@ def PeriEventPlot(data, length, resGraph, resHeatmap, GD, GDf, GDb, SRD, save=Fa
     
     if save :
         
-        plt.savefig("/home/thomas.topilko/Desktop/Photometry{0}.svg".format(fileNameLabel), dpi=200.);
+        plt.savefig("/home/thomas.topilko/Desktop/Photometry_Walking.png".format(fileNameLabel), dpi=200.);
+        plt.savefig("/home/thomas.topilko/Desktop/Photometry_Walking.svg".format(fileNameLabel), dpi=200.);
         
 def PeakPlot(peaks, mergedPeaks, majorPeaks, seedPeaks, multiPlot=False, timeFrame=[], save=False) :
     
@@ -761,6 +812,41 @@ def extractManualBehavior(raw, file) :
             peaks[i] = True;
         
     return peaks;
+
+def extract_manual_bouts(manualFile, end_vid, beh) :
+    
+    peaks = []
+    posPeaks = []
+    
+    f = pd.read_excel(manualFile, header=None);
+    
+    start_pos = np.where(f[0] == "tStart{0}".format(beh))[0]
+    end_pos = np.where(f[0] == "tEnd{0}".format(beh))[0]
+    
+    print(f.iloc[start_pos[0]][1:][f.iloc[start_pos[0]][1:] > 0])
+    print(f.iloc[end_pos[0]][1:][f.iloc[end_pos[0]][1:] > 0])
+    
+    for s, e in zip(f.iloc[start_pos[0]][1:][f.iloc[start_pos[0]][1:] > 0], f.iloc[end_pos[0]][1:][f.iloc[end_pos[0]][1:] > 0]) :
+        
+        for i in np.arange(len(peaks), s, 1) :
+            
+            peaks.append(False)
+        
+        for i in np.arange(s, e, 1) :
+            
+            
+            peaks.append(True)
+            posPeaks.append(i)
+            
+    for i in np.arange(e, end_vid, 1) :
+        
+        peaks.append(False)
+    
+    print(hoursMinutesSeconds(len(peaks)))
+    
+    return peaks, posPeaks
+        
+        
         
         
         
