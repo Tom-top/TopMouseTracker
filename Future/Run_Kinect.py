@@ -16,7 +16,7 @@ from pykinect2 import PyKinectV2,PyKinectRuntime;
 
 from TopMouseTracker import settings
 import TopMouseTracker.parameters as params
-import TopMouseTracker.IO as IO;
+import TopMouseTracker.tmt_io as IO
 import TopMouseTracker.Tracker_Kinect as tracker;
 import TopMouseTracker.Analysis as analysis;
 import TopMouseTracker.utilities as utils;
