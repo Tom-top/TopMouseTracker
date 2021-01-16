@@ -331,4 +331,3 @@ peData, leData, posData = fc.reorderByBoutSize(peData, leData, posData);
 fc.PeriEventPlot(peData, leData, SRD, SRD, GD, GDf, GDb, SRD, save=False,\
                  showStd=True, fileNameLabel="_All", cmap="inferno",\
                  lowpass=(2,2), norm=True)                  
-                    

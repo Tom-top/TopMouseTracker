@@ -263,11 +263,3 @@ class Kinect() :
 
         self.RGBWriter.release();
         self.DEPTH8BitWriter.release();
-    
-        
-        
-        
-        
-        
-        
-        

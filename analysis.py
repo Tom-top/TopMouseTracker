@@ -1110,4 +1110,3 @@ class Plot(tracker.TopMouseTracker) :
         
         self.finalClip.write_videofile(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_{0}.mp4'.format(self._args["main"]["mouse"])), fps=10);
 #        self.finalClip.write_gif(os.path.join(self._args["main"]["resultDir"],'Live_Tracking_{0}.gif'.format(self._args["main"]["mouse"])));
-        

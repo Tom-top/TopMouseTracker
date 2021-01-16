@@ -1416,4 +1416,3 @@ def SaveTracking(Tracker,**kwargs) :
     if params.savingParameters["segmentCotton"] :
         np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonPixelIntensities.npy'),Tracker._cottonAveragePixelIntensities);
 #    np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonSpread.npy'),Tracker._cottonSpread);
-                

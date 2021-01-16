@@ -850,24 +850,3 @@ def extract_manual_bouts(manualFile, end_vid, beh) :
     print(hoursMinutesSeconds(len(peaks)))
     
     return peaks, posPeaks
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        

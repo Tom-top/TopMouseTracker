@@ -235,16 +235,3 @@ for f in os.listdir(working_dir) :
         n+=1
     
 wb.save(os.path.join("/home/thomas.topilko/Desktop", "Distance_Traveled_3.xls"))
-
-
-
-
-
-
-
-
-
-
-
-
-

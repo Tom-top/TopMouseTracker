@@ -409,5 +409,3 @@ def KinectTopMouseTracker(trackers,**kwargs) :
     cv2.destroyAllWindows();
     
     SaveTracking(trackers,args);
-
-                

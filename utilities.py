@@ -255,4 +255,3 @@ def CheckDirectories() :
         CheckDirectoryExists(params.mainParameters["segmentationDir"]);  #Check if directory exists
         
     CheckMail();
-        

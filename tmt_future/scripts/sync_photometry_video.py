@@ -478,6 +478,3 @@ plt.savefig("/home/thomas.topilko/Desktop/Photometry.png", dpi=200.)
 #ax0.plot(np.arange(-boutDist, boutDist+1, 1), Mean-Std, color="blue", alpha=0.5);
 #ax0.fill_between(np.arange(-boutDist, boutDist+1, 1), Mean, Mean+Std, color="blue", alpha=0.1);
 #ax0.fill_between(np.arange(-boutDist, boutDist+1, 1), Mean, Mean-Std, color="blue", alpha=0.1);
-        
-    
-    

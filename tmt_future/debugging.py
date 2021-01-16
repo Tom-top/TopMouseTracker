@@ -143,7 +143,3 @@ ax3.set_yticks([])
 ax3.set_xticks([])
 
 #plt.savefig("/home/thomas.topilko/Desktop/Tracking_Overlay.png",dpi=200)
-    
-    
-    
-
