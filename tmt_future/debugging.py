@@ -6,9 +6,12 @@ Created on Tue Feb 12 09:01:11 2019
 @author: thomas.topilko
 """
 
-import cv2;
-import os;
-import matplotlib.pyplot as plt;
+import os
+
+import matplotlib.pyplot as plt
+
+import cv2
+
 
 _refPt = Tracker._refPt
 

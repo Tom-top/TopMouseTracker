@@ -9,21 +9,19 @@ Created on Fri Dec  7 13:58:46 2018
 # Importing libraries#
 
 import os
+
 import numpy as np
-import cv2
-import matplotlib.pyplot as plt
+
 from matplotlib import cm
-from twilio.rest import Client
 
-# Checking if the TMT is the current working directory#
+# Checking if TMT is the current working directory#
 
-_topMouseTrackerDir = "/home/thomas.topilko/Documents/" #Sets path to the TMT directory
+_topMouseTrackerDir = "/home/thomas.topilko/Documents/"  # Sets path to the TMT directory
 
-if os.getcwd() !=  _topMouseTrackerDir : #If the current working directory is not the TMT directory changes it
+if os.getcwd() != _topMouseTrackerDir:  # If the current working directory is not the TMT directory changes it
     os.chdir(_topMouseTrackerDir)
 
 # Loads TMT modules#
-
 import TopMouseTracker.parameters as params
 import TopMouseTracker.utilities as utils
 import TopMouseTracker.tmt_io as IO

@@ -6,14 +6,17 @@ Created on Sun Feb  3 11:31:48 2019
 @author: ADMIN
 """
 
-import numpy as np;
-import cv2;
-import time;
-import os;
-import xlwt;
-from math import pi,tan;
+import os
+import time
+from math import pi, tan
 
-import TopMouseTracker.utilities as utils;
+import numpy as np
+
+import cv2
+
+import xlwt
+
+import TopMouseTracker.utilities as utils
 
 
 class Kinect() :

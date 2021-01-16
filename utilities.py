@@ -6,9 +6,10 @@ Created on Mon Jan  7 17:56:59 2019
 @author: Thomas TOPILKO
 """
 
-import os;
-import shutil;
-import smtplib;
+import os
+
+import shutil
+import smtplib
 
 from TopMouseTracker import settings
 import TopMouseTracker.parameters as params

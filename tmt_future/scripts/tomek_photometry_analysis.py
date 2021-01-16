@@ -7,25 +7,22 @@ Created on Fri Dec  6 11:30:37 2019
 @author: thomas.topilko
 """
 
-import os;
-import pandas as pd;
-import matplotlib.pyplot as plt;
-import matplotlib.animation as animation;
-import matplotlib.patches as patches;
-import numpy as np;
-import datetime;
-from matplotlib.widgets import MultiCursor;
+import os
 
-import moviepy.editor as mpy;
-from moviepy.video.io.bindings import mplfig_to_npimage;
-from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip;
+import numpy as np
 
-TMTDir = "/home/thomas.topilko/Documents/TopMouseTracker";
-if not os.getcwd() == TMTDir :
+import matplotlib.pyplot as plt
+
+import moviepy.editor as mpy
+from moviepy.video.io.bindings import mplfig_to_npimage
+from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
+
+
+tmt_dir = "/home/thomas.topilko/Documents/TopMouseTracker"
+if not os.getcwd() == tmt_dir:
+    os.chdir(tmt_dir)
     
-    os.chdir(TMTDir);
-    
-import scripts.tomek_photometry_functions as fc;
+import scripts.tomek_photometry_functions as fc
 
 experiment = 200917;
 mouse = "2";

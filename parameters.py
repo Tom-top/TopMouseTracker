@@ -6,8 +6,9 @@ This module defines default parameters used by TopMouseTracker.
 
 """
 
-import os;
-import numpy as np;
+import os
+
+import numpy as np
 
 mainParameters = {  
                     "testFramePos" : 0, #The position of the frame used for ROI selection

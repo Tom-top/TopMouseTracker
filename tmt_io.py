@@ -6,14 +6,18 @@ Created on Wed Jan 16 15:00:30 2019
 @author: tomtop
 """
 
-import os;
-import subprocess;
-import shlex;
-import numpy as np;
-import cv2;
-from natsort import natsorted;
-import skvideo.io;
-import moviepy.editor as mpy;
+import os
+
+import subprocess
+import shlex
+
+import numpy as np
+
+from natsort import natsorted
+
+import cv2
+
+import moviepy.editor as mpy
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 import TopMouseTracker.parameters as params

@@ -6,20 +6,17 @@ Created on Fri Dec  7 13:58:46 2018
 @author: tomtop
 """
 
-import time;
-import os;
-import numpy as np;
-import cv2;
-import matplotlib.pyplot as plt;
+import os
 
-from pykinect2 import PyKinectV2,PyKinectRuntime;
+import numpy as np
 
-from TopMouseTracker import settings
-import TopMouseTracker.parameters as params
-import TopMouseTracker.tmt_io as IO
-import TopMouseTracker.tracker_kinect as tracker;
-import TopMouseTracker.analysis as analysis;
-import TopMouseTracker.utilities as utils;
+import cv2
+
+from pykinect2 import PyKinectV2, PyKinectRuntime
+
+import TopMouseTracker.tracker_kinect as tracker
+import TopMouseTracker.analysis as analysis
+import TopMouseTracker.utilities as utils
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");

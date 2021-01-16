@@ -6,16 +6,18 @@ Created on Tue Nov 12 16:21:34 2019
 @author: thomas.topilko
 """
 
-import os;
-import pandas as pd;
-import matplotlib.pyplot as plt;
-import matplotlib.animation as animation;
-import matplotlib.patches as patches;
-import numpy as np;
+import os
 
-import moviepy.editor as mpy;
-from moviepy.video.io.bindings import mplfig_to_npimage;
-from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip;
+import numpy as np
+import pandas as pd
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+import moviepy.editor as mpy
+from moviepy.video.io.bindings import mplfig_to_npimage
+from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
+
 
 workDir = "/home/thomas.topilko/Desktop/Photometry/191203";
 

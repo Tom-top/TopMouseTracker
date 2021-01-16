@@ -9,10 +9,11 @@ Created on Tue Feb  5 13:29:39 2019
 
 """
 
-import os;
-import cv2;
-import matplotlib.pyplot as plt;
-from pykinect2 import PyKinectV2,PyKinectRuntime;
+import os
+
+import cv2
+
+from pykinect2 import PyKinectV2, PyKinectRuntime
 
 import TopMouseTracker.utilities as utils
 import TopMouseTracker._kinect_video_writer as kinect

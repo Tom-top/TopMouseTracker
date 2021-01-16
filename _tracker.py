@@ -6,22 +6,19 @@ Created on Fri Dec  7 14:03:44 2018
 @author: tomtop
 """
 
-import os;
-import cv2;
-import time;
-import numpy as np;
-import pandas as pd;
-import fnmatch;
-import xlwt;
-from math import sqrt;
-import skvideo.io;
-import smtplib;
-import moviepy.editor as mpy;
-import smtplib;
-from email.mime.text import MIMEText;
-from email.mime.image import MIMEImage;
-from email.mime.multipart import MIMEMultipart;
-from PIL import Image;
+import os
+import time
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+
+import numpy as np
+import pandas as pd
+
+import cv2
+import skvideo.io
+
+import xlwt
 
 import TopMouseTracker.parameters as params
 import TopMouseTracker.utilities as utils

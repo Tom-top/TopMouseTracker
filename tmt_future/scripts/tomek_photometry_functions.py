@@ -6,17 +6,22 @@ Created on Fri Dec  6 11:40:32 2019
 @author: thomas.topilko
 """
 
-import os;
-import numpy as np;
-import pandas as pd;
-import datetime;
-import matplotlib.pyplot as plt;
-import matplotlib.patches as patches;
-from matplotlib.widgets import MultiCursor;
-import scipy.optimize as optimization;
-from scipy.interpolate import UnivariateSpline, interp1d;
-from scipy import signal;
-import matplotlib;
+import os
+import datetime
+
+import numpy as np
+import pandas as pd
+
+import scipy.optimize as optimization
+from scipy.interpolate import UnivariateSpline, interp1d
+from scipy import signal
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.widgets import MultiCursor
+
+import matplotlib
+
 
 def hoursMinutesSeconds(time) :
     

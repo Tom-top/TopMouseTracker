@@ -6,14 +6,16 @@ Created on Tue Apr  9 16:13:05 2019
 @author: thomas.topilko
 """
 
+import os
+
 import numpy as np
+
+from natsort import natsorted
 import matplotlib.pyplot as plt
+
 import moviepy.editor as mpy
-import os;
-import numpy as np;
-from natsort import natsorted;
 from moviepy.video.io.bindings import mplfig_to_npimage
-from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip
+from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
 
 path = "/mnt/raid/TopMouseTracker/190305-01/255";
 save = "/home/thomas.topilko/Desktop";

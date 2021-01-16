@@ -6,16 +6,15 @@ Created on Mon Jan  7 17:51:08 2019
 @author: Thomas TOPILKO
 """
 
-import os;
-import sys;
+import os
+import sys
 
-#Checking the operating system
-
-#Linux : platform = "linux" or "linux2"
-#OS X : platform = "darwin"
-#Windows : platform = "win32"
-
-_platform = sys.platform;
+# Checking the operating system
+# platforms: {
+#  linux: "linux" or "linux2"
+#  os_x: "darwin"
+#  windows: "win32"}
+_platform = sys.platform
 
 def TopMouseTrackerPath():
     

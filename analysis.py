@@ -6,22 +6,25 @@ Created on Wed Jan 16 15:06:08 2019
 @author: tomtop
 """
 
-import os;
-import pandas as pd;
-import numpy as np;
-from math import sqrt;
-import matplotlib.pyplot as plt;
-import matplotlib.colors as mcolors;
-import matplotlib.patches as patches;
-from matplotlib.widgets import MultiCursor;
-from scipy.ndimage.filters import gaussian_filter;
-import matplotlib.cm as cm;
-import moviepy.editor as mpy;
-from moviepy.video.io.bindings import mplfig_to_npimage;
-from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip;
+import os
 
-import TopMouseTracker.utilities as utils;
-import TopMouseTracker._tracker as tracker;
+from math import sqrt
+
+import numpy as np
+import pandas as pd
+from scipy.ndimage.filters import gaussian_filter
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.widgets import MultiCursor
+import matplotlib.cm as cm
+
+import moviepy.editor as mpy
+from moviepy.video.io.bindings import mplfig_to_npimage
+from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
+
+import TopMouseTracker.utilities as utils
+import TopMouseTracker._tracker as tracker
 
 #class GroupData() :
 #    
