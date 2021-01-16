@@ -27,7 +27,7 @@ if os.getcwd() !=  _topMouseTrackerDir : #If the current working directory is no
 import TopMouseTracker.parameters as params
 import TopMouseTracker.utilities as utils
 import TopMouseTracker.tmt_io as IO
-import TopMouseTracker._Tracker as tracker
+import TopMouseTracker._tracker as tracker
 import TopMouseTracker.analysis as analysis
 # Global parameters#
 
