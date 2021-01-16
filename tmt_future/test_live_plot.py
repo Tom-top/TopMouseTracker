@@ -17,6 +17,7 @@ import moviepy.editor as mpy
 from moviepy.video.io.bindings import mplfig_to_npimage
 from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
 
+
 path = "/mnt/raid/TopMouseTracker/190305-01/255"
 save = "/home/thomas.topilko/Desktop"
 
@@ -66,13 +67,10 @@ plt.tight_layout()
 # ANIMATE WITH MOVIEPY (UPDATE THE CURVE FOR EACH t). MAKE A GIF.
 
 def make_frame_mpl(t):
-    
     global thresh,ax0,ax1
     
     i = int(t)
-    
     if i < thresh :
-        
         line.set_data(x[0:i],y[tStart:tStart+i])
         patch.set_data(x[0:i],z[tStart:tStart+i])
         #ax1.fill_between(x[i-1:i], 0, z[i-1:i],color="blue",alpha=0.5)
@@ -81,9 +79,7 @@ def make_frame_mpl(t):
 #                p.set_height(1);
         last_frame = mplfig_to_npimage(fig)
         return last_frame
-    
     else :
-        
         delta = i - thresh
         
         ax0.set_xlim(tStart+delta,tStart+i)
@@ -98,19 +94,14 @@ def make_frame_mpl(t):
         return last_frame
     
 #def raster_mpl(t):
-#    
 #    global thresh,ax1
 #    
 #    i = int(t)
-#    
 #    if i < thresh :
-#        
 #        patch.set_data(x[0:i],z[tStart:tStart+i])
 #        last_frame = mplfig_to_npimage(fig)
 #        return last_frame
-#    
 #    else :
-#        
 #        delta = i - thresh
 #        
 #        ax1.set_xlim(tStart+delta,tStart+i)

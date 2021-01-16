@@ -85,7 +85,6 @@ import skvideo.io
 cap = skvideo.io.vreader(os.path.join(_workingDir,"Raw_Video_Mice_226_217_7-2-2019_8-54-10.avi"))
     
 for frame in cap :
-    
     RGBFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) #[DISPLAY ONLY] Changes the Frame to RGB for display purposes
     
     croppedFrame = RGBFrame[upLeftY:lowRightY,upLeftX:lowRightX] #Crops the initial frame to the ROI
@@ -102,7 +101,7 @@ for frame in cap :
     cv2.imshow('clone',cloneCroppedFrame)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        break;
+        break
         
 cv2.destroyAllWindows()
 

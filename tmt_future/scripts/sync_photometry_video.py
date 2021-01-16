@@ -13,6 +13,7 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.widgets import MultiCursor
 
 import moviepy.editor as mpy
 from moviepy.video.io.bindings import mplfig_to_npimage
@@ -124,17 +125,12 @@ print("\n")
 print("Running peak detection algorithm")
 
 for i, dp in enumerate(Cotton) : #For every data point
-    
     if i <= (len(Cotton) - 1) - peakToPeakDistance : #If the point has enough points available in front of it
-        
         if Cotton[i]+peakAmplitudeThreshold <= Cotton[i+peakToPeakDistance]\
         or Cotton[i]-peakAmplitudeThreshold >= Cotton[i+peakToPeakDistance] :
-            
             detectedPeaks.append(True)
             posDetectedPeaks.append(i)
-            
         else :
-            
             detectedPeaks.append(False)
             
 #Merge close peaks
@@ -144,71 +140,49 @@ print("Running peak merging algorithm")
 detectedPeaksMerged = []
 
 for pos, peak in enumerate(detectedPeaks) :
-    
     if peak :
-            
         ind = posDetectedPeaks.index(pos)
-        
         if ind < len(posDetectedPeaks) - 1 :
-        
             if posDetectedPeaks[ind+1] - posDetectedPeaks[ind] < peakMergingDistance :
-                
                 for i in np.arange(0, posDetectedPeaks[ind+1] - posDetectedPeaks[ind]) :
-                    
                     detectedPeaksMerged.append(True)
-        
         else :
-            
             detectedPeaksMerged.append(True)
-                
     else :
-        
         if len(detectedPeaksMerged) <= pos :
-        
             detectedPeaksMerged.append(False)
 
 def LivePhotometryTrack(vidClip, x, y0, y1, y2, y3, thresh, globalAcceleration=1,\
                         plotAcceleration=1./displayResolution, showHeight=True, showTrace=True) :
     
     def make_frame_mpl(t):
-         
         i = int(t)
-        
         if i < thresh :
-            
             try :
-                
 #                cottonGraph.set_data(x[0:i],y0[0:i])
 #                eventGraph.set_data(x[0:i],y1[0:i])
 #                calciumGraph.set_data(x[0:i],y2[0:i])
                 isosbesticGraph.set_data(x[0:i],y3[0:i])
-                
             except :
-                
                 print("Oups a problem occured")
                 pass
     
             last_frame = mplfig_to_npimage(liveFig)
             return last_frame
-        
         else :
-            
             delta = i - thresh
         
 #            liveAx0.set_xlim(delta,i)
 #            liveAx1.set_xlim(delta,i)
 #            liveAx2.set_xlim(delta,i)
             liveAx3.set_xlim(delta,i)
-            
+
             try :
-                
 #                cottonGraph.set_data(x[0:i],y0[0:i])
 #                eventGraph.set_data(x[0:i],y1[0:i])
 #                calciumGraph.set_data(x[0:i],y2[0:i])
                 isosbesticGraph.set_data(x[0:i],y3[0:i])
-                
             except :
-                
                 print("Oups a problem occured")
                 pass
     
@@ -279,23 +253,12 @@ detectedPeaksMerged = []
     
 LivePhotometryTrack(videoClip, X, Cotton, detectedPeaksMerged, Calcium, dF,\
                     displayThreshold, globalAcceleration=5, plotAcceleration=1./displayResolution)
-        
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+
                     
 dbe = 3 #Distance Between Events
 bl = 15 #Behavioral Bout Length;
 
 def PhotometryMajorBoutDetection(events, distanceBetweenEvents, boutLength) :
-    
     majorEventsPositions = []
     majorEventsLengths = []
     seeds = []
@@ -309,50 +272,29 @@ def PhotometryMajorBoutDetection(events, distanceBetweenEvents, boutLength) :
     cumulativeEvents = 0
     
     for pos, event in enumerate(events) :
-        
         if event == True :
-            
             cumulativeEvents += 1
-            
             if not newBoutDetected :
-                
                 newBoutDetected = True
                 posPotentialEvent = pos
                 seeds.append(pos)
-                
             elif newBoutDetected :
-                    
                 distanceToNextEvent = 0
-                
                 if cumulativeEvents >= boutLength :
-                    
                     if not newMajorBoutDetected :
-                        
                         newMajorBoutDetected = True
                         majorEventsPositions.append(posPotentialEvent)
-                        
                     else :
-                        
-                        pass;
-                    
+                        pass
                 else :
-                    
-                    pass;
-
+                    pass
         elif event == False :
-            
             if newBoutDetected :
-            
                 if distanceToNextEvent < distanceBetweenEvents :
-                
                     distanceToNextEvent += 1
-            
                 elif distanceToNextEvent >= distanceBetweenEvents :
-                    
                     if newMajorBoutDetected :
-                        
                         majorEventsLengths.append(cumulativeEvents);
-                    
                     distanceToNextEvent = 0
                     newBoutDetected = False
                     newMajorBoutDetected = False
@@ -387,24 +329,18 @@ dF = np.load(dFFile)
 graphDistance = 10
 CalciumData = photometryData[2][:].tolist()
 
+
 def ExtractCalciumDataWhenBehaving(posPeaks, calciumData, dist, samplingRateDoric, resample=1) :
-    
     data = []
     
-    for p in posPeaks :  
-        
+    for p in posPeaks :
         segment = calciumData[int((p*samplingRateDoric)-(dist*samplingRateDoric)) : \
                                 int((p*samplingRateDoric)+((dist+1)*samplingRateDoric))]
                               
         resampled = [np.mean(segment[int(i) : int(i)+int(samplingRateDoric/resample)]) for i in np.arange(0, len(segment), int(samplingRateDoric/resample))]
-        
         data.append(resampled)
-        
-#    data = np.array(data)
-        
+    # data = np.array(data)
     return data
-
-from matplotlib.widgets import MultiCursor
 
 zeroList = np.zeros((len(CalciumData)-len(dF)))
 dFn = np.concatenate((zeroList, dF), axis=None)
@@ -429,10 +365,8 @@ res = 12000
 resPlot = int(12000/48)
 
 for i in calciumDataAroundPeaks :
-    
     sink = []
     pos = np.arange(0, (2*res*10)+1, resPlot)
-    
     for j in pos :
         print(j)
         mean = np.mean(i[j : j+resPlot])

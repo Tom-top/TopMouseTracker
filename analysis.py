@@ -114,7 +114,6 @@ class Plot(tracker.TopMouseTracker) :
             self.distanceCumulativeAfter = [x for x in self.distanceCumulativeAfter]
             
     def GeneratePeakFile(self,**kwargs) :
-        
         args = kwargs
         
         self.res = np.mean(self._framerate)*args["res"]
@@ -136,7 +135,6 @@ class Plot(tracker.TopMouseTracker) :
         np.save(os.path.join(self._args["main"]["resultDir"],'Data_'+self._args["main"]["mouse"]+'_Peaks.npy'), peaks)
         
     def CheckTracking(self) :
-         
         fig = plt.figure();
         fig.suptitle("Mouse {0}".format(self._args["mouse"]), fontsize = 12, y = 1.01)
         
@@ -158,7 +156,6 @@ class Plot(tracker.TopMouseTracker) :
         plt.tight_layout()
         
     def TrackingPlot(self,res,plotB=True,plotA=True,cBefore='b',cAfter='r',limit=6) :
-        
         fig = plt.figure(figsize=(12,7))
         ax0 = plt.subplot()
 
@@ -234,21 +231,16 @@ class Plot(tracker.TopMouseTracker) :
         plt.tight_layout()
         
         if self._args["plot"]["save"] :
-            
             if plotB and plotA :
-            
                 plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_Mouse_{0}".format(self._mouse)))
-                
-            if plotB and not plotA : 
-                
+
+            if plotB and not plotA :
                 plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_Before_Mouse_{0}".format(self._mouse)))
                 
             if not plotB and plotA :
-                
                 plt.savefig(os.path.join(self._args["main"]["resultDir"],"Tracking_After_Mouse_{0}".format(self._mouse)))
         
     def CompleteTrackingPlot(self,**kwargs) :
-        
         args = kwargs
         
         self.res = np.mean(self._framerate)*args["res"]
@@ -256,7 +248,6 @@ class Plot(tracker.TopMouseTracker) :
         fig = plt.figure(figsize=(20,10))
 #        fig.suptitle("Tracking Mouse {0}".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97);
         fig.suptitle("Tracking Plot".format(self._args["main"]["mouse"]), fontsize = 12, y = 0.97)
-
 
         ax0 = plt.subplot2grid((4, 4), (0, 3))
         #ax0 = plt.subplot(3,4,4)
@@ -272,7 +263,6 @@ class Plot(tracker.TopMouseTracker) :
         ax0.tick_params(bottom=False,labelbottom=False)
         ax0.set_xlim([0,len(Before+After)])
         
-        
         ax1 = plt.subplot2grid((4, 4), (1, 3),sharex=ax0)
         #ax1 = plt.subplot(3,4,8)
         #ax1.plot(np.arange(0,len(self.distanceCumulativeBefore)),self.distanceCumulativeBefore,color='blue',alpha=0.5)
@@ -286,7 +276,6 @@ class Plot(tracker.TopMouseTracker) :
         ax1.set_xticks(np.arange(0,(self._args["plot"]["limit"]*3600)/args["res"]+1,3600/args["res"]))
         ax1.tick_params(bottom=False,labelbottom=False)
         ax1.set_xlim([0,len(Before+After)])
-        
         
 #        ax2 = plt.subplot2grid((5, 4), (2, 3))
 #        #ax2 = plt.subplot(3,4,12)
@@ -302,9 +291,7 @@ class Plot(tracker.TopMouseTracker) :
 #        ax2.tick_params(bottom=False,labelbottom=False)
 #        ax2.set_xlim([0,len(Before+After)])
         
-        
         if args["cottonSubplots"] :
-        
             ax2 = plt.subplot2grid((4, 4), (2, 3),sharex=ax0)
             #ax3.plot(np.arange(0,len(self.cottonBefore)),self.cottonBefore,color='blue',alpha=0.5)
             Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)]
@@ -318,13 +305,9 @@ class Plot(tracker.TopMouseTracker) :
             peaks = []
             
             for i,data in enumerate(All) :
-    
                 if i <= len(All)-2 :
-                
                     if All[i]+1 <= All[i+1] or All[i]-1 >= All[i+1] :
-                        
                         peaks.append(i)
-                    
             
             #peaks = peakutils.indexes(All, thres=0.8, min_dist=1)
             
@@ -395,23 +378,16 @@ class Plot(tracker.TopMouseTracker) :
         self.filteredPosAfter = self.posAfter[0::self._args["plot"]["res"]]
         
         if args["line"] :
-        
             self.befPlot = ax5.plot([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],'-o',markersize=1,alpha=args["alpha"],solid_capstyle="butt",color=args["cBefore"],label='Before Initiation')
             self.aftPlot = ax5.plot([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],'-o',markersize=1,alpha=args["alpha"],solid_capstyle="butt",color=args["cAfter"],label='After Initiation')
-            
         else :
-            
             self.befPlot = ax5.scatter([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore],s=10,alpha=args["alpha"],color=args["cBefore"],label='Before Initiation')
             self.aftPlot = ax5.scatter([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter],s=10,alpha=args["alpha"],color=args["cAfter"],label='After Initiation')
         
 #        else :
-#            
 #            for x,y in zip([x[0] for x in self.filteredPosBefore],[y[1] for y in self.filteredPosBefore]) :
-#                
 #                self.befPlot = ax3.plot(x,y,'-',markersize=1,alpha=alpha,solid_capstyle="butt",color='blue',label='Before Initiation')
-#                
 #            for x,y in zip([x[0] for x in self.filteredPosAfter],[y[1] for y in self.filteredPosAfter]) :
-#                
 #                self.aftPlot = ax3.plot(x,y,'-',markersize=1,alpha=alpha,solid_capstyle="butt",color='red',label='After Initiation')
         
         self.distTraveledBeforeInitiation = sum(self.distanceCorrected[0:int(self._tStartBehav*np.mean(self._framerate))])
@@ -449,7 +425,6 @@ class Plot(tracker.TopMouseTracker) :
         
         if args["line"] : 
             ax5.legend(handles = [self.befPlot[0],self.aftPlot[0]],loc=(0,1.02),shadow=True)
-            
         else :
             ax5.legend(handles = [self.befPlot,self.aftPlot],loc=(0,1.02),shadow=True)
         
@@ -460,7 +435,6 @@ class Plot(tracker.TopMouseTracker) :
         plt.show()
         
         if args["save"] :
-            
 #            plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking_Mouse_{0}".format(self._mouse)), dpi=500.);
             plt.savefig(os.path.join(self._args["main"]["resultDir"],"Complete_Tracking".format(self._mouse)), dpi=500.)
             
@@ -483,11 +457,8 @@ class Plot(tracker.TopMouseTracker) :
         peaks = []
         
         for i,data in enumerate(All) :
-
             if i <= len(All)-peakDist-1 :
-            
                 if All[i]+x[0] <= All[i+peakDist] or All[i]-x[0] >= All[i+peakDist] :
-                    
                     peaks.append(i)
         
         #----------------------------------------------------------------------
@@ -497,39 +468,25 @@ class Plot(tracker.TopMouseTracker) :
         automaticEnd = []
         
         if x[1] != None :
-        
             for pos,peak in enumerate(peaks) :
-                
                 if automaticStart == [] :
-                    
                     automaticStart.append(peaks[pos])
                     
                 if pos < len(peaks)-1 :
-                    
-                    if peaks[pos+1]-peaks[pos] >= x[1] : #If next is far 
-                        
+                    if peaks[pos+1]-peaks[pos] >= x[1] : #If next is far
                         if automaticStart[-1] == peaks[pos] : #If start is the first
-                            
                             automaticEnd.append(peaks[pos]+rasterSpread)
                             automaticStart.append(peaks[pos+1])
-                        
                         else :
-                            
                             automaticEnd.append(peaks[pos])
                             automaticStart.append(peaks[pos+1])
-                        
                     else :
-                        
-                        pass;
+                        pass
                         
             for s,e in zip(automaticStart,automaticEnd) :
-                
                 self.totalTimeAutomatic += e-s
-                
         else :
-            
             for peak in peaks :
-                
                 self.totalTimeAutomatic += rasterSpread
         
 #        print(x)
@@ -553,98 +510,65 @@ class Plot(tracker.TopMouseTracker) :
         After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)]
 
         for f in os.listdir(path) :
-                    
             path2File = os.path.join(path,f)
-            
             if len(f.split(".")) == 2 :
-            
                 if f.split(".")[-1] == "xlsx" :
-                    
                     try :
-                    
                         mouse = f.split("-")[1].split(".")[0]
         
                         if mouse == self._args["main"]["mouse"] :
-                            
                             excelSheet = pd.read_excel(path2File,header = None)
                             excelMatrix = excelSheet.as_matrix()
-                    
                             for line in excelMatrix :
-                                
                                 if isinstance(line[0], str) :
-                                    
                                     temp = []
                                     d = line[1:]
                                     
                                     for e in d :
-                                        
                                         if e >= 0 and not np.isnan(e) :
-                                            
                                             temp.append(e)
                                     
                                         if line[0] == "tInjection" :
-                                            
                                             tInjection = temp
                                         
                                         if line[0] == "tCotton" :
-                                            
                                             tCotton = temp
                                             
                                         if line[0] == "tInitiate" :
-                                            
                                             tInitiate = temp
                                             
                                         if line[0] == "tStart" :
-                                            
                                             tStart = temp
                                             
                                         if line[0] == "tEnd" :
-                                            
                                             tEnd = temp
                                             
                                         if line[0] == "tStartInteract" :
-                                    
                                             tStartInteract = temp
                                         
                                         if line[0] == "tEndInteract" :
-                                        
                                             tEndInteract = temp
-                                            
                     except :
-                        
-                        pass;
+                        pass
                                     
         #----------------------------------------------------------------------
         #Detection of peaks
         
         for s,e in zip(tStart,tEnd) :
-            
             if s < len(Before+After) :
-                
                 if e >= len(Before+After) :
-                    
                     self.totalTimeManual += len(Before+After)-s
-                    
                 elif e < len(Before+After) :
-        
                     self.totalTimeManual += e-s
-        
-        
+
         for s,e in zip(tStartInteract,tEndInteract) :
-            
             if s < len(Before+After) :
-                
                 if e >= len(Before+After) :
-                    
                     self.totalTimeManual += len(Before+After)-s
-                    
                 elif e < len(Before+After) :
-        
                     self.totalTimeManual += e-s
-        
-            
+
     def NestingRaster(self, **kwargs) :
-        
         args = kwargs
         
         fig = plt.figure(figsize=(20,10))
@@ -652,31 +576,21 @@ class Plot(tracker.TopMouseTracker) :
         self.res = np.mean(self._framerate)*args["res"]
         
         if args["displayManual"] :
-        
             ax0 = plt.subplot(311)
             ax1 = plt.subplot(312,sharex=ax0)
-            
         else :
-            
             ax0 = plt.subplot(211)
             ax1 = plt.subplot(212,sharex=ax0)
         
         Before = [np.mean(self.cottonBefore[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonBefore),self.res)]
-
         After = [np.mean(self.cottonAfter[int(i):int(i+self.res)]) for i in np.arange(0,len(self.cottonAfter),self.res)]
-        
         All = Before+After
         
 #        print(len(All))
-        
         peaks = []
-        
         for i,data in enumerate(All) :
-
             if i <= len(All)-args["peakDist"]-1 :
-            
                 if All[i]+args["peakThresh"] <= All[i+args["peakDist"]] or All[i]-args["peakThresh"] >= All[i+args["peakDist"]] :
-                    
                     peaks.append(i)
                     
         if args["rasterSpread"] == None :
@@ -688,39 +602,24 @@ class Plot(tracker.TopMouseTracker) :
         automaticEnd = []
         
         if args["minDist"] != None :
-        
             for pos,peak in enumerate(peaks) :
-                
                 if automaticStart == [] :
-                    
                     automaticStart.append(peaks[pos])
                     
                 if pos < len(peaks)-1 :
-                    
-                    if peaks[pos+1]-peaks[pos] >= args["minDist"] : #If next is far 
-                        
+                    if peaks[pos+1]-peaks[pos] >= args["minDist"] : #If next is far
                         if automaticStart[-1] == peaks[pos] : #If start is the first
-                            
                             automaticEnd.append(peaks[pos]+rasterSpread)
                             automaticStart.append(peaks[pos+1])
-                        
                         else :
-                            
                             automaticEnd.append(peaks[pos])
                             automaticStart.append(peaks[pos+1])
-                        
                     else :
-                        
-                        pass;
-                        
+                        pass
                 else :
-                    
                     if automaticStart[-1] == peaks[pos] :
-                        
                         automaticEnd.append(peaks[pos]+rasterSpread)
-                    
                     else :
-                        
                         automaticEnd.append(peaks[pos])
             
             raster = np.zeros_like(All)
@@ -728,33 +627,23 @@ class Plot(tracker.TopMouseTracker) :
             #pos = 0;
             
             for s,e in zip(automaticStart,automaticEnd) :
-                
 #                if pos+1 < len(automaticStart):
-#            
-#                    [raster.append(1) for x in np.arange((e-s))];
-#                    [raster.append(0) for x in np.arange((automaticStart[pos+1]-e))];
-#                    pos+=1;
-#                    
+#                    [raster.append(1) for x in np.arange((e-s))]
+#                    [raster.append(0) for x in np.arange((automaticStart[pos+1]-e))]
+#                    pos+=1
 #                else :
-#                    
-#                    [raster.append(1) for x in np.arange((e-s))];
-#                    [raster.append(0) for x in np.arange(len(All)-int(automaticEnd[-1]+1))];
+#                    [raster.append(1) for x in np.arange((e-s))]
+#                    [raster.append(0) for x in np.arange(len(All)-int(automaticEnd[-1]+1))]
                 
                 if e-s < 1 :
-                    
                     raster[int(s):int(e)+1] = 1
-                    
                 else :
-                
                     raster[int(s)+1:int(e)+1] = 1
                 
                 ax0.add_patch(patches.Rectangle((s, 0), e-s, 1,color=args["cAfter"],alpha=1))
                 self.totalTimeAutomatic += e-s
-                
         else :
-            
             for peak in peaks :
-                
                 ax0.add_patch(patches.Rectangle((peak, 0), rasterSpread, 1,color=args["cAfter"],alpha=1))
                 self.totalTimeAutomatic += rasterSpread
                 
@@ -765,17 +654,12 @@ class Plot(tracker.TopMouseTracker) :
         
 #        raster = [0 for x in np.arange(automaticStart[0])]
 #        pos = 0
-#                
 #        for s,e in zip(automaticStart,automaticEnd) :
-#            
 #            if pos+1 < len(automaticStart):
-#            
 #                [raster.append(1) for x in np.arange((e-s))]
 #                [raster.append(0) for x in np.arange((automaticStart[pos+1]-e))]
 #                pos+=1
-#                
 #            else :
-#                
 #                [raster.append(1) for x in np.arange((e-s))]
 #                [raster.append(0) for x in np.arange(len(All)-int(automaticEnd[-1]+1))]
         
@@ -783,8 +667,6 @@ class Plot(tracker.TopMouseTracker) :
 #        print(automaticEnd)
 #        print(len(raster))
 #        np.save(os.path.join(self._args["main"]["resultDir"],"Data_{0}_Raster.npy".format(self._args["main"]["mouse"])),np.array(raster))
-                
-                
             
 #        print(automaticStart)
 #        print(automaticEnd)
@@ -820,117 +702,79 @@ class Plot(tracker.TopMouseTracker) :
 #        print(len(Before+After))
         
         if args["displayManual"] :
-        
             self.totalTimeManual = 0
-    
             path = self._args["main"]["workingDir"]
-        
             for f in os.listdir(path) :
-                        
                 path2File = os.path.join(path,f)
-                
                 if len(f.split(".")) == 2 :
-                
                     if f.split(".")[-1] == "xlsx" :
-                        
                         mouse = f.split("-")[1].split(".")[0]
-        
                         if mouse == self._args["main"]["mouse"] :
-                            
                             excelSheet = pd.read_excel(path2File,header = None)
                             excelMatrix = excelSheet.as_matrix()
                     
                             for line in excelMatrix :
-                                
                                 if isinstance(line[0], str) :
-                                    
                                     temp = []
                                     d = line[1:]
-                                    
                                     for e in d :
-                                        
                                         if e >= 0 and not np.isnan(e) :
-                                            
                                             temp.append(e)
-                                    
+
                                     if line[0] == "tInjection" :
-                                        
                                         tInjection = temp
                                     
                                     if line[0] == "tCotton" :
-                                        
                                         tCotton = temp
                                         
                                     if line[0] == "tInitiate" :
-                                        
                                         tInitiate = temp
                                         
                                     if line[0] == "tStart" :
-                                        
                                         tStart = temp
                                         
                                     if line[0] == "tEnd" :
-                                        
                                         tEnd = temp
                                         
                                     if line[0] == "tStartInteract" :
-                                
-                                        tStartInteract = temp;
+                                        tStartInteract = temp
                                     
                                     if line[0] == "tEndInteract" :
-                                    
                                         tEndInteract = temp
-                                        
-    #                                    if line[0] == "tStartDig" :
-    #                            
-    #                                        tStartDig = temp;
-    #                                        
-    #                                    if line[0] == "tEndDig" :
-    #                                        
-    #                                        tEndDig = temp;
-    #                                        
-    #                                    if line[0] == "tStartGroom" :
-    #                            
-    #                                        tStartGroom = temp;
-    #                                        
-    #                                    if line[0] == "tEndGroom" :
-    #                                        
-    #                                        tEndGroom = temp;
-    #                                        
+
+                                    # if line[0] == "tStartDig" :
+                                    #    tStartDig = temp
+                                    #
+                                    # if line[0] == "tEndDig" :
+                                    #    tEndDig = temp
+                                    #
+                                    # if line[0] == "tStartGroom" :
+                                    #    tStartGroom = temp
+                                    #
+                                    # if line[0] == "tEndGroom" :
+                                    #    tEndGroom = temp
                                 
             ax2 = plt.subplot(313,sharex=ax0)
             temp =0
-            
             for s,e in zip(tStart,tEnd) :
-                
                 if s < len(Before+After) :
-                    
                     if e >= len(Before+After) :
-                        
                         temp+=len(Before+After)-s
                         ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"))
                         self.totalTimeManual += len(Before+After)-s
-                        
                     elif e < len(Before+After) :
-                        
                         temp+=e-s
                         ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Nesting"))
                         self.totalTimeManual += e-s
             
             temp =0
-            
             for s,e in zip(tStartInteract,tEndInteract) :
-                
                 if s < len(Before+After) :
-                    
                     if e >= len(Before+After) :
-                        
                         temp+=len(Before+After)-s
                         ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),len(Before+After)-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"))
                         self.totalTimeManual += len(Before+After)-s
-                        
                     elif e < len(Before+After) :
-                        
                         temp+=e-s
                         ax2.add_patch(patches.Rectangle((s-tCotton[0], 0),e-s,10,alpha = 0.5,fc="blue",ec='None',label="Cotton Interaction"))
                         self.totalTimeManual += e-s
@@ -962,7 +806,6 @@ class Plot(tracker.TopMouseTracker) :
             ax1.tick_params(bottom=False,labelbottom=False)
             
         else :
-            
             multi = MultiCursor(fig.canvas, (ax0, ax1), color='r', lw=2, horizOn=False, vertOn=True)
             ax1.tick_params(bottom=True,labelbottom=True)
         
@@ -978,7 +821,6 @@ class Plot(tracker.TopMouseTracker) :
     #        plt.savefig(os.path.join(self._args["main"]["resultDir"],"Raster_Mouse_{0}".format(self._mouse)))
         
     def HeatMapPlot(self,bins=1000,sigma=16) :
-        
         fig = plt.figure(figsize=(20,10))
         ax0 = plt.subplot()
 
@@ -1005,44 +847,29 @@ class Plot(tracker.TopMouseTracker) :
         plt.gca().invert_yaxis()
         
     def make_frame_mpl(self,t):
-            
             i = int(t)
-            
             if i < self.threshDisplay :
-                
                 try :
-                
 #                    self.cottonHeightGraph.set_data(self.livePlotX[0:i],self.livePlotCotton[self.tStartLivePlot:self.tStartLivePlot+i])
                     self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1])
-                    
                 except :
-                    
                     pass
 
                 last_frame = mplfig_to_npimage(self.liveFig)
                 return last_frame
-            
             else :
-                
-#                delta = i - self.threshDisplay
-                
-#                self.liveAx0.set_xlim(self.tStartLivePlot+delta,self.tStartLivePlot+i)
-                
+                # delta = i - self.threshDisplay
+                # self.liveAx0.set_xlim(self.tStartLivePlot+delta,self.tStartLivePlot+i)
                 try :
-                
-#                    self.cottonHeightGraph.set_data((self.livePlotX[delta:i],self.livePlotCotton[self.tStartLivePlot+delta:self.tStartLivePlot+i]))
+                    # self.cottonHeightGraph.set_data((self.livePlotX[delta:i],self.livePlotCotton[self.tStartLivePlot+delta:self.tStartLivePlot+i]))
                     self.trajectoryGraph.set_data(list(zip(*self.livePlotTrajectory[0:i]))[0],list(zip(*self.livePlotTrajectory[0:i]))[1])
-                    
                 except :
-                    
                     pass
 
                 last_frame = mplfig_to_npimage(self.liveFig)
                 return last_frame
-        
         
     def LiveTrackingPlot(self,res=1,tStartLivePlot=0,tEndLivePlot=5*60,acceleration=1,showHeight=True,showTrace=True) :
-        
         self._FrameRate = np.mean(self._framerate)
         
         self.tStartLivePlot = int((tStartLivePlot)*self._FrameRate)
@@ -1051,7 +878,6 @@ class Plot(tracker.TopMouseTracker) :
         self.threshDisplay = int(10*self._FrameRate)
         
         if self.durationLivePlot == 0 :
-            
             raise RuntimeError('LiveVideo length has to be > 0 !')
         
         self.videoClip = mpy.VideoFileClip(self._trackingVideo)
@@ -1060,7 +886,6 @@ class Plot(tracker.TopMouseTracker) :
 #        print(self._FrameRate, self.finalVideoClip.fps)
         
         if self.finalVideoClip.duration == 0 :
-            
             raise RuntimeError('videoClip is empty !')
         
         self.liveFig = plt.figure(figsize=(5,3), facecolor='white')

@@ -48,22 +48,15 @@ _x = np.arange(0,2,0.1)
 _y = np.arange(0,20,1.)
 
 for folder in os.listdir(OptimizationDir) :
-    
     path2Folder = os.path.join(OptimizationDir,folder)
-    
     for file in os.listdir(path2Folder) :
-        
         prefix = file.split(".")[0].split("_")[0]
         end = file.split(".")[0].split("_")[-1]
         
         if prefix == "PeakThresh" :
-            
             if end == str(minDist) :
-
                 Automatic.append(np.load(os.path.join(path2Folder,file)))
-                                
         elif prefix == "Raster" :
-            
             Manual.append(np.load(os.path.join(path2Folder,file)))
             
 #Colors = [np.random.random(3) for i in range(len(Automatic))]
@@ -71,20 +64,14 @@ Colors = ['green','blue','red','cyan']
 Plots = []
 
 for i,j,k in zip(Automatic,Colors,Manual) :
-    
     Z = []
-    
     for z in [x for sublist in i for x in sublist] :
-    
         if z < k-k*delta :
                 Z.append(np.nan)
-                
         elif z > k+k*delta :
                 Z.append(np.nan)
-                
         else :
             Z.append(1)
-            
     Z = np.array(Z).reshape(((len(_x),len(_y))))
     
     plot = plt.imshow(Z, cmap = mpl.colors.ListedColormap([j]),alpha=alpha, vmin=0, vmax=1)
@@ -127,13 +114,10 @@ _y = np.arange(0,20,1.)
 pos = 0
 
 for y in _y :
-    
     pos+=1
     
     print(pos/len(_y))
-    
     for x in _x :
-    
         z = Plot.OptimizeSegmentation([x,y],peakDist)
         if z[0] > Plot.totalTimeManual+50 :
             z[0] = 0

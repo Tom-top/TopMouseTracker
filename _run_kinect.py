@@ -18,6 +18,7 @@ from pykinect2 import PyKinectV2, PyKinectRuntime
 import TopMouseTracker.utilities as utils
 import TopMouseTracker._kinect_video_writer as kinect
 
+
 _mainDir = os.path.expanduser("~")
 _desktopDir = os.path.join(_mainDir,"Desktop")
 _savingDir = os.path.join(_mainDir,"TopMouseTracker")

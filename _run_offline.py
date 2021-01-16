@@ -29,6 +29,7 @@ import TopMouseTracker._tracker as tracker
 import TopMouseTracker.analysis as analysis
 # Global parameters#
 
+
 Mice = ["68", "69", "70", "72", "74", "77", "78" , "75", "82", "76"]
 #Mice = ["76"]
 
@@ -55,7 +56,6 @@ if not all_params.count(all_params[0]) == len(all_params) :
     raise RuntimeError("One of the preset parameters is missing some data! {0}".format(all_params))
 
 for m, f, r, v in zip(Mice, Folders, refPt, maxMouse) :
-
     params.mainParameters["mouse"] = m #The number of the mouse to be analyzed
     params.mainParameters["rgbVideoName"] = "Raw" #The prefix of the RGB video to be analyzed
     params.mainParameters["depthVideoName"] = "Depth" #The prefix of the depth video to be analyzed

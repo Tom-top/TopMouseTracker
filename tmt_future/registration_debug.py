@@ -8,6 +8,7 @@ Created on Fri Feb 15 16:17:57 2019
 
 from matplotlib.widgets import MultiCursor
 
+
 data.depthFrame = cv2.resize(data.DEPTHFrame,(0,0),fx = data._resizingFactorRegistration,fy = data._resizingFactorRegistration)
         
 data._H_DEPTH_RESIZED,data._W_DEPTH_RESIZED = data.depthFrame.shape[0],data.depthFrame.shape[1]

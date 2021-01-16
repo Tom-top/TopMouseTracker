@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 import xlwt
 
+
 time_cutoff = 5*3600 #seconds
 jitter_filter = 0.6
 artefact_filter = 5
@@ -26,12 +27,13 @@ ws.write(0, 1, "distance_traveled")
 
 metadata_file = "/home/thomas.topilko/Desktop/Tracking/Metadata_Analysis.xlsx"
 
+
 def compute_distance_traveled(file) :
-        
     d = np.load(file)
     distance = [ sqrt( (d[i+1][0]-d[i][0])**2 + (d[i+1][1]-d[i][1])**2 ) for i in np.arange(0, len(d)-1, 1) ]
     
     return np.array(distance)
+
 
 for n, a in enumerate(["183", "183bis", "193", "193bis", "194", "194bis", "195", "195bis",\
                        "196", "196bis", "204", "204bis", "255", "255bis", "260", "260bis",\
@@ -46,7 +48,6 @@ for n, a in enumerate(["183", "183bis", "193", "193bis", "194", "194bis", "195",
     metadata = pd.read_excel(metadata_file)
     
     if os.path.exists(dist_file) :
-        
         try :
             animal = int(dist_file.split("/")[-1].split("_")[-2])
         except :
@@ -60,9 +61,7 @@ for n, a in enumerate(["183", "183bis", "193", "193bis", "194", "194bis", "195",
         distance = np.load(dist_file)
         real_distance = distance[: int(time_cutoff*framerate)]
         real_distance[real_distance < jitter_filter] = 0
-
     else :
-        
         try :
             animal = int(pos_file.split("/")[-1].split("_")[-2])
         except :
@@ -112,16 +111,15 @@ ws.write(0, 1, "distance_traveled")
 
 metadata_file = "/home/thomas.topilko/Desktop/Tracking/Metadata_Analysis.xlsx"
 
+
 def compute_distance_traveled(file) :
-        
     d = np.load(file)
     distance = [ sqrt( (d[i+1][0]-d[i][0])**2 + (d[i+1][1]-d[i][1])**2 ) for i in np.arange(0, len(d)-1, 1) ]
     
     return np.array(distance)
 
-for n, a in enumerate(["68", "69", "70", "72", "74", "77", "78", "75", "82", "76",\
-                       ]) :
-    
+
+for n, a in enumerate(["68", "69", "70", "72", "74", "77", "78", "75", "82", "76"]) :
     dist_file = "/home/thomas.topilko/Desktop/Tracking/Tracking_Results/Experiment/Data_{0}_Distances.npy".format(a)
     pos_file = "/home/thomas.topilko/Desktop/Tracking/Tracking_Results/Experiment/Data_{0}_Points.npy".format(a)
     refPt_file = "/home/thomas.topilko/Desktop/Tracking/Tracking_Results/Experiment/Data_{0}_refPt.npy".format(a)
@@ -129,7 +127,6 @@ for n, a in enumerate(["68", "69", "70", "72", "74", "77", "78", "75", "82", "76
     metadata = pd.read_excel(metadata_file)
     
     if os.path.exists(dist_file) :
-        
         try :
             animal = int(dist_file.split("/")[-1].split("_")[-2])
         except :
@@ -143,9 +140,7 @@ for n, a in enumerate(["68", "69", "70", "72", "74", "77", "78", "75", "82", "76
         distance = np.load(dist_file)
         real_distance = distance[: int(time_cutoff*framerate)]
         real_distance[real_distance < jitter_filter] = 0
-
     else :
-        
         try :
             animal = int(pos_file.split("/")[-1].split("_")[-2])
         except :
@@ -200,10 +195,8 @@ ws.write(0, 0, "name")
 ws.write(0, 1, "distance_traveled")
 
 for f in os.listdir(working_dir) :
-    
     path = os.path.join(working_dir, f)
     if f.split(".")[-1] == "csv" :
-        
         animal = f.split(".")[0].split("_")[-1]
         
         raw = pd.read_csv(path, sep='delimiter', header=None)

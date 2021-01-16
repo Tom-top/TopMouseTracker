@@ -20,7 +20,6 @@ import TopMouseTracker.utilities as utils
 
 
 class Kinect() :
-    
     def __init__(self,**kwargs) : 
         
         self._args = kwargs
@@ -31,17 +30,13 @@ class Kinect() :
         self.topBoxSize = 50 #cm
         
     def GetFrame(self,camera,which,resize) :
-        
         if which == "rgb" :
-            
             frame = camera.get_last_color_frame()
             W,H = camera.color_frame_desc.Width,camera.color_frame_desc.Height
             frame = frame.reshape(H,W,-1).astype(np.uint8)
             frame = cv2.resize(frame, (int(W/resize),int(H/resize)))
             return frame
-            
         elif which == "depth" :
-            
             frame = camera.get_last_depth_frame()
             W,H = camera.depth_frame_desc.Width,camera.depth_frame_desc.Height
             frame8bit = frame.reshape(H,W,-1).astype(np.uint8)
@@ -51,7 +46,6 @@ class Kinect() :
             return frame8bit,frame16bit
 
     def LoadRGBDEPTH(self,resizeRGB,resizeDEPTH) :
-        
         RGBFrame = self.GetFrame(self._args["kinectRGB"],"rgb",resizeRGB)
         RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_BGR2RGB)
         RGBFrame = cv2.cvtColor(RGBFrame, cv2.COLOR_RGB2BGR)
@@ -68,7 +62,6 @@ class Kinect() :
         return RGBFrame,DEPTHFrame8bit,DEPTHFrame16bit
     
     def CreateDisplay(self) :
-        
         RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(3,1)
         
         H,W,_ = RGBFrame.shape
@@ -77,16 +70,12 @@ class Kinect() :
         
         return hStack
     
-    def TestKinect(self,grid=True) : 
-        
+    def TestKinect(self,grid=True) :
         while True :
-            
             RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(2,1)
             
             clone = DEPTHFrame8bit.copy()
-            
-            if grid : 
-
+            if grid :
                 box_size = 50
                 height,width,depth = DEPTHFrame8bit.shape
                 
@@ -109,32 +98,19 @@ class Kinect() :
                 gridres = self.gridRes
                         
                 for x in np.arange(int(horizontal_position)+gridres,int(horizontal_position)+(box_size*average_ratio),gridres) :
-                    
-                    for y in np.arange(int(vertical_position)+gridres,int(vertical_position)+(box_size*average_ratio),gridres) : 
-                        
+                    for y in np.arange(int(vertical_position)+gridres,int(vertical_position)+(box_size*average_ratio),gridres) :
                         local_pixel_values = []
-                        
                         for x_pixel in np.arange(-gridres/2,gridres/2) :
-                            
                             for y_pixel in np.arange(-gridres/2,gridres/2) :
-                                
                                 pixel_value = clone[int(y+y_pixel)][int(x+x_pixel)][0]
                                 local_pixel_values.append(pixel_value)
-                                
                         avg_local_value = sum(local_pixel_values)/len(local_pixel_values)
-                        
-                        if avg_local_value > self._args["depthMaxThresh"] : 
-                            
+                        if avg_local_value > self._args["depthMaxThresh"] :
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (255,0,0), 1)
-                            
-                        elif avg_local_value < self._args["depthMinThresh"] : 
-                            
+                        elif avg_local_value < self._args["depthMinThresh"] :
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,0,255), 1)
-                            
-                        else : 
-                            
+                        else :
                             cv2.circle(DEPTHFrame8bit,(x,y), gridres-12, (0,255,0), 1)
-                        
                         cv2.putText(DEPTHFrame8bit, str(int(avg_local_value)), (x-10,y+2),cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255))
             
             cv2.imshow("RGBframe",RGBFrame)
@@ -147,11 +123,8 @@ class Kinect() :
         
         
     def PlayAndSave(self,display=True) :
-        
-        
         #Initializes time variables
         #----------------------------------------------------------------------
-        
         self.time = time.localtime(time.time())
         self.tStart = time.time()
         
@@ -160,8 +133,7 @@ class Kinect() :
                         self.time.tm_min,self.time.tm_sec)
         self.dataDir = os.path.join(self._args["savingDir"],self.dataDirName)
         utils.CheckDirectoryExists(self.dataDir)
-        
-        
+
         #Creates temporary folders that will hold of the stream images
         #----------------------------------------------------------------------
         
@@ -170,21 +142,17 @@ class Kinect() :
         
         self.tempSinkDEPTH = os.path.join(self.dataDir,"tempSinkDEPTH")
         utils.CheckDirectoryExists(self.tempSinkDEPTH)
-        
-        
+
         #Creates temporary folders that will hold of the stream images
         #----------------------------------------------------------------------
         
         self.frameCnt = 0
     
         while True :
-            
             self.FrameRGB,self.FrameDEPTH8Bit,_ = self.LoadRGBDEPTH(1,1)
             
             self.frameCnt += 1
-            
             if display :
-
                 RGBFrame,DEPTHFrame8bit,_ = self.LoadRGBDEPTH(3,1)
                 cv2.imshow('RGB',RGBFrame)
                 #cv2.imshow('DEPTH',DEPTHFrame8bit)
@@ -196,8 +164,7 @@ class Kinect() :
                 break
                 
         cv2.destroyAllWindows()
-        
-        
+
         #Set VideoWriters
         #----------------------------------------------------------------------
         

@@ -24,6 +24,7 @@ if not os.getcwd() == tmt_dir:
     
 import scripts.tomek_photometry_functions as fc
 
+
 experiment = 200917
 mouse = "2"
 
@@ -176,50 +177,38 @@ fc.PeriEventPlot(dataAroundPeaksOrdered, mLengthPeaksOrdered, SRD, SRD, GD, GDf,
 
 def LivePhotometryTrack(vidClip, x, yData, thresh, globalAcceleration=1,\
                         plotAcceleration=SRD, showHeight=True, showTrace=True) :
-    
     nSubplots = len([x for x in yData if x != []])
     
     def make_frame_mpl(t):
-         
         i = int(t)
-        
         if i < thresh*plotAcceleration :
-            
             try :
-                
                 cottonGraph.set_data(x[0:i], yData[0][0:i])
 #                cottonGraph.fill_between(x[0:i], 0, y0[0:i], color="blue", alpha=0.8)
 #                eventGraph.set_data(x[0:i], y1)
 #                calciumGraph.set_data(x[0:i], y2[0:i])
                 dFGraph.set_data(x[0:i], yData[3][0:i])
-                
             except :
-                
                 print("Oups a problem occured")
                 pass
     
             last_frame = mplfig_to_npimage(liveFig)
             return last_frame
-        
         else :
-            
             delta = (i/plotAcceleration) - thresh
         
             liveAx0.set_xlim(x[0]+delta, x[0]+(i/plotAcceleration))
 #            liveAx1.set_xlim(x[0]+delta, x[0]+(i/plotAcceleration))
 #            liveAx2.set_xlim(x[0]+delta, x[0]+(i/plotAcceleration))
             liveAx3.set_xlim(x[0]+delta, x[0]+(i/plotAcceleration))
-            
+
             try :
-                
                 cottonGraph.set_data(x[0:i], yData[0][0:i])
 #                cottonGraph.fill_between(x[0:i], 0, y0[0:i], color="blue", alpha=0.8)
 #                eventGraph.set_data(x[0:i], y1[0:i])
 #                calciumGraph.set_data(x[0:i], y2[0:i])
                 dFGraph.set_data(x[0:i], yData[3][0:i])
-                
             except :
-                
                 print("Oups a problem occured")
                 pass
     
@@ -280,7 +269,6 @@ def LivePhotometryTrack(vidClip, x, yData, thresh, globalAcceleration=1,\
                              bg_color=[255,255,255])
     
     finalClip.write_videofile(os.path.join("/home/thomas.topilko/Desktop",'PhotoMetry_Tracking.mp4'), fps=10)
-    
 
 
 #rawXZeroed = rawX - rawX[0]
@@ -292,7 +280,6 @@ newCotton = np.array(newCotton)
 yData = [newCotton, [], [], dF]
 
 for y in yData :
-    
     print(len(y))
 
 displayThreshold = int(5*videoClipCropped.fps) #How much of the graph will be displayed in live (x scale)
@@ -315,7 +302,6 @@ leData = []
 posData = []
 
 for f in os.listdir(peFolder) :
-    
     temp = np.load(os.path.join(peFolder, f))
     peData.append(temp[0])
     leData.append(temp[1])

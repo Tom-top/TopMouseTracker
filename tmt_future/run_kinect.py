@@ -18,6 +18,7 @@ import TopMouseTracker.tracker_kinect as tracker
 import TopMouseTracker.analysis as analysis
 import TopMouseTracker.utilities as utils
 
+
 _mainDir = os.path.expanduser("~")
 _desktopDir = os.path.join(_mainDir,"Desktop")
 _resultDir = os.path.join(_mainDir,"TopMouseTracker")
@@ -92,7 +93,6 @@ mainParameters["testFrameRGB"] = tracker.getColorFrame(mainParameters["kinectRGB
 data = {}
 
 for mouse in mainParameters["mice"] :
-
     segmentationParameters["mouse"] = mouse
     
     data["{0}".format(mouse)] = tracker.Tracker(mode=mainParameters["light"],**trackerParameters)

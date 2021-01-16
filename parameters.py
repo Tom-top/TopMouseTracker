@@ -70,11 +70,8 @@ nestingRasterPlotParameters = {
                                 }
         
 if type(nestingRasterPlotParameters['peakThresh']) == float :
-    
     nestingRasterPlotParameters['PeakTresh'] = str(nestingRasterPlotParameters['peakThresh'])[0]+'-'+str(nestingRasterPlotParameters['peakThresh'])[2:]
-
 else :
-    
     nestingRasterPlotParameters['PeakTresh'] = nestingRasterPlotParameters['peakThresh']
                 
 completeTrackingPlotParameters = {
@@ -100,11 +97,8 @@ trackerParameters = {
 ##############################################################################             
 
 if os.path.exists("/System/Library/Sounds/") :
-    
     sounds = {sound.split(".")[0]: sound.split(".")[0] for sound in os.listdir("/System/Library/Sounds/")}
-    
 else :
-    
     sounds = None
     print("/!\ [WARNING] The directory : {0} for sound files doesn't exist".format("/System/Library/Sounds/"))
                          

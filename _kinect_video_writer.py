@@ -16,10 +16,9 @@ import xlwt
 
 import TopMouseTracker.utilities as utils
 
+
 class Kinect() :
-    
-    def __init__(self,**kwargs) : 
-        
+    def __init__(self,**kwargs) :
         self._args = kwargs
         
         self.kinectHeight = 60 #cm
@@ -28,7 +27,6 @@ class Kinect() :
         self.topBoxSize = 50 #cm
         
     def GetRGBFrame(self, resize) :
-        
         self.RGBFrame = self._args["kinectRGB"].get_last_color_frame()
         self.wRGB,self.hRGB = self._args["kinectRGB"].color_frame_desc.Width,self._args["kinectRGB"].color_frame_desc.Height
         self.RGBFrame = self.RGBFrame.reshape(self.hRGB,self.wRGB,-1).astype(np.uint8)
@@ -38,7 +36,6 @@ class Kinect() :
         self.RGBFrame = cv2.flip(self.RGBFrame,0)
     
     def GetDepthFrame(self, resize) :
-        
         self.DepthFrame = self._args["kinectDEPTH"].get_last_depth_frame()
         self.wDepth,self.hDepth = self._args["kinectDEPTH"].depth_frame_desc.Width,self._args["kinectDEPTH"].depth_frame_desc.Height
         self.DepthFrame = self.DepthFrame.reshape(self.hDepth,self.wDepth,-1).astype(np.uint8)
@@ -48,24 +45,19 @@ class Kinect() :
         self.DepthFrame = cv2.resize(self.DepthFrame, (self.wRGB,self.hRGB))
 
     def LoadRGBDepth(self, resizeRGB, resizeDepth) :
-        
         self.GetRGBFrame(resizeRGB)
         self.GetDepthFrame(resizeDepth)
     
     def CreateDisplay(self, resizeRGB, resizeDepth) :
-        
         self.LoadRGBDepth(resizeRGB, resizeDepth)
         self.hStack = np.hstack((self.RGBFrame, self.DepthFrame))
     
-    def TestKinect(self, grid=False) : 
-        
+    def TestKinect(self, grid=False) :
         while True :
-            
             self.CreateDisplay(3,1)
             self.DepthFrameClone = self.DepthFrame.copy()
             
-            if grid : 
-                
+            if grid :
                 self.horizontalLength = 2*( tan( (self.kinectHorizontalAngle*(pi/180)) /2 )*self.kinectHeight )
                 self.verticalLength = 2*( tan( (self.kinectVerticalAngle*(pi/180)) /2 )*self.kinectHeight )
                 self.distanceRatio = int( (self.wRGB/self.horizontalLength) + (self.hRGB/self.verticalLength) /2 )
@@ -86,9 +78,7 @@ class Kinect() :
                         local_pixel_values = []
                         
                         for x_pixel in np.arange(-self._args["gridRes"]/2,self._args["gridRes"]/2) :
-                            
                             for y_pixel in np.arange(-self._args["gridRes"]/2,self._args["gridRes"]/2) :
-                                
                                 pixel_value = self.DepthFrameClone[int(y+y_pixel)][int(x+x_pixel)][0]
                                 local_pixel_values.append(pixel_value)
                                 
@@ -102,22 +92,18 @@ class Kinect() :
                             cv2.circle(self.DepthFrame,(x,y), self._args["gridRes"]-12, (0,255,0), 1)
                         
                         cv2.putText(self.DepthFrame, str(int(avg_local_value)), (x-10,y+2),cv2.FONT_HERSHEY_SIMPLEX, .3, (255, 255, 255))
-            
             else :
-                
                 pass
             
             cv2.imshow("RGBframe", self.RGBFrame)
             cv2.imshow("DEPTHframe",self.DepthFrame)
    
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                
                 break
                 
         cv2.destroyAllWindows()
         
     def saveFrames(self) :
-        
         self.tNow = time.time()
         self.LoadRGBDepth()
         self.frameCnt += 1
@@ -126,7 +112,6 @@ class Kinect() :
         self.DepthWriter.write(self.DepthFrame)
         
     def PlayAndSave(self, display=True, samplingTime=60) :
-        
         #Set timers
         #----------------------------------------------------------------------
         
@@ -150,7 +135,6 @@ class Kinect() :
         utils.CheckDirectoryExists(self.dataDir)
         
         if samplingTime != 1 :
-        
             #Checking frame sizes
             #----------------------------------------------------------------------
             
@@ -177,21 +161,15 @@ class Kinect() :
             print("[INFO] Starting framerate sampling for {0}s...".format(samplingTime))
             
             try :
-                
-                while self.tNow-self.tStart < samplingTime : 
-                
+                while self.tNow-self.tStart < samplingTime :
                     self.saveFrames(self.TestRGBWriter,self.TestDepthWriter)
-                        
                     if display :
-                        
                         self.downSampledRGB = cv2.resize(self.RGBFrame, (0,0), fx=0.3, fy=0.3)
                         cv2.imshow('RGB',self.downSampledRGB)
                         
                         if cv2.waitKey(1) & 0xFF == ord('q'):
                             break
-                    
             except KeyboardInterrupt:
-                
                 pass
         
             #Resets timers and counters
@@ -206,9 +184,7 @@ class Kinect() :
         
             os.remove(os.path.join(self.dataDir,'TestRGB.avi'))
             os.remove(os.path.join(self.dataDir,'TestDEPTH.avi'))
-        
         else :
-            
             self.LoadRGBDepth(1,1)
         
         self.RGBWriter = cv2.VideoWriter(os.path.join(self.dataDir,\
@@ -228,9 +204,7 @@ class Kinect() :
         print("[INFO] Starting video recording...")
         
         try :
-            
             while True :
-                    
                 self.saveFrames(self.RGBWriter,self.DepthWriter)
                 
                 if self.display :
@@ -240,9 +214,7 @@ class Kinect() :
                         
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
-                    
         except KeyboardInterrupt:
-                
             pass
             
         #Stops stream saving and saves metadata
@@ -259,7 +231,6 @@ class Kinect() :
         cv2.destroyAllWindows()
         
     def saveMetaData(self) :
-        
         self.metaDataString = "MetaData",self.time.tm_mday,\
                         self.time.tm_mon,self.time.tm_year,self.time.tm_hour,\
                         self.time.tm_min,self.time.tm_sec

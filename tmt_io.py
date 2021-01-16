@@ -52,19 +52,14 @@ def VideoConverter(directory,**kwargs) :
     counter = 0
         
     for files in natsorted(os.listdir(directory)) :
-        
         if files.split('.')[-1] == 'mpg' :
-            
             Videosources.append(directory+str(files))
             Videosinks.append(directory+'Mpeg_'+str(counter)+'.mp4')
             counter+=1
-            
         else :
-            
             utils.PrintColoredMessage("[WARNING] File {0} is not in the right format".format(files), "darkred")
     
     for videosource,videosinks in zip(Videosources,Videosinks) :
-        
         name = videosource.split('/')[-1]
         args = shlex.split(kwargs['runstr'].format(kwargs['handBrakeCLI'],\
                            videosource,videosinks,kwargs['encoder'],\
@@ -148,19 +143,12 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
     DEPTHTestFrame = None
     
     print("\n")
-    
     if not in_folder :
-    
         for folder in natsorted(os.listdir(directory)) :
-            
             dirPath = os.path.join(directory,folder)
-            
             if os.path.isdir(dirPath) and dirPath in kwargs["main"]["workingDir"] :
-        
                 for file in natsorted(os.listdir(os.path.join(directory,folder))) :
-                    
                     if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
-                        
                         if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
     #                    if file.split('_')[0] == "Raw" :
                             #cap = cv2.VideoCapture(os.path.join(directory,file))
@@ -169,7 +157,6 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                             RGBCaptures.append(cap)
                             
                             if not RGBTrigger :
-                            
                                 frame = cap.get_frame(kwargs["main"]["testFramePos"])
                                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                                 
@@ -179,21 +166,18 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                             utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                                   
                             if kwargs["main"]["playSound"] :
-                                  
                                 try :  
                                     utils.PlaySound(1,params.sounds['Purr'])
                                 except :
-                                    pass;
+                                    pass
                             
                         elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
-                            
                             #cap = cv2.VideoCapture(os.path.join(directory,file))
                             cap = mpy.VideoFileClip(os.path.join(dirPath,file))
                             #cap = skvideo.io.vreader(os.path.join(directory,file))
                             DEPTHCaptures.append(cap)
         
                             if not DEPTHTrigger :
-                                
                                 frame = cap.get_frame(kwargs["main"]["testFramePos"])
                                 
                                 DEPTHTestFrame = frame
@@ -202,25 +186,18 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                             utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                                   
                             if kwargs["main"]["playSound"] :
-                            
                                 try :  
                                     utils.PlaySound(1,params.sounds['Purr'])
                                 except :
-                                    pass;
-                                    
+                                    pass
     elif in_folder :
-        
         for file in natsorted(os.listdir(directory)) :
-            
             if file.split('.')[-1] == kwargs["main"]["extensionLoad"] :
-                
                 if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
-
                     cap = mpy.VideoFileClip(os.path.join(directory,file))
                     RGBCaptures.append(cap)
                     
                     if not RGBTrigger :
-                    
                         frame = cap.get_frame(kwargs["main"]["testFramePos"])
                         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         
@@ -230,22 +207,16 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                     utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                           
                     if kwargs["main"]["playSound"] :
-                          
-                        try :  
-                            
+                        try :
                             utils.PlaySound(1,params.sounds['Purr'])
-                            
                         except :
-                            
                             pass
                 
                 elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
-                    
                     cap = mpy.VideoFileClip(os.path.join(directory,file))
                     DEPTHCaptures.append(cap)
 
                     if not DEPTHTrigger :
-                        
                         frame = cap.get_frame(kwargs["main"]["testFramePos"])
                         
                         DEPTHTestFrame = frame
@@ -254,17 +225,12 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                     utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                           
                     if kwargs["main"]["playSound"] :
-                    
-                        try :  
-                            
+                        try :
                             utils.PlaySound(1,params.sounds['Purr'])
-                            
                         except :
-                            
                             pass
     
     if not RGBTrigger and not DEPTHTrigger:
-        
         utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found","darkred")
             
     return RGBCaptures,DEPTHCaptures,RGBTestFrame,DEPTHTestFrame
@@ -315,7 +281,6 @@ class CroppingROI():
             cv2.waitKey(1)
     
     def clickAndCrop(self, event, x, y, flags, param):
-        
         if event == cv2.EVENT_LBUTTONDOWN:
             self.refPt = [(x, y)]
         elif event == cv2.EVENT_LBUTTONUP:
@@ -325,5 +290,4 @@ class CroppingROI():
             cv2.imshow("image", self.frame)
             
     def roi(self) :
-        
         return self.refPt

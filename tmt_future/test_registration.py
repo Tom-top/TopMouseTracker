@@ -6,38 +6,37 @@ Created on Fri Aug  2 16:49:17 2019
 @author: thomas.topilko
 """
 
+import numpy as np
+
+from matplotlib import pyplot as plt
+
+import cv2
+
 Tracker.start_X = 0
 Tracker.end_X = Tracker.start_X+Tracker._H_DEPTH_RESIZED
 Tracker.start_Y = 295 #292
 Tracker.end_Y = Tracker.start_Y+Tracker._W_DEPTH_RESIZED
 
 if Tracker.end_X >= Tracker._H_RGB :
-    
     Tracker.end_X_foreground = Tracker._H_RGB-Tracker.start_X
 else :
-    
     Tracker.end_X_foreground = Tracker._H_RGB
     
 if Tracker.end_Y >= Tracker._W_RGB :
-    
     Tracker.end_Y_foreground = Tracker._W_RGB-Tracker.start_Y
-else : 
-    
+else :
     Tracker.end_Y_foreground = Tracker._W_RGB
 
 Tracker.start_X_foreground = 110 #97
 Tracker.start_Y_foreground = 0
 
 if Tracker.start_X_foreground != 0 :
-    
     Tracker.end_X = Tracker.end_X-Tracker.start_X_foreground
     Tracker.end_X_foreground = Tracker.end_X_foreground+Tracker.start_X_foreground
     
 if Tracker.start_Y_foreground != 0 :
-    
     Tracker.end_Y = Tracker.end_Y-Tracker.start_Y_foreground
     Tracker.end_Y_foreground = Tracker.end_Y_foreground+Tracker.start_Y_foreground
-    
 
 
 Tracker.depthFrame = cv2.resize(Tracker.DEPTHFrame,(0,0), fx=Tracker._resizingFactorRegistration, fy=Tracker._resizingFactorRegistration)
@@ -71,7 +70,6 @@ croppedRegisteredDepth = registeredDepth[Tracker.upLeftY:Tracker.lowRightY,Track
 #cv2.drawContours(croppedRegisteredDepth, Tracker.cntsCottonFiltered, -1, (0,255,0), Tracker.contourThickness)
 
 #plt.imshow(croppedRegisteredDepth)
-
 
 
 fig =plt.figure()
