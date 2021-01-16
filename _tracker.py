@@ -650,7 +650,7 @@ class TopMouseTracker():
             self.biggestContour = max(self.cnts, key=cv2.contourArea); #Finds the biggest contour of the binary mask
             self.area = cv2.contourArea(self.biggestContour); #Computes the area of the biggest object from the binary mask
             
-            if self.area > self._args["segmentation"]["minAreaMask"] and self.area < self._args["segmentation"]["maxAreaMask"] : #Future computation is done only if the area of the detected object is meaningful
+            if self.area > self._args["segmentation"]["minAreaMask"] and self.area < self._args["segmentation"]["maxAreaMask"] : #tmt_future computation is done only if the area of the detected object is meaningful
                 
                 ((self.x,self.y), self.radius) = cv2.minEnclosingCircle(self.biggestContour);
                 self.M = cv2.moments(self.biggestContour); #Computes the Moments of the detected object
