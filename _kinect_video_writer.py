@@ -12,7 +12,7 @@ import os;
 import xlwt;
 from math import pi,tan;
 
-import TopMouseTracker.utilities as utils;
+import TopMouseTracker.utilities as utils
 
 class Kinect() :
     
