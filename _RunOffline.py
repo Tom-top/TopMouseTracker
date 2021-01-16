@@ -28,7 +28,7 @@ import TopMouseTracker.parameters as params
 import TopMouseTracker.utilities as utils
 import TopMouseTracker.tmt_io as IO
 import TopMouseTracker._Tracker as tracker
-import TopMouseTracker.Analysis as analysis
+import TopMouseTracker.analysis as analysis
 # Global parameters#
 
 Mice = ["68", "69", "70", "72", "74", "77", "78" , "75", "82", "76"]

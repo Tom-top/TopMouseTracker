@@ -18,7 +18,7 @@ from TopMouseTracker import settings
 import TopMouseTracker.parameters as params
 import TopMouseTracker.tmt_io as IO
 import TopMouseTracker.Tracker_Kinect as tracker;
-import TopMouseTracker.Analysis as analysis;
+import TopMouseTracker.analysis as analysis;
 import TopMouseTracker.utilities as utils;
 
 _mainDir = os.path.expanduser("~");
