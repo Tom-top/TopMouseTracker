@@ -23,8 +23,8 @@ from email.mime.image import MIMEImage;
 from email.mime.multipart import MIMEMultipart;
 from PIL import Image;
 
-import TopMouseTracker.Parameters as params;
-import TopMouseTracker.utilities as utils;
+import TopMouseTracker.parameters as params
+import TopMouseTracker.utilities as utils
 import TopMouseTracker.IO as IO;
 
 class TopMouseTracker():

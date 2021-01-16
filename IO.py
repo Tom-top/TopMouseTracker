@@ -16,9 +16,8 @@ import skvideo.io;
 import moviepy.editor as mpy;
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-import TopMouseTracker.Parameters as params;
-import TopMouseTracker.Settings as settings;
-import TopMouseTracker.utilities as utils;
+import TopMouseTracker.parameters as params
+import TopMouseTracker.utilities as utils
 
 def concatenate_video_clips(folder_path) :
 

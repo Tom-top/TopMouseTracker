@@ -10,8 +10,8 @@ import os;
 import shutil;
 import smtplib;
 
-import TopMouseTracker.Settings as settings;
-import TopMouseTracker.Parameters as params;
+from TopMouseTracker import settings
+import TopMouseTracker.parameters as params
 
 
 def PrintColoredMessage(msg,color) :

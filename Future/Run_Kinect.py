@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt;
 
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
-import TopMouseTracker.Settings as settings;
-import TopMouseTracker.Parameters as params;
+from TopMouseTracker import settings
+import TopMouseTracker.parameters as params
 import TopMouseTracker.IO as IO;
 import TopMouseTracker.Tracker_Kinect as tracker;
 import TopMouseTracker.Analysis as analysis;
