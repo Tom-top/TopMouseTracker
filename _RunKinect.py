@@ -14,7 +14,7 @@ import cv2;
 import matplotlib.pyplot as plt;
 from pykinect2 import PyKinectV2,PyKinectRuntime;
 
-import TopMouseTracker.Utilities as utils;
+import TopMouseTracker.utilities as utils;
 import TopMouseTracker._KinectVideoWriter as kinect;
 
 _mainDir = os.path.expanduser("~");

@@ -18,7 +18,7 @@ from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 import TopMouseTracker.Parameters as params;
 import TopMouseTracker.Settings as settings;
-import TopMouseTracker.Utilities as utils;
+import TopMouseTracker.utilities as utils;
 
 def concatenate_video_clips(folder_path) :
 

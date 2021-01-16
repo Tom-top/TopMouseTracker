@@ -19,7 +19,7 @@ import TopMouseTracker.Parameters as params;
 import TopMouseTracker.IO as IO;
 import TopMouseTracker.Tracker_Kinect as tracker;
 import TopMouseTracker.Analysis as analysis;
-import TopMouseTracker.Utilities as utils;
+import TopMouseTracker.utilities as utils;
 
 _mainDir = os.path.expanduser("~");
 _desktopDir = os.path.join(_mainDir,"Desktop");

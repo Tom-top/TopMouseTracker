@@ -20,7 +20,7 @@ import moviepy.editor as mpy;
 from moviepy.video.io.bindings import mplfig_to_npimage;
 from moviepy.editor import VideoFileClip, VideoClip, clips_array,ImageSequenceClip;
 
-import TopMouseTracker.Utilities as utils;
+import TopMouseTracker.utilities as utils;
 import TopMouseTracker._Tracker as tracker;
 
 #class GroupData() :
