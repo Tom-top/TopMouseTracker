@@ -25,7 +25,7 @@ if not os.getcwd() == TMTDir :
     
     os.chdir(TMTDir);
     
-import Scripts.Tomek_Photometry_Functions as fc;
+import scripts.Tomek_Photometry_Functions as fc;
 
 experiment = 200917;
 mouse = "2";
