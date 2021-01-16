@@ -79,7 +79,7 @@ for m, f, r, v in zip(Mice, Folders, refPt, maxMouse) :
     
     # Path parameters#
     
-    params.mainParameters["worckingStation"] = "Black Sabbath"; #Name of the machine on which the    code is being run
+    params.mainParameters["worckingStation"] = "Black Sabbath" #Name of the machine on which the    code is being run
     params.mainParameters["tmtDir"] = "/home/thomas.topilko/Desktop/Tracking" #Path to the TMT folder "/mnt/raid/TopMouseTracker"
     params.mainParameters["videoInfoFile"] = os.path.join(params.mainParameters["tmtDir"],"Video_Info.xlsx") #Path to the video info file
     params.mainParameters["dataDir"] = os.path.join(params.mainParameters["tmtDir"],f) #Path to the Data folder
@@ -87,7 +87,7 @@ for m, f, r, v in zip(Mice, Folders, refPt, maxMouse) :
     params.mainParameters["resultDir"] = os.path.join(params.mainParameters["dataDir"],"{0}".format(params.mainParameters["mouse"])) #Path to the Result folder
     params.mainParameters["segmentationDir"] = os.path.join(params.mainParameters["resultDir"],"segmentation") #Path to the segmentation folder in case sequential frame segmentation was activated
     
-    utils.CheckDirectories(); #Check is all the necessary directories were created and asks for the user to clean them if not empty
+    utils.CheckDirectories() #Check is all the necessary directories were created and asks for the user to clean them if not empty
         
     #######################################################################################################################################################
     # Loading captures/test frames to memory#

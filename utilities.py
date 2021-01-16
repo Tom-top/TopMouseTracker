@@ -31,15 +31,15 @@ def PrintColoredMessage(msg,color) :
     
         if color in params.colors :
             
-            print(params.colors[color]+msg+params.colors["off"]);
+            print(params.colors[color]+msg+params.colors["off"])
         
         else :
             
-            PrintColoredMessage("[WARNING] The color {0} is not available!".format(color),"darkred");
+            PrintColoredMessage("[WARNING] The color {0} is not available!".format(color),"darkred")
             
     else :
         
-        PrintColoredMessage("[WARNING] The message {0} is not in the correct format!".format(msg),"darkred");
+        PrintColoredMessage("[WARNING] The message {0} is not in the correct format!".format(msg),"darkred")
     
 def PrintLoadingBar(percent) :
     
@@ -68,16 +68,16 @@ def PrintLoadingBar(percent) :
                    
         for n,i in enumerate(pattern) :
             if n < percent :
-                pattern[n] = '#';
+                pattern[n] = '#'
             else :
-                pattern[n] = '.';
+                pattern[n] = '.'
                 
-        pattern = "".join(pattern);
-        return pattern;
+        pattern = "".join(pattern)
+        return pattern
     
     else :
         
-        PrintColoredMessage("[WARNING] A progress cannot be negative right?","darkred");
+        PrintColoredMessage("[WARNING] A progress cannot be negative right?","darkred")
 
 def HoursMinutesSeconds(time) :
     
@@ -93,17 +93,17 @@ def HoursMinutesSeconds(time) :
     #Checks if time argument is correct
     if time >= 0 :
 
-        remainingMinutes = time%3600;
-        remainingSeconds = remainingMinutes%60;
-        hours = int(time/3600);
-        minutes = int(remainingMinutes/60);
-        seconds = int(remainingSeconds);
-    
-        return hours,minutes,seconds;
+        remainingMinutes = time%3600
+        remainingSeconds = remainingMinutes%60
+        hours = int(time/3600)
+        minutes = int(remainingMinutes/60)
+        seconds = int(remainingSeconds)
+
+        return hours,minutes,seconds
     
     else :
         
-        PrintColoredMessage("[WARNING] Time cannot be negative right?","darkred");
+        PrintColoredMessage("[WARNING] Time cannot be negative right?","darkred")
 
 def PlaySound(n,sound) :
     
@@ -130,11 +130,11 @@ def PlaySound(n,sound) :
         
             for i in range(n) :
                 
-                os.system('afplay /System/Library/Sounds/'+str(sound)+'.aiff');
+                os.system('afplay /System/Library/Sounds/'+str(sound)+'.aiff')
         
         else :
             
-            PrintColoredMessage("[WARNING] The functions utils.PlaySound requieres OS X operating system to work!","darkred");
+            PrintColoredMessage("[WARNING] The functions utils.PlaySound requieres OS X operating system to work!","darkred")
             
     else :
         
@@ -165,20 +165,20 @@ def CheckDirectoryExists(directory) :
     
             if not os.path.exists(directory) :
                 
-                os.mkdir(directory);
-                PrintColoredMessage("[INFO] {0} has been created".format(directory),"darkgreen");
+                os.mkdir(directory)
+                PrintColoredMessage("[INFO] {0} has been created".format(directory),"darkgreen")
                 
             else :
-                
-                pass;
+
+                pass
                 
         else :
             
-            raise RuntimeError("{0} is not a valid directory!".format(directory));
+            raise RuntimeError("{0} is not a valid directory!".format(directory))
             
     else :
         
-        raise RuntimeError("{0} is not a valid directory!".format(directory));
+        raise RuntimeError("{0} is not a valid directory!".format(directory))
         
 def ClearDirectory(directory) :
     
@@ -188,7 +188,7 @@ def ClearDirectory(directory) :
             
             if os.listdir(directory) != [] :
                 
-                Input = input("Type [y]/n to clean {0} :   ".format(directory));
+                Input = input("Type [y]/n to clean {0} :   ".format(directory))
                     
                 if Input == 'y' :
                 
@@ -196,62 +196,62 @@ def ClearDirectory(directory) :
                         
                         try :
                     
-                            os.remove(os.path.join(directory,obj));
+                            os.remove(os.path.join(directory,obj))
                             
                         except :
                             
-                            shutil.rmtree(os.path.join(directory,obj));
+                            shutil.rmtree(os.path.join(directory,obj))
                         
                 elif Input == 'n' :
                     
-                    PrintColoredMessage("{0} was kept untouched!".format(directory),"darkgreen");
+                    PrintColoredMessage("{0} was kept untouched!".format(directory),"darkgreen")
                     
                 else :
                     
-                    PrintColoredMessage("Wrong input!".format(directory),"darkgreen");
+                    PrintColoredMessage("Wrong input!".format(directory),"darkgreen")
                     
             else :
                 
-                PrintColoredMessage("{0} was already empty!".format(directory),"darkgreen");
+                PrintColoredMessage("{0} was already empty!".format(directory),"darkgreen")
                 
         else :
             
-            raise RuntimeError("{0} is not a valid directory!".format(directory));
+            raise RuntimeError("{0} is not a valid directory!".format(directory))
             
     else :
         
-        raise RuntimeError("{0} is not a valid directory!".format(directory));
+        raise RuntimeError("{0} is not a valid directory!".format(directory))
         
 def CheckMail() :
     
     if params.mainParameters["email"] != None :
     
-        params.mainParameters["password"] = input("Type the password for your email {0} : ".format(params.mainParameters["email"]));
+        params.mainParameters["password"] = input("Type the password for your email {0} : ".format(params.mainParameters["email"]))
     
         try :
-            s = smtplib.SMTP(params.mainParameters["smtp"], params.mainParameters["port"]);
-            s.ehlo();
-            s.starttls();
-            s.ehlo();
-            s.login(params.mainParameters["email"], params.mainParameters["password"]);
-            PrintColoredMessage("Emailing mode has been enabled","darkgreen");
-            
+            s = smtplib.SMTP(params.mainParameters["smtp"], params.mainParameters["port"])
+            s.ehlo()
+            s.starttls()
+            s.ehlo()
+            s.login(params.mainParameters["email"], params.mainParameters["password"])
+            PrintColoredMessage("Emailing mode has been enabled","darkgreen")
+
         except :
             
-            PrintColoredMessage("[WARNING] Wrong Username or Password !","darkred");
+            PrintColoredMessage("[WARNING] Wrong Username or Password !","darkred")
     
     else :
         
-        PrintColoredMessage("Emailing mode has been disabled","darkgreen");
+        PrintColoredMessage("Emailing mode has been disabled","darkgreen")
         
 def CheckDirectories() :
     
-    CheckDirectoryExists(params.mainParameters["tmtDir"]); #Checks if directory exists
-    CheckDirectoryExists(params.mainParameters["resultDir"]); #Checks if directory exists
-    ClearDirectory(params.mainParameters["resultDir"]); #Asks for clearing the directory if not empty
+    CheckDirectoryExists(params.mainParameters["tmtDir"])  #Checks if directory exists
+    CheckDirectoryExists(params.mainParameters["resultDir"])  #Checks if directory exists
+    ClearDirectory(params.mainParameters["resultDir"])  #Asks for clearing the directory if not empty
     
     if params.savingParameters["fourcc"] == "Frames" :
         
-        CheckDirectoryExists(params.mainParameters["segmentationDir"]);  #Check if directory exists
+        CheckDirectoryExists(params.mainParameters["segmentationDir"])  #Check if directory exists
         
-    CheckMail();
+    CheckMail()

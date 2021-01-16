@@ -16,7 +16,7 @@ mainParameters = {
                     "port" : 587, #The server port
                     "playSound" : False, #Parameters to enable ping sound after code finished running
                     "sound2Play" : None, #The sound to be played
-                    };
+                    }
 
 segmentationParameters = {
                     "threshMinMouse" : np.array([0, 0, 0],np.uint8), #Lower parameter for thresholding the mouse (hsv) #"threshMinMouse" : np.array([0, 10, 40],np.uint8)
@@ -30,7 +30,7 @@ segmentationParameters = {
                     "nestCottonSize" : 15000., #Parameter for maximum size of cotton detection (pixels)
                     "showStream" : False, #Display the tracking in LIVE MODE
                     "resize_stream" : 4,
-                    };
+                    }
 
 '''   
 FOURCC :
@@ -47,7 +47,7 @@ savingParameters = {
                     "savingExtension" : "avi", #The extension of the tracking for saving
                     "saveCottonMask" : False, #Whether or not to save the cotton mask
                     "resizeTracking" : 1., #Resizing factor for tracking video
-                    };
+                    }
 
 plotParameters = {
                     "minDist" : 0.5,
@@ -55,7 +55,7 @@ plotParameters = {
                     "res" : 1,
                     "limit" : 10.,
                     "gridsize" : 200,
-                    };
+                    }
         
 nestingRasterPlotParameters = {
                                 "cBefore" : "blue",
@@ -67,7 +67,7 @@ nestingRasterPlotParameters = {
                                 "minDist" : 7,
                                 "displayManual" : False,
                                 "save" : True,
-                                };
+                                }
         
 if type(nestingRasterPlotParameters['peakThresh']) == float :
     
@@ -86,14 +86,14 @@ completeTrackingPlotParameters = {
                                     "rasterSpread" : None,
                                     "cottonSubplots" : True,
                                     "save" : True,
-                                    };
+                                    }
         
 trackerParameters = {
         "main" : mainParameters,
         "segmentation" : segmentationParameters,
         "saving" : savingParameters,
         "plot" : plotParameters,
-        };
+        }
     
 ##############################################################################
 # Parameters for sounds outputs
@@ -101,12 +101,12 @@ trackerParameters = {
 
 if os.path.exists("/System/Library/Sounds/") :
     
-    sounds = {sound.split(".")[0]: sound.split(".")[0] for sound in os.listdir("/System/Library/Sounds/")};
+    sounds = {sound.split(".")[0]: sound.split(".")[0] for sound in os.listdir("/System/Library/Sounds/")}
     
 else :
     
-    sounds = None;
-    print("/!\ [WARNING] The directory : {0} for sound files doesn't exist".format("/System/Library/Sounds/"));
+    sounds = None
+    print("/!\ [WARNING] The directory : {0} for sound files doesn't exist".format("/System/Library/Sounds/"))
                          
 ##############################################################################
 # Parameters for message outputs
@@ -131,4 +131,4 @@ colors = {
     'darkblack':  "\033[0;30m",
     'bold' :      "\033[1m",
     'off':        "\033[0;0m"
-};
+}

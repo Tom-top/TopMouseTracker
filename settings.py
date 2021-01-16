@@ -24,19 +24,19 @@ def TopMouseTrackerPath():
         str: path to TopMouseTracker
     '''
     
-    fn = os.path.split(__file__);
-    fn = os.path.abspath(fn[0]);
-    return fn;
+    fn = os.path.split(__file__)
+    fn = os.path.abspath(fn[0])
+    return fn
 
-_topMouseTrackerPath = TopMouseTrackerPath();
+_topMouseTrackerPath = TopMouseTrackerPath()
 
-_mainPath = os.path.expanduser("~");
-_desktopPath = _mainPath+"/Desktop";
+_mainPath = os.path.expanduser("~")
+_desktopPath = _mainPath+"/Desktop"
 
-screenResString = os.popen("xrandr | grep '*'").read();
+screenResString = os.popen("xrandr | grep '*'").read()
 
 if not screenResString == '':
-    resolution = screenResString.split()[0];
-    _width, _height = resolution.split('x');
-    _width = int(_width);
-    _height = int(_height);
+    resolution = screenResString.split()[0]
+    _width, _height = resolution.split('x')
+    _width = int(_width)
+    _height = int(_height)

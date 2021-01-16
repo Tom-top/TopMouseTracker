@@ -47,37 +47,37 @@ def VideoConverter(directory,**kwargs) :
         (see videoParameters in Kinect.py file for more info)
     '''
         
-    Videosources = [];
-    Videosinks = [];
-    counter = 0;
+    Videosources = []
+    Videosinks = []
+    counter = 0
         
     for files in natsorted(os.listdir(directory)) :
         
         if files.split('.')[-1] == 'mpg' :
             
-            Videosources.append(directory+str(files));
-            Videosinks.append(directory+'Mpeg_'+str(counter)+'.mp4');
-            counter+=1;
+            Videosources.append(directory+str(files))
+            Videosinks.append(directory+'Mpeg_'+str(counter)+'.mp4')
+            counter+=1
             
         else :
             
-            utils.PrintColoredMessage("[WARNING] File {0} is not in the right format".format(files), "darkred");
+            utils.PrintColoredMessage("[WARNING] File {0} is not in the right format".format(files), "darkred")
     
     for videosource,videosinks in zip(Videosources,Videosinks) :
         
-        name = videosource.split('/')[-1];
+        name = videosource.split('/')[-1]
         args = shlex.split(kwargs['runstr'].format(kwargs['handBrakeCLI'],\
                            videosource,videosinks,kwargs['encoder'],\
-                           kwargs['quality'],kwargs['framerate']));
-        subprocess.call(args,shell=False);
+                           kwargs['quality'],kwargs['framerate']))
+        subprocess.call(args,shell=False)
         
-        print('\n');
-        utils.PrintColoredMessage('###############################################',"darkgreen");
-        utils.PrintColoredMessage("[INFO] Video {0} has been successfully converted".format(name),"darkgreen");
-        utils.PrintColoredMessage('###############################################',"darkgreen");
+        print('\n')
+        utils.PrintColoredMessage('###############################################',"darkgreen")
+        utils.PrintColoredMessage("[INFO] Video {0} has been successfully converted".format(name),"darkgreen")
+        utils.PrintColoredMessage('###############################################',"darkgreen")
               
         if kwargs['playSound'] :
-            utils.PlaySound(2,params.sounds['Purr']);
+            utils.PlaySound(2,params.sounds['Purr'])
 
 
 def GetColorFrame(stream,RF):
@@ -93,13 +93,13 @@ def GetColorFrame(stream,RF):
         _frameRGB (array) : RGB image of each frame coming from the stream
     '''
     
-    _frameRGB = stream.get_last_color_frame();
+    _frameRGB = stream.get_last_color_frame()
     
-    _W,_H = stream.color_frame_desc.Width,stream.color_frame_desc.Height;
-    _frameRGB = _frameRGB.reshape(_H,_W,-1).astype(np.uint8);
-    _frameRGB = cv2.resize(_frameRGB, (int(_W/RF),int(_H/RF)));
+    _W,_H = stream.color_frame_desc.Width,stream.color_frame_desc.Height
+    _frameRGB = _frameRGB.reshape(_H,_W,-1).astype(np.uint8)
+    _frameRGB = cv2.resize(_frameRGB, (int(_W/RF),int(_H/RF)))
     
-    return _frameRGB;
+    return _frameRGB
 
 
 def GetDepthFrame(stream,RF):
@@ -121,7 +121,7 @@ def GetDepthFrame(stream,RF):
     _frameDEPTH = _frameDEPTH.reshape((H, W,-1)).astype(np.uint16)
     _frameDEPTH = cv2.resize(_frameDEPTH, (int(W/RF),int(H/RF)))
     
-    return _frameDEPTH;
+    return _frameDEPTH
 
 
 def VideoLoader(directory, in_folder=False, **kwargs) :
@@ -139,21 +139,21 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
         testFrame (array) : test frame that is loaded for the croppingROI function
     '''
     
-    RGBTrigger = False;
-    DEPTHTrigger = False;
+    RGBTrigger = False
+    DEPTHTrigger = False
     
-    RGBCaptures = [];
-    DEPTHCaptures = [];
-    RGBTestFrame = None;
-    DEPTHTestFrame = None;
+    RGBCaptures = []
+    DEPTHCaptures = []
+    RGBTestFrame = None
+    DEPTHTestFrame = None
     
-    print("\n");
+    print("\n")
     
     if not in_folder :
     
         for folder in natsorted(os.listdir(directory)) :
             
-            dirPath = os.path.join(directory,folder);
+            dirPath = os.path.join(directory,folder)
             
             if os.path.isdir(dirPath) and dirPath in kwargs["main"]["workingDir"] :
         
@@ -163,48 +163,48 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                         
                         if file.split("_")[0] == kwargs["main"]["rgbVideoName"] :
     #                    if file.split('_')[0] == "Raw" :
-                            #cap = cv2.VideoCapture(os.path.join(directory,file));
-                            cap = mpy.VideoFileClip(os.path.join(dirPath,file));
-                            #cap = skvideo.io.vreader(os.path.join(directory,file));
-                            RGBCaptures.append(cap);
+                            #cap = cv2.VideoCapture(os.path.join(directory,file))
+                            cap = mpy.VideoFileClip(os.path.join(dirPath,file))
+                            #cap = skvideo.io.vreader(os.path.join(directory,file))
+                            RGBCaptures.append(cap)
                             
                             if not RGBTrigger :
                             
-                                frame = cap.get_frame(kwargs["main"]["testFramePos"]);
-                                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                                frame = cap.get_frame(kwargs["main"]["testFramePos"])
+                                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                                 
-                                RGBTestFrame = frame;
-                                RGBTrigger = True;
+                                RGBTestFrame = frame
+                                RGBTrigger = True
             
-                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                                   
                             if kwargs["main"]["playSound"] :
                                   
                                 try :  
-                                    utils.PlaySound(1,params.sounds['Purr']);
+                                    utils.PlaySound(1,params.sounds['Purr'])
                                 except :
                                     pass;
                             
                         elif file.split("_")[0] == kwargs["main"]["depthVideoName"] :
                             
-                            #cap = cv2.VideoCapture(os.path.join(directory,file));
-                            cap = mpy.VideoFileClip(os.path.join(dirPath,file));
-                            #cap = skvideo.io.vreader(os.path.join(directory,file));
-                            DEPTHCaptures.append(cap);
+                            #cap = cv2.VideoCapture(os.path.join(directory,file))
+                            cap = mpy.VideoFileClip(os.path.join(dirPath,file))
+                            #cap = skvideo.io.vreader(os.path.join(directory,file))
+                            DEPTHCaptures.append(cap)
         
                             if not DEPTHTrigger :
                                 
-                                frame = cap.get_frame(kwargs["main"]["testFramePos"]);
+                                frame = cap.get_frame(kwargs["main"]["testFramePos"])
                                 
-                                DEPTHTestFrame = frame;
-                                DEPTHTrigger = True;
+                                DEPTHTestFrame = frame
+                                DEPTHTrigger = True
                             
-                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                                   
                             if kwargs["main"]["playSound"] :
                             
                                 try :  
-                                    utils.PlaySound(1,params.sounds['Purr']);
+                                    utils.PlaySound(1,params.sounds['Purr'])
                                 except :
                                     pass;
                                     
@@ -221,13 +221,13 @@ def VideoLoader(directory, in_folder=False, **kwargs) :
                     
                     if not RGBTrigger :
                     
-                        frame = cap.get_frame(kwargs["main"]["testFramePos"]);
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB);
+                        frame = cap.get_frame(kwargs["main"]["testFramePos"])
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         
                         RGBTestFrame = frame
                         RGBTrigger = True
     
-                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen");
+                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file),"darkgreen")
                           
                     if kwargs["main"]["playSound"] :
                           
@@ -285,45 +285,45 @@ class CroppingROI():
     
     def __init__(self, frame):
         
-        utils.PrintColoredMessage("\n[INFO] Select the ROI for segmentation","darkgreen");
+        utils.PrintColoredMessage("\n[INFO] Select the ROI for segmentation","darkgreen")
         
-        self.refPt = [];
-        self.frame = frame.copy();
+        self.refPt = []
+        self.frame = frame.copy()
         self.W, self.H, _ = self.frame.shape
-        cv2.namedWindow("image", cv2.WINDOW_NORMAL);
-        cv2.resizeWindow("image", self.H,self.W);
-        cv2.setMouseCallback("image", self.clickAndCrop);
-        self.clone = self.frame.copy();
+        cv2.namedWindow("image", cv2.WINDOW_NORMAL)
+        cv2.resizeWindow("image", self.H,self.W)
+        cv2.setMouseCallback("image", self.clickAndCrop)
+        self.clone = self.frame.copy()
         # keep looping until the 'q' key is pressed
         while True:
             # display the image and wait for a keypress
-            cv2.moveWindow("image", 0, 0);
-            cv2.imshow("image", self.frame);
-            key = cv2.waitKey(10) & 0xFF;
+            cv2.moveWindow("image", 0, 0)
+            cv2.imshow("image", self.frame)
+            key = cv2.waitKey(10) & 0xFF
             # if the 'r' key is pressed, reset the cropping region
             if key == ord("r"):
-                utils.PrintColoredMessage("[INFO] ROI was reset","darkgreen");
-                self.refPt = [];
-                self.frame = self.clone.copy();
+                utils.PrintColoredMessage("[INFO] ROI was reset","darkgreen")
+                self.refPt = []
+                self.frame = self.clone.copy()
             # if the 'c' key is pressed, break from the loop
             elif key == ord("c"):
-                utils.PrintColoredMessage("[INFO] ROI successfully set","darkgreen");
-                break;
+                utils.PrintColoredMessage("[INFO] ROI successfully set","darkgreen")
+                break
         # close all open windows
-        cv2.destroyAllWindows();
+        cv2.destroyAllWindows()
         for i in range (1,5):
-            cv2.waitKey(1);
+            cv2.waitKey(1)
     
     def clickAndCrop(self, event, x, y, flags, param):
         
         if event == cv2.EVENT_LBUTTONDOWN:
-            self.refPt = [(x, y)];
+            self.refPt = [(x, y)]
         elif event == cv2.EVENT_LBUTTONUP:
-            self.refPt.append((x, y));
+            self.refPt.append((x, y))
         if len(self.refPt) == 2 and self.refPt != None :
-            cv2.rectangle(self.frame, self.refPt[0], self.refPt[1], (0, 0, 255), 2);
-            cv2.imshow("image", self.frame);
+            cv2.rectangle(self.frame, self.refPt[0], self.refPt[1], (0, 0, 255), 2)
+            cv2.imshow("image", self.frame)
             
     def roi(self) :
         
-        return self.refPt;
+        return self.refPt

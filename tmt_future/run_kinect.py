@@ -18,11 +18,11 @@ import TopMouseTracker.tracker_kinect as tracker
 import TopMouseTracker.analysis as analysis
 import TopMouseTracker.utilities as utils
 
-_mainDir = os.path.expanduser("~");
-_desktopDir = os.path.join(_mainDir,"Desktop");
-_resultDir = os.path.join(_mainDir,"TopMouseTracker");
+_mainDir = os.path.expanduser("~")
+_desktopDir = os.path.join(_mainDir,"Desktop")
+_resultDir = os.path.join(_mainDir,"TopMouseTracker")
 
-utils.CheckDirectoryExists(_resultDir);
+utils.CheckDirectoryExists(_resultDir)
                  
 mainParameters = {"resultDir" : _resultDir,
                   "mice" : ["1","2"], #Name of the mice that are tracked
@@ -35,7 +35,7 @@ mainParameters = {"resultDir" : _resultDir,
                   "rawFrameDEPTH" : None,
                   "testFrameRGB" : None,
                   "testFrameDEPTH" : None,
-                  };
+                  }
         
 segmentationParameters = {
                 "mouse" : None,
@@ -47,12 +47,12 @@ segmentationParameters = {
                 "minDist" : 3.0,
                 "cageLength" : 25.,
                 "cageWidth" : 50.,
-                };
+                }
         
 displayParameters = {
         "mode" : "v",
         "showStream" : False,
-        };
+        }
         
 savingParameters = {
         "framerate" : 15,
@@ -63,48 +63,48 @@ savingParameters = {
         "rawWriter" : None,
         "segWriter" : None,
         "saveVideo" : False,
-        };
+        }
         
 trackerParameters = {
         "main" : mainParameters,
         "display" : displayParameters,
         "saving" : savingParameters,
         "segmentation" : segmentationParameters,
-        };
+        }
 
 #%%###########################################################################
 #Setting up cameras#
 ##############################################################################
 
-mainParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body); #Initializes the RGB camera
-mainParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth); #Initializes the DEPTH camera
+mainParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body) #Initializes the RGB camera
+mainParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth) #Initializes the DEPTH camera
 
-mainParameters["rawFrameRGB"] = tracker.getColorFrame(mainParameters["kinectRGB"],mainParameters["resizeDisplay"]); #Imports a test frame from RGB camera in full resolution
-#mainParameters["rawFrameDEPTH"] = tracker.getDepthFrame(_kinectDEPTH,1); #Imports a test frame from DEPTH camera in full resolution
+mainParameters["rawFrameRGB"] = tracker.getColorFrame(mainParameters["kinectRGB"],mainParameters["resizeDisplay"]) #Imports a test frame from RGB camera in full resolution
+#mainParameters["rawFrameDEPTH"] = tracker.getDepthFrame(_kinectDEPTH,1) #Imports a test frame from DEPTH camera in full resolution
 
-mainParameters["testFrameDEPTH"] = tracker.getDepthFrame(mainParameters["kinectDEPTH"],mainParameters["resizeROI"]); #Imports a test RESIZED test frame from RGB camera
-mainParameters["testFrameRGB"] = tracker.getColorFrame(mainParameters["kinectRGB"],mainParameters["resizeROI"]); #Imports a test RESIZED test frame from DEPTH camera
+mainParameters["testFrameDEPTH"] = tracker.getDepthFrame(mainParameters["kinectDEPTH"],mainParameters["resizeROI"]) #Imports a test RESIZED test frame from RGB camera
+mainParameters["testFrameRGB"] = tracker.getColorFrame(mainParameters["kinectRGB"],mainParameters["resizeROI"]) #Imports a test RESIZED test frame from DEPTH camera
         
 #%%############################################################################
 #Creating ROI for analysis#
 ###############################################################################
 
-data = {};
+data = {}
 
 for mouse in mainParameters["mice"] :
+
+    segmentationParameters["mouse"] = mouse
     
-    segmentationParameters["mouse"] = mouse;
+    data["{0}".format(mouse)] = tracker.Tracker(mode=mainParameters["light"],**trackerParameters)
+    data["{0}".format(mouse)].SetROI()
     
-    data["{0}".format(mouse)] = tracker.Tracker(mode=mainParameters["light"],**trackerParameters);
-    data["{0}".format(mouse)].SetROI();
-    
-    cv2.destroyAllWindows();
+    cv2.destroyAllWindows()
 
 #%%############################################################################
 #Launching segmentation#
 ############################################################################### 
  
-tracker.KinectTopMouseTracker(data,**segmentationParameters);
+tracker.KinectTopMouseTracker(data,**segmentationParameters)
 
 #%%############################################################################
 #Plotting and Analysis
@@ -120,13 +120,13 @@ plotParameters = {
                 "maxDist" : 10,
                 "framerate" : savingParameters["framerate"],
                 "gridsize" : 100,
-                };
+                }
         
-Plot = analysis.Plot(**plotParameters);
+Plot = analysis.Plot(**plotParameters)
 
-res = 1;
+res = 1
 
-#Plot.CheckTracking();
-Plot.CompleteTrackingPlot(res,limit=6,save=True);
-#Plot.TrackingPlot(res,limit=6);
-#Plot.HeatMapPlot(PlotParameters["gridsize"]);
+#Plot.CheckTracking()
+Plot.CompleteTrackingPlot(res,limit=6,save=True)
+#Plot.TrackingPlot(res,limit=6)
+#Plot.HeatMapPlot(PlotParameters["gridsize"])
