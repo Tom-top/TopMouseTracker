@@ -20,24 +20,25 @@ import TopMouseTracker._kinect_video_writer as kinect
 
 
 _mainDir = os.path.expanduser("~")
-_desktopDir = os.path.join(_mainDir,"Desktop")
-_savingDir = os.path.join(_mainDir,"TopMouseTracker")
+_desktopDir = os.path.join(_mainDir, "Desktop")
+_savingDir = os.path.join(_mainDir, "TopMouseTracker")
 
 utils.CheckDirectoryExists(_savingDir)
 
-kinectParameters = {"savingDir" : _savingDir,
-                    "mice" : "226_217",
-                    "kinectRGB" : None,
-                    "kinectDEPTH" : None,
-                    "gridRes" : 20,
-                    "boxSize" : 50.,
-                    "depthMinThresh" : 130,
-                    "depthMaxThresh" : 140,
-                    "rawVideoFileName" : None,
-                    "depthVideoFileName8Bit" : None,
-                    "depthVideoFileName16Bit" : None,
-                    "fourcc" : cv2.VideoWriter_fourcc(*'MJPG'),
-                    }
+kinectParameters = {
+    "savingDir": _savingDir,
+    "mice": "226_217",
+    "kinectRGB": None,
+    "kinectDEPTH": None,
+    "gridRes": 20,
+    "boxSize": 50.,
+    "depthMinThresh": 130,
+    "depthMaxThresh": 140,
+    "rawVideoFileName": None,
+    "depthVideoFileName8Bit": None,
+    "depthVideoFileName16Bit": None,
+    "fourcc": cv2.VideoWriter_fourcc(*'MJPG')
+}
 
 kinectParameters["rawVideoFileName"] = "Raw_Video_Mice_{0}".format(kinectParameters["mice"])
 kinectParameters["depthVideoFileName8Bit"] = "Depth_Video_Mice_8b_{0}".format(kinectParameters["mice"])
@@ -47,8 +48,8 @@ kinectParameters["depthVideoFileName16Bit"] = "Depth_Video_Mice_16b_{0}".format(
 #Setting up cameras#
 ##############################################################################
 
-kinectParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body) #Initializes the RGB camera
-kinectParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth) #Initializes the DEPTH camera
+kinectParameters["kinectRGB"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body)  # Initializes the RGB camera
+kinectParameters["kinectDEPTH"] = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth)  # Initializes the DEPTH camera
 
 #%%###########################################################################
 #Initializes the kinect object#
@@ -60,7 +61,7 @@ Kinect = kinect.Kinect(**kinectParameters)
 #[OPTIONAL] Test the kinect for positioning#
 ##############################################################################
 
-Kinect.TestKinect(grid=True) #If grid == True : Displays the calibration grid on depth image
+Kinect.TestKinect(grid=True)  # If grid : Displays the calibration grid on depth image
 
 #%%###########################################################################
 #Launch saving#
@@ -76,6 +77,6 @@ Kinect.TestKinect(grid=True) #If grid == True : Displays the calibration grid on
     The samplingTime is the time in seconds that the program uses to estimate the maximal framerate of the camera
 """
 
-samplingTime = 5*60 #5 minutes
+samplingTime = 5*60  # 5 minutes
 
 Kinect.PlayAndSave(display=True, samplingTime=samplingTime)

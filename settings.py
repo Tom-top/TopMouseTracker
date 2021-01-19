@@ -16,17 +16,17 @@ import sys
 #  windows: "win32"}
 _platform = sys.platform
 
+
 def TopMouseTrackerPath():
-    
     '''Returns path to the TopMouseTracker software
     
     Returns:
         str: path to TopMouseTracker
     '''
-    
     fn = os.path.split(__file__)
     fn = os.path.abspath(fn[0])
     return fn
+
 
 _topMouseTrackerPath = TopMouseTrackerPath()
 
