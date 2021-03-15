@@ -16,7 +16,7 @@ import cv2
 
 import xlwt
 
-import TopMouseTracker.utilities as utils
+import top_mouse_tracker.utilities as utils
 
 
 class Kinect():
@@ -133,16 +133,16 @@ class Kinect():
         self.dataDirName = '{0}-{1}-{2}_{3}-{4}-{5}'.format(self.time.tm_mday, self.time.tm_mon, self.time.tm_year,
                                                             self.time.tm_hour, self.time.tm_min, self.time.tm_sec)
         self.dataDir = os.path.join(self._args["savingDir"], self.dataDirName)
-        utils.CheckDirectoryExists(self.dataDir)
+        utils.check_directory_exists(self.dataDir)
 
         # Creates temporary folders that will hold of the stream images
         # ----------------------------------------------------------------------
         
         self.tempSinkRGB = os.path.join(self.dataDir, "tempSinkRGB")
-        utils.CheckDirectoryExists(self.tempSinkRGB)
+        utils.check_directory_exists(self.tempSinkRGB)
         
         self.tempSinkDEPTH = os.path.join(self.dataDir, "tempSinkDEPTH")
-        utils.CheckDirectoryExists(self.tempSinkDEPTH)
+        utils.check_directory_exists(self.tempSinkDEPTH)
 
         # Creates temporary folders that will hold of the stream images
         # ----------------------------------------------------------------------

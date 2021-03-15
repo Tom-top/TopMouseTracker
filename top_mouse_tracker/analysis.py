@@ -21,10 +21,10 @@ import matplotlib.cm as cm
 
 import moviepy.editor as mpy
 from moviepy.video.io.bindings import mplfig_to_npimage
-from moviepy.editor import VideoFileClip, VideoClip, clips_array, ImageSequenceClip
+from moviepy.editor import clips_array
 
-import TopMouseTracker.utilities as utils
-import TopMouseTracker._tracker as tracker
+import top_mouse_tracker.utilities as utils
+import top_mouse_tracker._tracker as tracker
 
 
 #class GroupData() :
@@ -195,8 +195,8 @@ class Plot(tracker.TopMouseTracker):
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100)
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100)
         
-        hB, mB, sB = utils.HoursMinutesSeconds(len(self.posBefore)/self._framerate)
-        hA, mA, sA = utils.HoursMinutesSeconds(len(self.posAfter)/self._framerate)
+        hB, mB, sB = utils.hours_minutes_seconds(len(self.posBefore) / self._framerate)
+        hA, mA, sA = utils.hours_minutes_seconds(len(self.posAfter) / self._framerate)
         
         fontBefore = {"size": 10,
                       "color": cBefore,
@@ -406,8 +406,8 @@ class Plot(tracker.TopMouseTracker):
         self.distTraveledBeforeInitiation = "%.2f" % (self.distTraveledBeforeInitiation/100)
         self.distTraveledAfterInitiation = "%.2f" % (self.distTraveledAfterInitiation/100)
         
-        hB, mB, sB = utils.HoursMinutesSeconds(round(len(self.posBefore)/np.mean(self._framerate)))
-        hA, mA, sA = utils.HoursMinutesSeconds(round(len(self.posAfter)/np.mean(self._framerate)))
+        hB, mB, sB = utils.hours_minutes_seconds(round(len(self.posBefore) / np.mean(self._framerate)))
+        hA, mA, sA = utils.hours_minutes_seconds(round(len(self.posAfter) / np.mean(self._framerate)))
         
         fontBefore = {"size": 10,
                       "color": args["cBefore"],

@@ -14,16 +14,16 @@ import cv2
 
 from pykinect2 import PyKinectV2, PyKinectRuntime
 
-import TopMouseTracker.tracker_kinect as tracker
-import TopMouseTracker.analysis as analysis
-import TopMouseTracker.utilities as utils
+import top_mouse_tracker.tracker_kinect as tracker
+import top_mouse_tracker.analysis as analysis
+import top_mouse_tracker.utilities as utils
 
 
 _mainDir = os.path.expanduser("~")
 _desktopDir = os.path.join(_mainDir, "Desktop")
 _resultDir = os.path.join(_mainDir, "TopMouseTracker")
 
-utils.CheckDirectoryExists(_resultDir)
+utils.check_directory_exists(_resultDir)
                  
 mainParameters = {
     "resultDir": _resultDir,

@@ -14,7 +14,7 @@ import numpy as np
 
 import cv2
 
-import TopMouseTracker.tmt_io as IO
+import top_mouse_tracker.tmt_io as IO
 
 
 def getColorFrame(stream,resize):

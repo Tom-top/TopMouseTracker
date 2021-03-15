@@ -22,7 +22,7 @@ tmt_dir = "/home/thomas.topilko/Documents/TopMouseTracker"
 if not os.getcwd() == tmt_dir:
     os.chdir(tmt_dir)
     
-import scripts.tomek_photometry_functions as fc
+import top_mouse_tracker.tmt_future.scripts.tomek_photometry_functions as fc
 
 
 experiment = 200917

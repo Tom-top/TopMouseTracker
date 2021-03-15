@@ -31,8 +31,8 @@ lowRightY = int(_refPt[1][1])  # Defines the Low Right ROI corner Y coordinates
 # cv2.rectangle(cloneFrame,(upLeftX,upLeftY),(lowRightX,lowRightY),(0,255,0),3);
 # plt.imshow(cloneFrame)
 
-distanceRatio = (abs(upLeftX-lowRightX)/params.segmentationParameters["cageLength"] +
-                 abs(upLeftY-lowRightY)/params.segmentationParameters["cageWidth"])/2  # Defines the resizing factor for the cage
+distanceRatio = (abs(upLeftX-lowRightX) / params.segmentation["cageLength"] +
+                 abs(upLeftY-lowRightY) / params.segmentation["cageWidth"]) / 2  # Defines the resizing factor for the cage
 
 croppedFrame = RGBFrame[upLeftY:lowRightY, upLeftX:lowRightX]  # Crops the initial frame to the ROI
 
@@ -51,13 +51,13 @@ hsvFrame = cv2.cvtColor(croppedFrame, cv2.COLOR_BGR2HSV)  # Changes the croppedF
 # plt.imshow(hsvFrame)
 blur = cv2.blur(hsvFrame, (5, 5))  # Applies a Gaussian Blur to smoothen the image
 # plt.imshow(blur)
-mask = cv2.inRange(blur, params.segmentationParameters["threshMinMouse"], params.segmentationParameters["threshMaxMouse"]) #Thresholds the image to binary
+mask = cv2.inRange(blur, params.segmentation["threshMinMouse"], params.segmentation["threshMaxMouse"]) #Thresholds the image to binary
 # plt.imshow(mask)
 opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN,
-                           params.segmentationParameters["kernel"], iterations=1)  # Applies opening operation to the mask for dot removal
+                           params.segmentation["kernel"], iterations=1)  # Applies opening operation to the mask for dot removal
 # plt.imshow(opening)
 closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE,
-                           params.segmentationParameters["kernel"], iterations=1)  # Applies closing operation to the mask for large object filling
+                           params.segmentation["kernel"], iterations=1)  # Applies closing operation to the mask for large object filling
 # plt.imshow(closing)
 
 cnts = cv2.findContours(closing.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]  # Finds the contours of the image to identify the meaningful object
@@ -81,9 +81,9 @@ cap.set(cv2.CAP_PROP_POS_FRAMES, frames-1)
 res, frame = cap.read()
 plt.imshow(frame)
     
-params.segmentationParameters["capturesRGB"][0].set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
-params.segmentationParameters["capturesRGB"][0].get(cv2.CAP_PROP_POS_MSEC)
-params.segmentationParameters["capturesRGB"][0].get(cv2.CAP_PROP_POS_FRAMES)
+params.segmentation["capturesRGB"][0].set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
+params.segmentation["capturesRGB"][0].get(cv2.CAP_PROP_POS_MSEC)
+params.segmentation["capturesRGB"][0].get(cv2.CAP_PROP_POS_FRAMES)
 
 cap = skvideo.io.vreader(os.path.join(_workingDir,"Raw_Video_Mice_226_217_7-2-2019_8-54-10.avi"))
     
@@ -93,9 +93,9 @@ for frame in cap:
     croppedFrame = RGBFrame[upLeftY:lowRightY,upLeftX:lowRightX]  # Crops the initial frame to the ROI
     hsvFrame = cv2.cvtColor(croppedFrame, cv2.COLOR_BGR2HSV)  # Changes the croppedFrame LUT to HSV for segmentation
     blur = cv2.blur(hsvFrame, (5, 5))  # Applies a Gaussian Blur to smoothen the image
-    mask = cv2.inRange(blur, params.segmentationParameters["threshMinMouse"], params.segmentationParameters["threshMaxMouse"])  # Thresholds the image to binary
-    opening = cv2.morphologyEx(mask,cv2.MORPH_OPEN,params.segmentationParameters["kernel"], iterations=1)  # Applies opening operation to the mask for dot removal
-    closing = cv2.morphologyEx(opening,cv2.MORPH_CLOSE,params.segmentationParameters["kernel"], iterations=1)  # Applies closing operation to the mask for large object filling
+    mask = cv2.inRange(blur, params.segmentation["threshMinMouse"], params.segmentation["threshMaxMouse"])  # Thresholds the image to binary
+    opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, params.segmentation["kernel"], iterations=1)  # Applies opening operation to the mask for dot removal
+    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, params.segmentation["kernel"], iterations=1)  # Applies closing operation to the mask for large object filling
     cnts = cv2.findContours(closing.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]  # Finds the contours of the image to identify the meaningful object
     
     cloneCroppedFrame = croppedFrame.copy()

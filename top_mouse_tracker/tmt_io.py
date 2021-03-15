@@ -20,8 +20,8 @@ import cv2
 import moviepy.editor as mpy
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-import TopMouseTracker.parameters as params
-import TopMouseTracker.utilities as utils
+import top_mouse_tracker.parameters as params
+import top_mouse_tracker.utilities as utils
 
 
 def concatenate_video_clips(folder_path):
@@ -56,7 +56,7 @@ def VideoConverter(directory,**kwargs):
             Videosinks.append(directory+'Mpeg_'+str(counter)+'.mp4')
             counter += 1
         else:
-            utils.PrintColoredMessage("[WARNING] File {0} is not in the right format".format(files), "darkred")
+            utils.print_colored_message("[WARNING] File {0} is not in the right format".format(files), "darkred")
     
     for videosource,videosinks in zip(Videosources, Videosinks):
         name = videosource.split('/')[-1]
@@ -66,12 +66,12 @@ def VideoConverter(directory,**kwargs):
         subprocess.call(args, shell=False)
         
         print('\n')
-        utils.PrintColoredMessage('###############################################', "darkgreen")
-        utils.PrintColoredMessage("[INFO] Video {0} has been successfully converted".format(name), "darkgreen")
-        utils.PrintColoredMessage('###############################################', "darkgreen")
+        utils.print_colored_message('###############################################', "darkgreen")
+        utils.print_colored_message("[INFO] Video {0} has been successfully converted".format(name), "darkgreen")
+        utils.print_colored_message('###############################################', "darkgreen")
               
         if kwargs['playSound']:
-            utils.PlaySound(2, params.sounds['Purr'])
+            utils.play_sound(2, params.sounds['Purr'])
 
 
 def GetColorFrame(stream,RF):
@@ -156,11 +156,11 @@ def VideoLoader(directory, in_folder=False, **kwargs):
                                 RGBTestFrame = frame
                                 RGBTrigger = True
             
-                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file), "darkgreen")
+                            utils.print_colored_message("[INFO] {0} loaded successfully".format(file), "darkgreen")
                                   
                             if kwargs["main"]["playSound"]:
                                 try:
-                                    utils.PlaySound(1, params.sounds['Purr'])
+                                    utils.play_sound(1, params.sounds['Purr'])
                                 except:
                                     pass
                             
@@ -176,11 +176,11 @@ def VideoLoader(directory, in_folder=False, **kwargs):
                                 DEPTHTestFrame = frame
                                 DEPTHTrigger = True
                             
-                            utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file), "darkgreen")
+                            utils.print_colored_message("[INFO] {0} loaded successfully".format(file), "darkgreen")
                                   
                             if kwargs["main"]["playSound"]:
                                 try:
-                                    utils.PlaySound(1,params.sounds['Purr'])
+                                    utils.play_sound(1, params.sounds['Purr'])
                                 except:
                                     pass
     elif in_folder:
@@ -197,11 +197,11 @@ def VideoLoader(directory, in_folder=False, **kwargs):
                         RGBTestFrame = frame
                         RGBTrigger = True
     
-                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file), "darkgreen")
+                    utils.print_colored_message("[INFO] {0} loaded successfully".format(file), "darkgreen")
                           
                     if kwargs["main"]["playSound"]:
                         try:
-                            utils.PlaySound(1, params.sounds['Purr'])
+                            utils.play_sound(1, params.sounds['Purr'])
                         except:
                             pass
                 
@@ -215,16 +215,16 @@ def VideoLoader(directory, in_folder=False, **kwargs):
                         DEPTHTestFrame = frame
                         DEPTHTrigger = True
                     
-                    utils.PrintColoredMessage("[INFO] {0} loaded successfully".format(file), "darkgreen")
+                    utils.print_colored_message("[INFO] {0} loaded successfully".format(file), "darkgreen")
                           
                     if kwargs["main"]["playSound"]:
                         try:
-                            utils.PlaySound(1, params.sounds['Purr'])
+                            utils.play_sound(1, params.sounds['Purr'])
                         except:
                             pass
     
     if not RGBTrigger and not DEPTHTrigger:
-        utils.PrintColoredMessage("[WARNING] Sorry, no video file in the right format was found", "darkred")
+        utils.print_colored_message("[WARNING] Sorry, no video file in the right format was found", "darkred")
             
     return RGBCaptures, DEPTHCaptures, RGBTestFrame, DEPTHTestFrame
 
@@ -241,7 +241,7 @@ class CroppingROI():
         corner and Low Right corner of the ROI, respectively
     '''
     def __init__(self, frame):
-        utils.PrintColoredMessage("\n[INFO] Select the ROI for segmentation", "darkgreen")
+        utils.print_colored_message("\n[INFO] Select the ROI for segmentation", "darkgreen")
         
         self.refPt = []
         self.frame = frame.copy()
@@ -258,12 +258,12 @@ class CroppingROI():
             key = cv2.waitKey(10) & 0xFF
             # if the 'r' key is pressed, reset the cropping region
             if key == ord("r"):
-                utils.PrintColoredMessage("[INFO] ROI was reset", "darkgreen")
+                utils.print_colored_message("[INFO] ROI was reset", "darkgreen")
                 self.refPt = []
                 self.frame = self.clone.copy()
             # if the 'c' key is pressed, break from the loop
             elif key == ord("c"):
-                utils.PrintColoredMessage("[INFO] ROI successfully set", "darkgreen")
+                utils.print_colored_message("[INFO] ROI successfully set", "darkgreen")
                 break
         # close all open windows
         cv2.destroyAllWindows()

@@ -20,12 +20,12 @@ import skvideo.io
 
 import xlwt
 
-import TopMouseTracker.parameters as params
-import TopMouseTracker.utilities as utils
-import TopMouseTracker.tmt_io as IO
+import top_mouse_tracker.parameters as params
+import top_mouse_tracker.utilities as utils
+from top_mouse_tracker import tmt_io
 
 
-class TopMouseTracker():
+class TopMouseTracker:
     '''Main tracking class :
         
        Methods :
@@ -189,18 +189,18 @@ class TopMouseTracker():
                 self.videoWriter = skvideo.io.FFmpegWriter(os.path.join(self._args["main"]["resultDir"], self.videoString),
                                                            inputdict={'-r': str(np.mean(self._framerate))},
                                                            outputdict={'-r': str(np.mean(self._framerate))})
-                utils.PrintColoredMessage("\n[INFO] Default skvideo video saving mode selected", "darkgreen")
+                utils.print_colored_message("\n[INFO] Default skvideo video saving mode selected", "darkgreen")
             elif self._args["saving"]["fourcc"] == "Frame":
-                utils.PrintColoredMessage("\n[INFO] Image saving mode selected \n", "darkgreen")
+                utils.print_colored_message("\n[INFO] Image saving mode selected \n", "darkgreen")
             else:
                 self.videoWriter = cv2.VideoWriter(os.path.join(self._args["main"]["resultDir"],
                                                                 self.videoString), self._args["saving"]["fourcc"],
                                                    np.mean(self._framerate),
                                                    (self.testCanvas.shape[0], self.testCanvas.shape[1]))
                 
-                utils.PrintColoredMessage("\n[INFO] Video saving mode selected", "darkgreen")
-                utils.PrintColoredMessage("[INFO] VideoWriter : {0} ; {1} \n"
-                                          .format((self.testCanvas.shape[0], self.testCanvas.shape[1]),
+                utils.print_colored_message("\n[INFO] Video saving mode selected", "darkgreen")
+                utils.print_colored_message("[INFO] VideoWriter : {0} ; {1} \n"
+                                            .format((self.testCanvas.shape[0], self.testCanvas.shape[1]),
                                                   self._args["saving"]["fourcc"]), "darkgreen")
     
     def SetRegistrationParameters(self, x, y):
@@ -280,7 +280,7 @@ class TopMouseTracker():
         
         try:
             nameColumn = videoInfoWorkbook["n"]  # Gets name data from column "n"
-        except:
+        except KeyError:
             nameColumn = videoInfoWorkbook[videoInfoWorkbook.columns[0]]  # If no column "n" gets name data from the first column
 
         for pos, n in enumerate(nameColumn):
@@ -302,8 +302,8 @@ class TopMouseTracker():
                 
                 self._mouseDetectedExcel = True  # The entry for self._mouse was successfully detected
                 
-                utils.PrintColoredMessage("\n[INFO] Entry in Video_Info file detected for mouse {0}"
-                                          .format(self._mouse), "darkgreen")
+                utils.print_colored_message("\n[INFO] Entry in Video_Info file detected for mouse {0}"
+                                            .format(self._mouse), "darkgreen")
         
         if not self._mouseDetectedExcel:  # The entry for self._mouse was not successfully detected
             raise RuntimeError("Data for mouse {0} was not detected in Video_Info file!".format(self._mouse))
@@ -317,10 +317,10 @@ class TopMouseTracker():
         
         '''
         print("\n")
-        utils.PrintColoredMessage("[INFO] Press R to reset ROI, and C to crop the selected ROI", "bold")
+        utils.print_colored_message("[INFO] Press R to reset ROI, and C to crop the selected ROI", "bold")
         
         if refPt is None:  # TODO: check
-            self._refPt = IO.CroppingROI(self._args["main"]["testFrameRGB"].copy()).roi()  # Defining the ROI for segmentation
+            self._refPt = tmt_io.CroppingROI(self._args["main"]["testFrameRGB"].copy()).roi()  # Defining the ROI for segmentation
         else:
             self._refPt = refPt
         
@@ -937,21 +937,21 @@ class TopMouseTracker():
 def TopTracker(Tracker,**kwargs):
     if not Tracker._break:
         print("\n")
-        utils.PrintColoredMessage("##################################################################################################################","darkgreen")
-        utils.PrintColoredMessage("                                  [INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"darkgreen")
-        utils.PrintColoredMessage("##################################################################################################################","darkgreen")
+        utils.print_colored_message("##################################################################################################################", "darkgreen")
+        utils.print_colored_message("                                  [INFO] Starting segmentation for mouse {0}".format(kwargs["main"]["mouse"]), "darkgreen")
+        utils.print_colored_message("##################################################################################################################", "darkgreen")
     else:
         print("\n")
-        utils.PrintColoredMessage("##################################################################################################################","magenta")
-        utils.PrintColoredMessage("                                  [INFO] Resuming segmentation for mouse {0}".format(kwargs["main"]["mouse"]),"magenta")
-        utils.PrintColoredMessage("##################################################################################################################","magenta")
+        utils.print_colored_message("##################################################################################################################", "magenta")
+        utils.print_colored_message("                                  [INFO] Resuming segmentation for mouse {0}".format(kwargs["main"]["mouse"]), "magenta")
+        utils.print_colored_message("##################################################################################################################", "magenta")
     
     Tracker._break = False
     Tracker._Start = time.time()
     startTime = time.localtime()
     h, m, s = startTime.tm_hour, startTime.tm_min, startTime.tm_sec
     Tracker.SetTrackingVideoSaving()
-    utils.PrintColoredMessage("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h,m,s),"darkgreen")
+    utils.print_colored_message("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h, m, s), "darkgreen")
     
     nFrames = sum([x*y for x,y in zip(Tracker._tEnd, Tracker._framerate)]) - (Tracker._tStart * Tracker._framerate[0])
     
@@ -986,17 +986,17 @@ def TopTracker(Tracker,**kwargs):
                             # -----------------------------------------------------------------------------------------
                             if Tracker.fn % (int(0.01*nFrames)) == 0:
                                 print('\n')
-                                utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
-                                    ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
-                                    +'% frames', "darkgreen")
+                                utils.print_colored_message('Loaded and analyzed : ' + str(Tracker.fn) + '/' + str(int(nFrames)) +\
+                                    ' = ' + str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100)) \
+                                                            +'% frames', "darkgreen")
                                                           
-                                utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )), "darkgreen")
+                                utils.print_colored_message(utils.print_loading_bar(round ((float(Tracker.fn) / float(nFrames)) * 100)), "darkgreen")
                             
                             # Runs only if the video is finished
                             # ----------------------------------------------------------------------------------------
                             if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber] * Tracker._framerate[Tracker.videoNumber]):
                                 if kwargs["main"]["playSound"]:
-                                    utils.PlaySound(2, params.sounds['Purr'])  # Plays sound when code finishes
+                                    utils.play_sound(2, params.sounds['Purr'])  # Plays sound when code finishes
                                 
                                 Tracker.videoNumber += 1  # Increments videoNumber variable to keep track which video is being processed
                                 Tracker.frameNumber = 0
@@ -1006,10 +1006,10 @@ def TopTracker(Tracker,**kwargs):
                             if kwargs["main"]["email"] is not None:
                                 Tracker.SendMail()
                         except:
-                            utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
+                            utils.print_colored_message("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
                     
                         if kwargs["main"]["playSound"]:
-                            utils.PlaySound(2, kwargs["main"]["sound2Play"])  # Plays sound when code finishes
+                            utils.play_sound(2, kwargs["main"]["sound2Play"])  # Plays sound when code finishes
                             
                         Tracker.videoNumber += 1  # Increments videoNumber variable to keep track which video is being processed
                         Tracker.frameNumber = 0
@@ -1037,7 +1037,7 @@ def TopTracker(Tracker,**kwargs):
                         # ----------------------------------------------------------------------
                         if kwargs["segmentation"]["showStream"]:
                             segmentation = Tracker.ReturnTracking()
-                            if segmentation:
+                            if segmentation != []:
                                 cv2.imshow('segmentation', segmentation)
                                 if cv2.waitKey(1) & 0xFF == ord('q'):
                                     Tracker._break = True
@@ -1051,16 +1051,16 @@ def TopTracker(Tracker,**kwargs):
                             # ----------------------------------------------------------------------------------------
                             if Tracker.fn % (int(0.01*nFrames)) == 0 :
                                 print('\n')
-                                utils.PrintColoredMessage('Loaded and analyzed : '+str(Tracker.fn)+'/'+str( int(nFrames) )+\
-                                    ' = '+ str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100))\
-                                    +'% frames', "darkgreen")
-                                utils.PrintColoredMessage(utils.PrintLoadingBar( round ( (float(Tracker.fn) / float(nFrames)) *100 )),"darkgreen")
+                                utils.print_colored_message('Loaded and analyzed : ' + str(Tracker.fn) + '/' + str(int(nFrames)) +\
+                                    ' = ' + str ( round ( (float(Tracker.fn) / float( (nFrames) )) *100)) \
+                                                            +'% frames', "darkgreen")
+                                utils.print_colored_message(utils.print_loading_bar(round ((float(Tracker.fn) / float(nFrames)) * 100)), "darkgreen")
                             
                             # Runs only if the video is finished
                             # -----------------------------------------------------------------------------------------
                             if Tracker.frameNumber == int(Tracker._tEnd[Tracker.videoNumber] * Tracker._framerate[Tracker.videoNumber]):
                                 if kwargs["main"]["playSound"]:
-                                    utils.PlaySound(2, params.sounds['Purr'])  # Plays sound when code finishes
+                                    utils.play_sound(2, params.sounds['Purr'])  # Plays sound when code finishes
                                 Tracker.videoNumber += 1  # Increments videoNumber variable to keep track which video is being processed
                                 Tracker.frameNumber = 0
                                 break
@@ -1070,10 +1070,10 @@ def TopTracker(Tracker,**kwargs):
                             if kwargs["main"]["email"] is not None:
                                 Tracker.SendMail()
                         except:
-                            utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
+                            utils.print_colored_message("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
                     
                         if kwargs["main"]["playSound"]:
-                            utils.PlaySound(2, kwargs["main"]["sound2Play"])  # Plays sound when code finishes
+                            utils.play_sound(2, kwargs["main"]["sound2Play"])  # Plays sound when code finishes
                             
                         Tracker.videoNumber += 1  # Increments videoNumber variable to keep track which video is being processed
                         Tracker.frameNumber = 0
@@ -1084,19 +1084,19 @@ def TopTracker(Tracker,**kwargs):
 
     if not Tracker._break:
         print('\n')
-        utils.PrintColoredMessage('##################################################################################################################', "darkgreen")
-        utils.PrintColoredMessage("                             [INFO] Mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber),Tracker._mouse), "darkgreen")
-        utils.PrintColoredMessage('##################################################################################################################', "darkgreen")
+        utils.print_colored_message('##################################################################################################################', "darkgreen")
+        utils.print_colored_message("                             [INFO] Mouse {1} has been successfully analyzed".format(str(Tracker.videoNumber), Tracker._mouse), "darkgreen")
+        utils.print_colored_message('##################################################################################################################', "darkgreen")
     else :
         print('\n')
-        utils.PrintColoredMessage('##################################################################################################################', "darkred")
-        utils.PrintColoredMessage("                             [INFO] Tracking for Mouse {1} has been aborted".format(str(Tracker.videoNumber),Tracker._mouse), "darkred")
-        utils.PrintColoredMessage('##################################################################################################################', "darkred")
+        utils.print_colored_message('##################################################################################################################', "darkred")
+        utils.print_colored_message("                             [INFO] Tracking for Mouse {1} has been aborted".format(str(Tracker.videoNumber), Tracker._mouse), "darkred")
+        utils.print_colored_message('##################################################################################################################', "darkred")
 
     try:
         Tracker.SendMail()
     except:
-        utils.PrintColoredMessage("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
+        utils.print_colored_message("[INFO] Sending email to {0} failed".format(kwargs["main"]["email"]), "darkred")
               
     if kwargs["segmentation"]["showStream"]:
         cv2.destroyAllWindows()
@@ -1120,10 +1120,10 @@ def TopTracker(Tracker,**kwargs):
     Tracker._End = time.time()
     
     diff = Tracker._End - Tracker._Start
-    h, m, s = utils.HoursMinutesSeconds(diff)
+    h, m, s = utils.hours_minutes_seconds(diff)
     
     print("\n")
-    utils.PrintColoredMessage("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h, m, s), "darkgreen")
+    utils.print_colored_message("[INFO] Segmentation started at : {0}h {1}m {2}s".format(h, m, s), "darkgreen")
     
     SaveTracking(Tracker, **kwargs)
 
@@ -1184,6 +1184,6 @@ def SaveTracking(Tracker, **kwargs):
     # np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Areas.npy'),Tracker._maskAreas)
     # np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_Distances.npy'),Tracker._distances)
     
-    if params.savingParameters["segmentCotton"] :
+    if params.saving["segmentCotton"] :
         np.save(os.path.join(kwargs["main"]["resultDir"], 'Data_'+str(Tracker._mouse) + '_CottonPixelIntensities.npy'), Tracker._cottonAveragePixelIntensities)
     # np.save(os.path.join(kwargs["main"]["resultDir"],'Data_'+str(Tracker._mouse)+'_CottonSpread.npy'),Tracker._cottonSpread)
