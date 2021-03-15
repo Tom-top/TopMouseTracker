@@ -16,7 +16,6 @@ __license__ = 'N.A'
 
 __copyright__ = '2018_Thomas_Piotr_TOPILKO'
 
-__all__ = ["settings", "parameters.py", "tmt_io.py", "Tracker", "analysis.py"]
+__all__ = ["parameters", "tmt_io", "_tracker.TopMouseTracker", "analysis"]
 
-from TopMouseTracker import settings
-import TopMouseTracker.parameters
+import top_mouse_tracker.parameters

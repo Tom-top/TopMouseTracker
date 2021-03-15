@@ -15,15 +15,15 @@ import cv2
 
 from pykinect2 import PyKinectV2, PyKinectRuntime
 
-import TopMouseTracker.utilities as utils
-import TopMouseTracker._kinect_video_writer as kinect
+import top_mouse_tracker.utilities as utils
+import top_mouse_tracker._kinect_video_writer as kinect
 
 
 _mainDir = os.path.expanduser("~")
 _desktopDir = os.path.join(_mainDir, "Desktop")
 _savingDir = os.path.join(_mainDir, "TopMouseTracker")
 
-utils.CheckDirectoryExists(_savingDir)
+utils.check_directory_exists(_savingDir)
 
 kinectParameters = {
     "savingDir": _savingDir,

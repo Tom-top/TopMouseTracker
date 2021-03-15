@@ -14,7 +14,7 @@ import cv2
 
 import xlwt
 
-import TopMouseTracker.utilities as utils
+import top_mouse_tracker.utilities as utils
 
 
 class Kinect():
@@ -135,7 +135,7 @@ class Kinect():
                                                             self.time.tm_hour, self.time.tm_min, self.time.tm_sec)
                             
         self.dataDir = os.path.join(self._args["savingDir"], self.dataDirName)
-        utils.CheckDirectoryExists(self.dataDir)
+        utils.check_directory_exists(self.dataDir)
         
         if samplingTime != 1:
             # Checking frame sizes
@@ -248,9 +248,9 @@ class Kinect():
                                                            self.time.tm_hour, self.time.tm_min, self.time.tm_sec))
         
         sheet.write(2, 0, "Elapsed_Time")
-        sheet.write(2, 1, str(utils.HoursMinutesSeconds(self.tEnd - self.tStart)[0])+':'+\
-                            str(utils.HoursMinutesSeconds(self.tEnd - self.tStart)[1])+':'+\
-                            str(utils.HoursMinutesSeconds(self.tEnd - self.tStart)[2]))
+        sheet.write(2, 1, str(utils.hours_minutes_seconds(self.tEnd - self.tStart)[0]) + ':' + \
+                    str(utils.hours_minutes_seconds(self.tEnd - self.tStart)[1]) + ':' + \
+                    str(utils.hours_minutes_seconds(self.tEnd - self.tStart)[2]))
         
         sheet.write(3, 0, "Sampled_Framerate")
         sheet.write(3, 1, self.sampledFrameRate)
