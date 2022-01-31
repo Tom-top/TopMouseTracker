@@ -1,0 +1,59 @@
+[general]
+
+    [[general]]
+    animal_tag = string(default="test")
+    experiment_tag = string(default="190801")
+    recording_tag = string(default="01-08-2019_9-0-0")
+    color_video_prefix = string(default="color")
+    depth_video_prefix = string(default="depth")
+    extension_video = string(default="mp4")
+
+    [[cage]]
+    length = float(default=37.0)
+    width = float(default=20.0)
+
+    [[video]]
+    start = int(default=0)
+    end = int(default=60)
+
+    [[misc]]
+    play_sound = boolean(default=True)
+    sound = string(default="Purr")
+
+[tracking]
+
+    [[general]]
+    test_frame = int(default=0)
+    segment_nesting = boolean(default=False)
+
+    [[thresholding]]
+    min_animal = list(default=[0, 0, 0])
+    max_animal = list(default=[255, 255, 75])
+    min_material = list(default=[0, 0, 0])
+    max_material = list(default=[255, 98, 255])
+
+    [[filtering]]
+    animal_minimal_size = int(default=200)
+    animal_maximal_size = int(default=8000)
+    nesting_material_size_filter = int(default=200)
+
+    [[display]]
+    show_tracking = boolean(default=False)
+    resize_tracking_window = float(default=0.25)
+    save_tracking_display = boolean(default=True)
+    saving_extension = string(default="mp4")
+
+[plot]
+
+    [[general]]
+    time_limit = int(default=3600)
+    minimal_distance = float(default=0.5)
+    maximal_distance = float(default=10.0)
+    peak_distance = int(default=1)
+    peak_threshold = float(default=0.55)
+    event_distance = int(default=20)
+    resolution = int(default=1)
+    color_before = string(default="blue")
+    color_after = string(default="red")
+    nesting_subplots = boolean(default=True)
+    save = boolean(default=True)
